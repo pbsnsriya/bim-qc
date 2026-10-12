@@ -8,6 +8,7 @@ import unittest
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from zipfile import ZipFile
+from unittest.mock import patch
 
 from http.server import ThreadingHTTPServer
 from server import Handler, MAX_BODY_BYTES, MAX_IFC_BYTES
@@ -36,12 +37,30 @@ class ApiTests(unittest.TestCase):
     def test_hard_clash_reference_is_diagnostic_and_blocks_model_verdicts(self):
         with urlopen(f"{self.base}/api/hard-clash-reference") as response:
             result = json.load(response)
-        self.assertFalse(result["model_clash_checking_enabled"])
-        self.assertEqual("blocked_reference_failure",result["gate_status"])
-        self.assertEqual((14,18),(result["passed_cases"],result["total_cases"]))
+        self.assertTrue(result["model_clash_checking_enabled"])
+        self.assertEqual("bounded_pilot_available",result["gate_status"])
+        self.assertEqual((30,30),(result["passed_cases"],result["total_cases"]))
         with urlopen(f"{self.base}/api/hard-clash-sample") as response:
-            self.assertIn("hard_clash_matrix.ifc",response.headers["Content-Disposition"])
-            self.assertEqual((ROOT/"samples/golden/hard_clash_matrix.ifc").read_bytes(),response.read())
+            self.assertIn("hard_clash_pilot.ifc",response.headers["Content-Disposition"])
+            self.assertEqual((ROOT/"samples/golden/hard_clash_pilot.ifc").read_bytes(),response.read())
+
+    def test_stage3_selected_model_pilot_retains_source_identity_and_depth_limits(self):
+        uploaded=self.upload_model('golden/hard_clash_matrix.ifc')
+        request=Request(f'{self.base}/api/hard-clashes',data=json.dumps({'model_id':uploaded['model_id'],'tolerance_mm':2}).encode(),headers={'Content-Type':'application/json'},method='POST')
+        with urlopen(request) as response: result=json.load(response)
+        self.assertEqual(uploaded['model_sha256'],result['source_sha256'])
+        self.assertEqual(6,result['summary']['candidate_pairs'])
+        self.assertEqual(1,result['summary']['unresolved_collisions'])
+        self.assertFalse(result['complete_for_selected_scope'])
+        self.assertTrue(result['reference_gate']['passed'])
+
+    def test_stage3_failed_reference_gate_cannot_be_bypassed(self):
+        request=Request(f'{self.base}/api/hard-clashes',data=b'{}',headers={'Content-Type':'application/json'},method='POST')
+        with patch('server.run_hard_clash_acceptance',return_value={'passed':False}),patch('server.run_hard_clashes_text') as scan:
+            with self.assertRaises(HTTPError) as context: urlopen(request)
+            self.assertEqual(400,context.exception.code)
+            self.assertIn('remains blocked',json.load(context.exception)['error'])
+            scan.assert_not_called()
 
     def test_capacity_allows_100_mb_ifc_with_json_overhead(self):
         self.assertEqual(100 * 1024 * 1024, MAX_IFC_BYTES)

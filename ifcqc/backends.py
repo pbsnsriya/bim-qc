@@ -21,6 +21,7 @@ def capabilities() -> dict:
         "semantic_backend_required": True,
         "ids_backend": "builtin-subset",
         "ifcopenshell_available": ifcopenshell,
+        "stage3_solid_available": ifcopenshell and _available("manifold3d"),
         "ifctester_available": ifctester,
         "ifctester_adapter": "pending" if ifctester else "not-installed",
         "builtin_ids_facets": ["entity", "attribute:GlobalId", "attribute:Name", "attribute:Description"],

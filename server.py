@@ -21,6 +21,7 @@ from ifcqc.ids_validator import validate_ids
 from ifcqc.runtime import GeometryJobManager, ModelStore
 from ifcqc.element_comparison import compare_elements, compare_elements_file, validate_pair_ids
 from ifcqc.hard_clash_acceptance import run_hard_clash_acceptance
+from ifcqc.hard_clashes import run_hard_clashes_file,run_hard_clashes_text
 
 
 ROOT = Path(__file__).resolve().parent
@@ -91,8 +92,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(200, capabilities())
             return
         if path == "/api/hard-clash-reference":
-            if not capabilities()["ifcopenshell_available"]:
-                self.send_json(400, {"error": "Stage 3 reference testing requires IfcOpenShell. Restart using start_windows.bat."})
+            if not capabilities()["stage3_solid_available"]:
+                self.send_json(400, {"error": "Stage 3 requires IfcOpenShell and Manifold. Restart using start_windows.bat to install release dependencies."})
                 return
             try:
                 with PAIR_COMPARISON_LOCK:
@@ -102,8 +103,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(500, {"error": "Stage 3 reference testing could not complete; model clash checking remains blocked."})
             return
         if path == "/api/hard-clash-sample":
-            self.send_bytes(200, (SAMPLES / "golden/hard_clash_matrix.ifc").read_bytes(),
-                            "application/octet-stream", "hard_clash_matrix.ifc")
+            self.send_bytes(200, (SAMPLES / "golden/hard_clash_pilot.ifc").read_bytes(),
+                            "application/octet-stream", "hard_clash_pilot.ifc")
             return
         if path == "/api/geometry-acceptance":
             self.send_json(200, run_acceptance_matrix(SAMPLES))
@@ -167,6 +168,7 @@ class Handler(BaseHTTPRequestHandler):
             "/api/analyze", "/api/validate-ids", "/api/geometry-diagnostics",
             "/api/geometry-checks", "/api/export-bcf",
             "/api/compare-elements",
+            "/api/hard-clashes",
         }:
             self.send_error(404)
             return
@@ -175,7 +177,20 @@ class Handler(BaseHTTPRequestHandler):
             if size <= 0 or size > MAX_BODY_BYTES:
                 raise ValueError("Request must be between 1 byte and 120 MB; IFC files are limited to 100 MB.")
             payload = json.loads(self.rfile.read(size))
-            if path == "/api/compare-elements":
+            if path == "/api/hard-clashes":
+                if not isinstance(payload,dict): raise ValueError('The request body must be a JSON object.')
+                if not capabilities()['stage3_solid_available']: raise ValueError('Stage 3 requires IfcOpenShell and Manifold; restart using start_windows.bat.')
+                with PAIR_COMPARISON_LOCK:
+                    reference=run_hard_clash_acceptance(SAMPLES)
+                    if not reference['passed']: raise ValueError('Stage 3 reference validation failed; model clash checking remains blocked.')
+                    if payload.get('model_id'):
+                        record=MODEL_STORE.get(payload['model_id'])
+                        result=run_hard_clashes_file(record.path,payload.get('tolerance_mm',2.),payload.get('element_ids'),record.sha256)
+                    else:
+                        result=run_hard_clashes_text(require_ifc_content(payload),payload.get('tolerance_mm',2.),payload.get('element_ids'))
+                    result['reference_gate']={k:reference[k] for k in ['passed','passed_cases','total_cases','generated_at','app_version','solid_engine_version']}
+                self.send_json(200,result)
+            elif path == "/api/compare-elements":
                 if not isinstance(payload, dict):
                     raise ValueError("The request body must be a JSON object.")
                 ids = validate_pair_ids(payload.get("element_ids"))
@@ -211,7 +226,7 @@ class Handler(BaseHTTPRequestHandler):
                 # a direct HTTP request bypass the staged acceptance gate.
                 later_checks = ("hard_clashes", "clearance_clashes", "connectivity", "alignment", "dimensions")
                 if any(name in config and config[name] is not False for name in later_checks):
-                    raise ValueError("Later geometry checks are not released. Stage 3 model clashes remain blocked pending reference validation; this endpoint supports Stage 2 duplicates only.")
+                    raise ValueError("Later geometry checks are not released through this endpoint. Use the reference-gated Stage 3 pilot for hard clashes; this endpoint supports Stage 2 duplicates only.")
                 config = {**config, **{name: False for name in later_checks}}
                 content = content_for_payload(payload)
                 self.send_json(200, run_geometry_checks(content, config))

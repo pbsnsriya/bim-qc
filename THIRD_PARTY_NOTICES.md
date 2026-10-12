@@ -25,3 +25,10 @@ The upstream licence text is included alongside the vendored files.
 - Licence: MIT
 
 The upstream licence text is included alongside the vendored files.
+
+## Manifold 3.5.1
+
+- Project: <https://github.com/elalish/manifold>
+- Distribution: installed `manifold3d` Python dependency; not vendored in this archive
+- Licence: Apache License 2.0
+- Use: solid-mesh intersection and volume; IFC parsing/tessellation remain IfcOpenShell responsibilities

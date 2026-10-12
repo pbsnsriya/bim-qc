@@ -1,0 +1,2315 @@
+{
+  "stage": 3,
+  "report_type": "Hard-clash reference matrix",
+  "app_version": "0.7.16",
+  "engine": "ifcopenshell",
+  "engine_version": "0.8.5",
+  "solid_engine": "manifold3d",
+  "solid_engine_version": "3.5.1",
+  "generated_at": "2026-10-10T08:03:12.640565+00:00",
+  "tolerance_mm": 2.0,
+  "passed": true,
+  "passed_cases": 30,
+  "total_cases": 30,
+  "failed_cases": 0,
+  "model_clash_checking_enabled": true,
+  "gate_status": "bounded_pilot_available",
+  "original_kernel_baseline": {
+    "passed_cases": 14,
+    "total_cases": 18,
+    "threshold_mm": 2.0,
+    "metric": "kernel protrusion/pierce distance"
+  },
+  "original_controls_passed": true,
+  "measurement_tolerances": {
+    "volume_absolute_m3": 1e-08,
+    "minimum_translation_absolute_mm": 0.0001
+  },
+  "cases": [
+    {
+      "id": "metre:Overlap 250 mm",
+      "name": "Overlap 250 mm",
+      "unit": "metre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 0.25,
+      "measured_intersection_volume_m3": 0.24999999999999997,
+      "expected_minimum_translation_mm": 250.0,
+      "minimum_translation_mm": 250.0,
+      "expected_threshold_status": "exceeds_threshold",
+      "measured_threshold_status": "exceeds_threshold",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Two unit boxes overlap 0.25 m along X and 1 m along Y/Z; coplanar faces must not hide the intersection."
+    },
+    {
+      "id": "metre:Separated 100 mm",
+      "name": "Separated 100 mm",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "measured_intersection_volume_m3": 0.0,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Unit boxes are separated by 0.1 m along X."
+    },
+    {
+      "id": "metre:Touching",
+      "name": "Touching",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "measured_intersection_volume_m3": 0.0,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Shared face only; no positive-volume intersection."
+    },
+    {
+      "id": "metre:Below threshold 1 mm",
+      "name": "Below threshold 1 mm",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.001,
+      "measured_intersection_volume_m3": 0.001000000000000024,
+      "expected_minimum_translation_mm": 1.0,
+      "minimum_translation_mm": 1.0000000000000009,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "1 mm overlap is below the application screening threshold."
+    },
+    {
+      "id": "metre:Boundary 2 mm",
+      "name": "Boundary 2 mm",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.002,
+      "measured_intersection_volume_m3": 0.001999999999999979,
+      "expected_minimum_translation_mm": 2.0,
+      "minimum_translation_mm": 2.0000000000000018,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Exactly 2 mm is excluded by the explicit strict-greater-than policy."
+    },
+    {
+      "id": "metre:Above threshold 3 mm",
+      "name": "Above threshold 3 mm",
+      "unit": "metre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 0.003,
+      "measured_intersection_volume_m3": 0.0030000000000000027,
+      "expected_minimum_translation_mm": 3.0,
+      "minimum_translation_mm": 3.0000000000000027,
+      "expected_threshold_status": "exceeds_threshold",
+      "measured_threshold_status": "exceeds_threshold",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "3 mm overlap exceeds the threshold; faces align along Y/Z."
+    },
+    {
+      "id": "metre:Contained box",
+      "name": "Contained box",
+      "unit": "metre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 0.125,
+      "measured_intersection_volume_m3": 0.125,
+      "expected_minimum_translation_mm": 750.0,
+      "minimum_translation_mm": 750.0,
+      "expected_threshold_status": "exceeds_threshold",
+      "measured_threshold_status": "exceeds_threshold",
+      "original_kernel_candidate": true,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "A 0.5 m cube is wholly inside a unit cube, 0.25 m from each host face."
+    },
+    {
+      "id": "metre:Through opening",
+      "name": "Through opening",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "measured_intersection_volume_m3": 0.0,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "The duct passes through the explicitly subtracted opening with 0.1 m clearance on X/Z."
+    },
+    {
+      "id": "metre:Bounds overlap only",
+      "name": "Bounds overlap only",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "measured_intersection_volume_m3": 0.0,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "The duct sits between two disjoint wall solids. Overlapping combined bounds do not imply contact."
+    },
+    {
+      "id": "metre:Rotated overlap 250 mm",
+      "name": "Rotated overlap 250 mm",
+      "unit": "metre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 0.25,
+      "measured_intersection_volume_m3": 0.24999999999999442,
+      "expected_minimum_translation_mm": 250.0,
+      "minimum_translation_mm": 250.00000000000117,
+      "expected_threshold_status": "exceeds_threshold",
+      "measured_threshold_status": "exceeds_threshold",
+      "original_kernel_candidate": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Both boxes and their offset are rotated 45 degrees; overlap remains 0.25 m\u00b3 and minimum translation 250 mm."
+    },
+    {
+      "id": "metre:Large-coordinate overlap 3 mm",
+      "name": "Large-coordinate overlap 3 mm",
+      "unit": "metre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 0.003,
+      "measured_intersection_volume_m3": 0.0030000000260770087,
+      "expected_minimum_translation_mm": 3.0,
+      "minimum_translation_mm": 3.000000026077032,
+      "expected_threshold_status": "exceeds_threshold",
+      "measured_threshold_status": "exceeds_threshold",
+      "original_kernel_candidate": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Boxes at million-metre world coordinates overlap 3 mm; shared local calculation avoids float32 loss."
+    },
+    {
+      "id": "metre:Identical boxes",
+      "name": "Identical boxes",
+      "unit": "metre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 1.0,
+      "measured_intersection_volume_m3": 1.0,
+      "expected_minimum_translation_mm": 1000.0,
+      "minimum_translation_mm": 1000.0,
+      "expected_threshold_status": "exceeds_threshold",
+      "measured_threshold_status": "exceeds_threshold",
+      "original_kernel_candidate": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Identical unit cubes intersect by 1 m\u00b3 and require 1000 mm translation to boundary contact."
+    },
+    {
+      "id": "metre:Non-convex intersection depth unknown",
+      "name": "Non-convex intersection depth unknown",
+      "unit": "metre",
+      "expected_candidate": null,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.004,
+      "measured_intersection_volume_m3": 0.004000000000000002,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "not_evaluated",
+      "measured_threshold_status": "not_evaluated",
+      "original_kernel_candidate": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "A duct overlaps one of two disconnected wall solids by 0.004 m\u00b3; convex threshold depth must remain Not evaluated."
+    },
+    {
+      "id": "metre:Edge touching",
+      "name": "Edge touching",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "measured_intersection_volume_m3": 0.0,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Shared edge only; no positive-volume intersection."
+    },
+    {
+      "id": "metre:Vertex touching",
+      "name": "Vertex touching",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "measured_intersection_volume_m3": 0.0,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Shared vertex only; no positive-volume intersection."
+    },
+    {
+      "id": "millimetre:Overlap 250 mm",
+      "name": "Overlap 250 mm",
+      "unit": "millimetre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 0.25,
+      "measured_intersection_volume_m3": 0.24999999999999997,
+      "expected_minimum_translation_mm": 250.0,
+      "minimum_translation_mm": 250.0,
+      "expected_threshold_status": "exceeds_threshold",
+      "measured_threshold_status": "exceeds_threshold",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Two unit boxes overlap 0.25 m along X and 1 m along Y/Z; coplanar faces must not hide the intersection."
+    },
+    {
+      "id": "millimetre:Separated 100 mm",
+      "name": "Separated 100 mm",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "measured_intersection_volume_m3": 0.0,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Unit boxes are separated by 0.1 m along X."
+    },
+    {
+      "id": "millimetre:Touching",
+      "name": "Touching",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "measured_intersection_volume_m3": 0.0,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Shared face only; no positive-volume intersection."
+    },
+    {
+      "id": "millimetre:Below threshold 1 mm",
+      "name": "Below threshold 1 mm",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.001,
+      "measured_intersection_volume_m3": 0.001000000000000024,
+      "expected_minimum_translation_mm": 1.0,
+      "minimum_translation_mm": 1.0000000000000009,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "1 mm overlap is below the application screening threshold."
+    },
+    {
+      "id": "millimetre:Boundary 2 mm",
+      "name": "Boundary 2 mm",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.002,
+      "measured_intersection_volume_m3": 0.001999999999999979,
+      "expected_minimum_translation_mm": 2.0,
+      "minimum_translation_mm": 2.0000000000000018,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Exactly 2 mm is excluded by the explicit strict-greater-than policy."
+    },
+    {
+      "id": "millimetre:Above threshold 3 mm",
+      "name": "Above threshold 3 mm",
+      "unit": "millimetre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 0.003,
+      "measured_intersection_volume_m3": 0.0030000000000000027,
+      "expected_minimum_translation_mm": 3.0,
+      "minimum_translation_mm": 3.0000000000000027,
+      "expected_threshold_status": "exceeds_threshold",
+      "measured_threshold_status": "exceeds_threshold",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "3 mm overlap exceeds the threshold; faces align along Y/Z."
+    },
+    {
+      "id": "millimetre:Contained box",
+      "name": "Contained box",
+      "unit": "millimetre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 0.125,
+      "measured_intersection_volume_m3": 0.125,
+      "expected_minimum_translation_mm": 750.0,
+      "minimum_translation_mm": 750.0,
+      "expected_threshold_status": "exceeds_threshold",
+      "measured_threshold_status": "exceeds_threshold",
+      "original_kernel_candidate": true,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "A 0.5 m cube is wholly inside a unit cube, 0.25 m from each host face."
+    },
+    {
+      "id": "millimetre:Through opening",
+      "name": "Through opening",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "measured_intersection_volume_m3": 0.0,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "The duct passes through the explicitly subtracted opening with 0.1 m clearance on X/Z."
+    },
+    {
+      "id": "millimetre:Bounds overlap only",
+      "name": "Bounds overlap only",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "measured_intersection_volume_m3": 0.0,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": false,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "The duct sits between two disjoint wall solids. Overlapping combined bounds do not imply contact."
+    },
+    {
+      "id": "millimetre:Rotated overlap 250 mm",
+      "name": "Rotated overlap 250 mm",
+      "unit": "millimetre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 0.25,
+      "measured_intersection_volume_m3": 0.24999999999999442,
+      "expected_minimum_translation_mm": 250.0,
+      "minimum_translation_mm": 250.00000000000117,
+      "expected_threshold_status": "exceeds_threshold",
+      "measured_threshold_status": "exceeds_threshold",
+      "original_kernel_candidate": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Both boxes and their offset are rotated 45 degrees; overlap remains 0.25 m\u00b3 and minimum translation 250 mm."
+    },
+    {
+      "id": "millimetre:Large-coordinate overlap 3 mm",
+      "name": "Large-coordinate overlap 3 mm",
+      "unit": "millimetre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 0.003,
+      "measured_intersection_volume_m3": 0.0030000000260770087,
+      "expected_minimum_translation_mm": 3.0,
+      "minimum_translation_mm": 3.000000026077032,
+      "expected_threshold_status": "exceeds_threshold",
+      "measured_threshold_status": "exceeds_threshold",
+      "original_kernel_candidate": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Boxes at million-metre world coordinates overlap 3 mm; shared local calculation avoids float32 loss."
+    },
+    {
+      "id": "millimetre:Identical boxes",
+      "name": "Identical boxes",
+      "unit": "millimetre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 1.0,
+      "measured_intersection_volume_m3": 1.0,
+      "expected_minimum_translation_mm": 1000.0,
+      "minimum_translation_mm": 1000.0,
+      "expected_threshold_status": "exceeds_threshold",
+      "measured_threshold_status": "exceeds_threshold",
+      "original_kernel_candidate": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Identical unit cubes intersect by 1 m\u00b3 and require 1000 mm translation to boundary contact."
+    },
+    {
+      "id": "millimetre:Non-convex intersection depth unknown",
+      "name": "Non-convex intersection depth unknown",
+      "unit": "millimetre",
+      "expected_candidate": null,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.004,
+      "measured_intersection_volume_m3": 0.004000000000000002,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "not_evaluated",
+      "measured_threshold_status": "not_evaluated",
+      "original_kernel_candidate": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "A duct overlaps one of two disconnected wall solids by 0.004 m\u00b3; convex threshold depth must remain Not evaluated."
+    },
+    {
+      "id": "millimetre:Edge touching",
+      "name": "Edge touching",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "measured_intersection_volume_m3": 0.0,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Shared edge only; no positive-volume intersection."
+    },
+    {
+      "id": "millimetre:Vertex touching",
+      "name": "Vertex touching",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "measured_intersection_volume_m3": 0.0,
+      "expected_minimum_translation_mm": null,
+      "minimum_translation_mm": null,
+      "expected_threshold_status": "no_candidate",
+      "measured_threshold_status": "no_candidate",
+      "original_kernel_candidate": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Shared vertex only; no positive-volume intersection."
+    }
+  ],
+  "fixtures": [
+    {
+      "filename": "hard_clash_matrix.ifc",
+      "source_sha256": "4b9d52a71f6baaea9f20d3dd0b26ae91cb02949774f50b9f32651f71c81d58ea",
+      "probe": {
+        "stage": 3,
+        "app_version": "0.7.16",
+        "engine": "ifcopenshell+manifold3d",
+        "engine_version": "0.8.5",
+        "solid_engine_version": "3.5.1",
+        "schema": "IFC4",
+        "generated_at": "2026-10-10T08:03:11.883279+00:00",
+        "scope": "MEP versus structure",
+        "selected_element_ids": [
+          20,
+          32,
+          44,
+          56,
+          68,
+          80,
+          92,
+          104,
+          116,
+          128,
+          140,
+          152,
+          164,
+          176,
+          188,
+          200,
+          231,
+          243,
+          256,
+          269,
+          281,
+          293,
+          305,
+          317,
+          335,
+          347,
+          359,
+          371,
+          383,
+          395
+        ],
+        "source_scope": "whole eligible model",
+        "tolerance_mm": 2.0,
+        "threshold_metric": "convex minimum translation to boundary contact",
+        "numeric_slack_mm": 1.0000000000000002e-06,
+        "volume_epsilon_m3": 1e-15,
+        "settings": {
+          "use_world_coords": true,
+          "context_identifiers": [
+            "Body"
+          ],
+          "disable_opening_subtractions": false,
+          "mesh_precision": "float64",
+          "mesh_repair": false
+        },
+        "extraction_complete_for_selected_scope": true,
+        "complete_for_selected_scope": false,
+        "detection_completeness_status": "selected tessellated-body scope only; not project certification",
+        "scope_status": "evaluated",
+        "summary": {
+          "eligible_elements": 30,
+          "measured_elements": 30,
+          "mep_elements": 15,
+          "structural_elements": 15,
+          "candidate_pairs": 6,
+          "skipped_elements": 0,
+          "unresolved_collisions": 1,
+          "triangles": 404,
+          "potential_pairs": 225,
+          "broad_phase_pairs": 14,
+          "broad_phase_rejected": 211
+        },
+        "issues": [
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "#32 versus #20: solid intersection 0.25 m\u00b3; convex minimum translation 250.000 mm exceeds 2 mm. Review coordination intent.",
+            "entity_id": 32,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "2WMS4JeM9OKuToZ2fY2TpA",
+            "name": "Overlap 250 mm",
+            "related_entity_id": 20,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "0FNqdogYbTxh$uANqxL$oh",
+            "selection_ids": [
+              32,
+              20
+            ],
+            "minimum_translation_mm": 250.0,
+            "intersection_volume_m3": 0.24999999999999997,
+            "tolerance_mm": 2.0,
+            "measurement": {
+              "element_ids": [
+                32,
+                20
+              ],
+              "name": "Overlap 250 mm",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 0.24999999999999997,
+              "intersection_bounds_metres": [
+                [
+                  0.75,
+                  0.0,
+                  0.0
+                ],
+                [
+                  1.0,
+                  1.0,
+                  1.0
+                ]
+              ],
+              "minimum_translation_mm": 250.0,
+              "depth_status": "evaluated_convex_sat",
+              "translation_vector_metres": [
+                0.25,
+                0.0,
+                0.0
+              ],
+              "threshold_status": "exceeds_threshold"
+            },
+            "review_status": "unresolved",
+            "detection_basis": "Manifold solid Boolean plus convex-polyhedron SAT; AABB used only for broad phase"
+          },
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "#152 versus #140: solid intersection 0.003 m\u00b3; convex minimum translation 3.000 mm exceeds 2 mm. Review coordination intent.",
+            "entity_id": 152,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "2wDm6IM09UY8ttsyb_eX30",
+            "name": "Above threshold 3 mm",
+            "related_entity_id": 140,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "32fTfqiijT79zgnjCLgNYC",
+            "selection_ids": [
+              152,
+              140
+            ],
+            "minimum_translation_mm": 3.0000000000000027,
+            "intersection_volume_m3": 0.0030000000000000027,
+            "tolerance_mm": 2.0,
+            "measurement": {
+              "element_ids": [
+                152,
+                140
+              ],
+              "name": "Above threshold 3 mm",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 0.0030000000000000027,
+              "intersection_bounds_metres": [
+                [
+                  0.997,
+                  50.0,
+                  0.0
+                ],
+                [
+                  1.0,
+                  51.0,
+                  1.0
+                ]
+              ],
+              "minimum_translation_mm": 3.0000000000000027,
+              "depth_status": "evaluated_convex_sat",
+              "translation_vector_metres": [
+                0.0030000000000000027,
+                0.0,
+                0.0
+              ],
+              "threshold_status": "exceeds_threshold"
+            },
+            "review_status": "unresolved",
+            "detection_basis": "Manifold solid Boolean plus convex-polyhedron SAT; AABB used only for broad phase"
+          },
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "#176 versus #164: solid intersection 0.125 m\u00b3; convex minimum translation 750.000 mm exceeds 2 mm. Review coordination intent.",
+            "entity_id": 176,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "3oF9qHPGXPDx8rIMSRuVcO",
+            "name": "Contained box",
+            "related_entity_id": 164,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "01PqjsbiXVdwSeJowfYW0_",
+            "selection_ids": [
+              176,
+              164
+            ],
+            "minimum_translation_mm": 750.0,
+            "intersection_volume_m3": 0.125,
+            "tolerance_mm": 2.0,
+            "measurement": {
+              "element_ids": [
+                176,
+                164
+              ],
+              "name": "Contained box",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 0.125,
+              "intersection_bounds_metres": [
+                [
+                  0.25,
+                  60.25,
+                  0.25
+                ],
+                [
+                  0.75,
+                  60.75,
+                  0.75
+                ]
+              ],
+              "minimum_translation_mm": 750.0,
+              "depth_status": "evaluated_convex_sat",
+              "translation_vector_metres": [
+                0.0,
+                -0.75,
+                0.0
+              ],
+              "threshold_status": "exceeds_threshold"
+            },
+            "review_status": "unresolved",
+            "detection_basis": "Manifold solid Boolean plus convex-polyhedron SAT; AABB used only for broad phase"
+          },
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "#269 versus #256: solid intersection 0.25 m\u00b3; convex minimum translation 250.000 mm exceeds 2 mm. Review coordination intent.",
+            "entity_id": 269,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "1ONhgV12XLbg7za6k3vYkr",
+            "name": "Rotated overlap 250 mm",
+            "related_entity_id": 256,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "3rkw7E_FDJV86jgVJ2bFxh",
+            "selection_ids": [
+              269,
+              256
+            ],
+            "minimum_translation_mm": 250.00000000000117,
+            "intersection_volume_m3": 0.24999999999999442,
+            "tolerance_mm": 2.0,
+            "measurement": {
+              "element_ids": [
+                269,
+                256
+              ],
+              "name": "Rotated overlap 250 mm",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 0.24999999999999442,
+              "intersection_bounds_metres": [
+                [
+                  -0.17677669529663143,
+                  90.53033008588991,
+                  0.0
+                ],
+                [
+                  0.7071067811865476,
+                  91.41421356237309,
+                  1.0
+                ]
+              ],
+              "minimum_translation_mm": 250.00000000000117,
+              "depth_status": "evaluated_convex_sat",
+              "translation_vector_metres": [
+                0.17677669529663664,
+                0.17677669529663878,
+                0.0
+              ],
+              "threshold_status": "exceeds_threshold"
+            },
+            "review_status": "unresolved",
+            "detection_basis": "Manifold solid Boolean plus convex-polyhedron SAT; AABB used only for broad phase"
+          },
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "#293 versus #281: solid intersection 0.003 m\u00b3; convex minimum translation 3.000 mm exceeds 2 mm. Review coordination intent.",
+            "entity_id": 293,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "3W2MAZebTLofCTjE67E1rY",
+            "name": "Large-coordinate overlap 3 mm",
+            "related_entity_id": 281,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "0GJ2FR5WTKLwb0$pM025xv",
+            "selection_ids": [
+              293,
+              281
+            ],
+            "minimum_translation_mm": 3.000000026077032,
+            "intersection_volume_m3": 0.0030000000260770087,
+            "tolerance_mm": 2.0,
+            "measurement": {
+              "element_ids": [
+                293,
+                281
+              ],
+              "name": "Large-coordinate overlap 3 mm",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 0.0030000000260770087,
+              "intersection_bounds_metres": [
+                [
+                  1000000.997,
+                  -1999900.0,
+                  1000.0
+                ],
+                [
+                  1000001.0,
+                  -1999899.0,
+                  1001.0
+                ]
+              ],
+              "minimum_translation_mm": 3.000000026077032,
+              "depth_status": "evaluated_convex_sat",
+              "translation_vector_metres": [
+                0.003000000026077032,
+                0.0,
+                0.0
+              ],
+              "threshold_status": "exceeds_threshold"
+            },
+            "review_status": "unresolved",
+            "detection_basis": "Manifold solid Boolean plus convex-polyhedron SAT; AABB used only for broad phase"
+          },
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "#317 versus #305: solid intersection 1 m\u00b3; convex minimum translation 1000.000 mm exceeds 2 mm. Review coordination intent.",
+            "entity_id": 317,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "18BUT1u1rN58xiec$k9W6e",
+            "name": "Identical boxes",
+            "related_entity_id": 305,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "01lxKaRSvQhADx07tec8_J",
+            "selection_ids": [
+              317,
+              305
+            ],
+            "minimum_translation_mm": 1000.0,
+            "intersection_volume_m3": 1.0,
+            "tolerance_mm": 2.0,
+            "measurement": {
+              "element_ids": [
+                317,
+                305
+              ],
+              "name": "Identical boxes",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 1.0,
+              "intersection_bounds_metres": [
+                [
+                  0.0,
+                  110.0,
+                  0.0
+                ],
+                [
+                  1.0,
+                  111.0,
+                  1.0
+                ]
+              ],
+              "minimum_translation_mm": 1000.0,
+              "depth_status": "evaluated_convex_sat",
+              "translation_vector_metres": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "threshold_status": "exceeds_threshold"
+            },
+            "review_status": "unresolved",
+            "detection_basis": "Manifold solid Boolean plus convex-polyhedron SAT; AABB used only for broad phase"
+          },
+          {
+            "rule_id": "hard_clash_depth_unresolved",
+            "severity": "info",
+            "title": "Intersection needs depth review",
+            "message": "#347 versus #335: positive volume intersection. Configured 2 mm threshold is Not evaluated; do not classify the pair as clear.",
+            "entity_id": 347,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "3LSDrhtyrPmvzvLwMVMOsC",
+            "name": "Non-convex intersection depth unknown",
+            "related_entity_id": 335,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "1YvrXQHCnKBwWA5Lfqkqfp",
+            "selection_ids": [
+              347,
+              335
+            ],
+            "review_status": "unresolved",
+            "measurement": {
+              "element_ids": [
+                347,
+                335
+              ],
+              "name": "Non-convex intersection depth unknown",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 0.004000000000000002,
+              "intersection_bounds_metres": [
+                [
+                  0.1,
+                  120.4,
+                  0.4
+                ],
+                [
+                  0.2,
+                  120.60000000000001,
+                  0.6000000000000001
+                ]
+              ],
+              "minimum_translation_mm": null,
+              "depth_status": "not_evaluated",
+              "threshold_status": "not_evaluated"
+            }
+          }
+        ],
+        "skipped_elements": [],
+        "unresolved_collisions": [
+          {
+            "element_ids": [
+              347,
+              335
+            ],
+            "name": "Non-convex intersection depth unknown",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.004000000000000002,
+            "intersection_bounds_metres": [
+              [
+                0.1,
+                120.4,
+                0.4
+              ],
+              [
+                0.2,
+                120.60000000000001,
+                0.6000000000000001
+              ]
+            ],
+            "minimum_translation_mm": null,
+            "depth_status": "not_evaluated",
+            "threshold_status": "not_evaluated"
+          }
+        ],
+        "pair_measurements": [
+          {
+            "element_ids": [
+              32,
+              20
+            ],
+            "name": "Overlap 250 mm",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.24999999999999997,
+            "intersection_bounds_metres": [
+              [
+                0.75,
+                0.0,
+                0.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ]
+            ],
+            "minimum_translation_mm": 250.0,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.25,
+              0.0,
+              0.0
+            ],
+            "threshold_status": "exceeds_threshold"
+          },
+          {
+            "element_ids": [
+              80,
+              68
+            ],
+            "name": "Touching",
+            "intersection_status": "no_positive_volume_intersection",
+            "intersection_volume_m3": 0.0,
+            "minimum_translation_mm": null,
+            "depth_status": "not_applicable",
+            "threshold_status": "not_applicable"
+          },
+          {
+            "element_ids": [
+              104,
+              92
+            ],
+            "name": "Below threshold 1 mm",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.001000000000000024,
+            "intersection_bounds_metres": [
+              [
+                0.999,
+                30.0,
+                0.0
+              ],
+              [
+                1.0,
+                31.0,
+                1.0
+              ]
+            ],
+            "minimum_translation_mm": 1.0000000000000009,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.0010000000000000009,
+              0.0,
+              0.0
+            ],
+            "threshold_status": "below_or_at_threshold"
+          },
+          {
+            "element_ids": [
+              128,
+              116
+            ],
+            "name": "Boundary 2 mm",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.001999999999999979,
+            "intersection_bounds_metres": [
+              [
+                0.998,
+                40.0,
+                0.0
+              ],
+              [
+                1.0,
+                41.0,
+                1.0
+              ]
+            ],
+            "minimum_translation_mm": 2.0000000000000018,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.0020000000000000018,
+              0.0,
+              0.0
+            ],
+            "threshold_status": "below_or_at_threshold"
+          },
+          {
+            "element_ids": [
+              152,
+              140
+            ],
+            "name": "Above threshold 3 mm",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.0030000000000000027,
+            "intersection_bounds_metres": [
+              [
+                0.997,
+                50.0,
+                0.0
+              ],
+              [
+                1.0,
+                51.0,
+                1.0
+              ]
+            ],
+            "minimum_translation_mm": 3.0000000000000027,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.0030000000000000027,
+              0.0,
+              0.0
+            ],
+            "threshold_status": "exceeds_threshold"
+          },
+          {
+            "element_ids": [
+              176,
+              164
+            ],
+            "name": "Contained box",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.125,
+            "intersection_bounds_metres": [
+              [
+                0.25,
+                60.25,
+                0.25
+              ],
+              [
+                0.75,
+                60.75,
+                0.75
+              ]
+            ],
+            "minimum_translation_mm": 750.0,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.0,
+              -0.75,
+              0.0
+            ],
+            "threshold_status": "exceeds_threshold"
+          },
+          {
+            "element_ids": [
+              200,
+              188
+            ],
+            "name": "Through opening",
+            "intersection_status": "no_positive_volume_intersection",
+            "intersection_volume_m3": 0.0,
+            "minimum_translation_mm": null,
+            "depth_status": "not_applicable",
+            "threshold_status": "not_applicable"
+          },
+          {
+            "element_ids": [
+              243,
+              231
+            ],
+            "name": "Bounds overlap only",
+            "intersection_status": "no_positive_volume_intersection",
+            "intersection_volume_m3": 0.0,
+            "minimum_translation_mm": null,
+            "depth_status": "not_applicable",
+            "threshold_status": "not_applicable"
+          },
+          {
+            "element_ids": [
+              269,
+              256
+            ],
+            "name": "Rotated overlap 250 mm",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.24999999999999442,
+            "intersection_bounds_metres": [
+              [
+                -0.17677669529663143,
+                90.53033008588991,
+                0.0
+              ],
+              [
+                0.7071067811865476,
+                91.41421356237309,
+                1.0
+              ]
+            ],
+            "minimum_translation_mm": 250.00000000000117,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.17677669529663664,
+              0.17677669529663878,
+              0.0
+            ],
+            "threshold_status": "exceeds_threshold"
+          },
+          {
+            "element_ids": [
+              293,
+              281
+            ],
+            "name": "Large-coordinate overlap 3 mm",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.0030000000260770087,
+            "intersection_bounds_metres": [
+              [
+                1000000.997,
+                -1999900.0,
+                1000.0
+              ],
+              [
+                1000001.0,
+                -1999899.0,
+                1001.0
+              ]
+            ],
+            "minimum_translation_mm": 3.000000026077032,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.003000000026077032,
+              0.0,
+              0.0
+            ],
+            "threshold_status": "exceeds_threshold"
+          },
+          {
+            "element_ids": [
+              317,
+              305
+            ],
+            "name": "Identical boxes",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 1.0,
+            "intersection_bounds_metres": [
+              [
+                0.0,
+                110.0,
+                0.0
+              ],
+              [
+                1.0,
+                111.0,
+                1.0
+              ]
+            ],
+            "minimum_translation_mm": 1000.0,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.0,
+              -1.0,
+              0.0
+            ],
+            "threshold_status": "exceeds_threshold"
+          },
+          {
+            "element_ids": [
+              347,
+              335
+            ],
+            "name": "Non-convex intersection depth unknown",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.004000000000000002,
+            "intersection_bounds_metres": [
+              [
+                0.1,
+                120.4,
+                0.4
+              ],
+              [
+                0.2,
+                120.60000000000001,
+                0.6000000000000001
+              ]
+            ],
+            "minimum_translation_mm": null,
+            "depth_status": "not_evaluated",
+            "threshold_status": "not_evaluated"
+          },
+          {
+            "element_ids": [
+              371,
+              359
+            ],
+            "name": "Edge touching",
+            "intersection_status": "no_positive_volume_intersection",
+            "intersection_volume_m3": 0.0,
+            "minimum_translation_mm": null,
+            "depth_status": "not_applicable",
+            "threshold_status": "not_applicable"
+          },
+          {
+            "element_ids": [
+              395,
+              383
+            ],
+            "name": "Vertex touching",
+            "intersection_status": "no_positive_volume_intersection",
+            "intersection_volume_m3": 0.0,
+            "minimum_translation_mm": null,
+            "depth_status": "not_applicable",
+            "threshold_status": "not_applicable"
+          }
+        ],
+        "duration_ms": 530.6,
+        "rule_source": "Manifold mesh Boolean; convex separating-axis theorem. Application threshold, not an industry acceptance limit.",
+        "claim_boundary": "Bounded MEP/structure pilot on extracted tessellated bodies. Convex minimum translation differs from old kernel protrusion/pierce distance; containment values may change. Non-convex or over-limit positive intersections have depth Not evaluated and remain unresolved. Missing/rejected geometry prevents complete scope status. No clearance, self-clash, project approval, exact curved-CAD equivalence or author-intent verdict. Zero candidates does not prove a clash-free project.",
+        "source_sha256": "4b9d52a71f6baaea9f20d3dd0b26ae91cb02949774f50b9f32651f71c81d58ea"
+      },
+      "original_kernel_probe": {
+        "stage": 3,
+        "app_version": "0.7.16",
+        "engine": "ifcopenshell",
+        "engine_version": "0.8.5",
+        "schema": "IFC4",
+        "generated_at": "2026-10-10T08:03:12.032383+00:00",
+        "scope": "Selected IDs; MEP versus structure only",
+        "selected_element_ids": [
+          20,
+          32,
+          44,
+          56,
+          68,
+          80,
+          92,
+          104,
+          116,
+          128,
+          140,
+          152,
+          164,
+          176,
+          188,
+          200,
+          231,
+          243
+        ],
+        "tolerance_mm": 2.0,
+        "numeric_slack_mm": 1e-06,
+        "settings": {
+          "use_world_coords": true,
+          "disable_opening_subtractions": false,
+          "check_all": true
+        },
+        "extraction_complete_for_selected_scope": true,
+        "complete_for_selected_scope": false,
+        "detection_completeness_status": "not_certified_reference_gate_required",
+        "scope_status": "evaluated",
+        "summary": {
+          "eligible_elements": 18,
+          "measured_elements": 18,
+          "mep_elements": 9,
+          "structural_elements": 9,
+          "candidate_pairs": 1,
+          "skipped_elements": 0,
+          "unresolved_collisions": 0,
+          "triangles": 248
+        },
+        "issues": [
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "IfcDuctSegment #176 versus IfcWall #164: kernel protrusion distance 250.000 mm exceeds the 2 mm screening threshold. Review coordination intent.",
+            "entity_id": 176,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "3oF9qHPGXPDx8rIMSRuVcO",
+            "name": "Contained box",
+            "related_entity_id": 164,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "01PqjsbiXVdwSeJowfYW0_",
+            "selection_ids": [
+              176,
+              164
+            ],
+            "distance_mm": 250.0,
+            "tolerance_mm": 2.0,
+            "clash_type": "protrusion",
+            "witness_points_metres": [
+              [
+                0.25,
+                60.75,
+                0.75
+              ],
+              [
+                0.25,
+                61.0,
+                0.75
+              ]
+            ],
+            "review_status": "unresolved",
+            "detection_basis": "IfcOpenShell intersection of manifold tessellated bodies; not AABB overlap"
+          }
+        ],
+        "skipped_elements": [],
+        "unresolved_collisions": [],
+        "duration_ms": 135.7,
+        "rule_source": "IfcOpenShell clash_intersection_many; application threshold, not an industry acceptance limit.",
+        "claim_boundary": "Diagnostic kernel probe, not a released model clash verdict. Known aligned-overlap false negatives must be resolved before Stage 3 is enabled. Kernel protrusion/pierce distance is not overlap volume or a universal minimum-translation distance. IFC opening subtractions are enabled. No clearance, self-clash, project approval or author intent verdict. Missing/non-manifold geometry and absent groups remain Not evaluated; zero candidates does not prove a clash-free project.",
+        "source_sha256": "4b9d52a71f6baaea9f20d3dd0b26ae91cb02949774f50b9f32651f71c81d58ea"
+      }
+    },
+    {
+      "filename": "hard_clash_matrix_millimetre.ifc",
+      "source_sha256": "4ba70cf19668925d7091130b91dfb7b9633c59bb72d048ccda902e2e8146215c",
+      "probe": {
+        "stage": 3,
+        "app_version": "0.7.16",
+        "engine": "ifcopenshell+manifold3d",
+        "engine_version": "0.8.5",
+        "solid_engine_version": "3.5.1",
+        "schema": "IFC4",
+        "generated_at": "2026-10-10T08:03:12.422425+00:00",
+        "scope": "MEP versus structure",
+        "selected_element_ids": [
+          20,
+          32,
+          44,
+          56,
+          68,
+          80,
+          92,
+          104,
+          116,
+          128,
+          140,
+          152,
+          164,
+          176,
+          188,
+          200,
+          231,
+          243,
+          256,
+          269,
+          281,
+          293,
+          305,
+          317,
+          335,
+          347,
+          359,
+          371,
+          383,
+          395
+        ],
+        "source_scope": "whole eligible model",
+        "tolerance_mm": 2.0,
+        "threshold_metric": "convex minimum translation to boundary contact",
+        "numeric_slack_mm": 1.0000000000000002e-06,
+        "volume_epsilon_m3": 1e-15,
+        "settings": {
+          "use_world_coords": true,
+          "context_identifiers": [
+            "Body"
+          ],
+          "disable_opening_subtractions": false,
+          "mesh_precision": "float64",
+          "mesh_repair": false
+        },
+        "extraction_complete_for_selected_scope": true,
+        "complete_for_selected_scope": false,
+        "detection_completeness_status": "selected tessellated-body scope only; not project certification",
+        "scope_status": "evaluated",
+        "summary": {
+          "eligible_elements": 30,
+          "measured_elements": 30,
+          "mep_elements": 15,
+          "structural_elements": 15,
+          "candidate_pairs": 6,
+          "skipped_elements": 0,
+          "unresolved_collisions": 1,
+          "triangles": 404,
+          "potential_pairs": 225,
+          "broad_phase_pairs": 14,
+          "broad_phase_rejected": 211
+        },
+        "issues": [
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "#32 versus #20: solid intersection 0.25 m\u00b3; convex minimum translation 250.000 mm exceeds 2 mm. Review coordination intent.",
+            "entity_id": 32,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "2WMS4JeM9OKuToZ2fY2TpA",
+            "name": "Overlap 250 mm",
+            "related_entity_id": 20,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "0FNqdogYbTxh$uANqxL$oh",
+            "selection_ids": [
+              32,
+              20
+            ],
+            "minimum_translation_mm": 250.0,
+            "intersection_volume_m3": 0.24999999999999997,
+            "tolerance_mm": 2.0,
+            "measurement": {
+              "element_ids": [
+                32,
+                20
+              ],
+              "name": "Overlap 250 mm",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 0.24999999999999997,
+              "intersection_bounds_metres": [
+                [
+                  0.75,
+                  0.0,
+                  0.0
+                ],
+                [
+                  1.0,
+                  1.0,
+                  1.0
+                ]
+              ],
+              "minimum_translation_mm": 250.0,
+              "depth_status": "evaluated_convex_sat",
+              "translation_vector_metres": [
+                0.25,
+                0.0,
+                0.0
+              ],
+              "threshold_status": "exceeds_threshold"
+            },
+            "review_status": "unresolved",
+            "detection_basis": "Manifold solid Boolean plus convex-polyhedron SAT; AABB used only for broad phase"
+          },
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "#152 versus #140: solid intersection 0.003 m\u00b3; convex minimum translation 3.000 mm exceeds 2 mm. Review coordination intent.",
+            "entity_id": 152,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "2wDm6IM09UY8ttsyb_eX30",
+            "name": "Above threshold 3 mm",
+            "related_entity_id": 140,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "32fTfqiijT79zgnjCLgNYC",
+            "selection_ids": [
+              152,
+              140
+            ],
+            "minimum_translation_mm": 3.0000000000000027,
+            "intersection_volume_m3": 0.0030000000000000027,
+            "tolerance_mm": 2.0,
+            "measurement": {
+              "element_ids": [
+                152,
+                140
+              ],
+              "name": "Above threshold 3 mm",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 0.0030000000000000027,
+              "intersection_bounds_metres": [
+                [
+                  0.997,
+                  50.0,
+                  0.0
+                ],
+                [
+                  1.0,
+                  51.0,
+                  1.0
+                ]
+              ],
+              "minimum_translation_mm": 3.0000000000000027,
+              "depth_status": "evaluated_convex_sat",
+              "translation_vector_metres": [
+                0.0030000000000000027,
+                0.0,
+                0.0
+              ],
+              "threshold_status": "exceeds_threshold"
+            },
+            "review_status": "unresolved",
+            "detection_basis": "Manifold solid Boolean plus convex-polyhedron SAT; AABB used only for broad phase"
+          },
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "#176 versus #164: solid intersection 0.125 m\u00b3; convex minimum translation 750.000 mm exceeds 2 mm. Review coordination intent.",
+            "entity_id": 176,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "3oF9qHPGXPDx8rIMSRuVcO",
+            "name": "Contained box",
+            "related_entity_id": 164,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "01PqjsbiXVdwSeJowfYW0_",
+            "selection_ids": [
+              176,
+              164
+            ],
+            "minimum_translation_mm": 750.0,
+            "intersection_volume_m3": 0.125,
+            "tolerance_mm": 2.0,
+            "measurement": {
+              "element_ids": [
+                176,
+                164
+              ],
+              "name": "Contained box",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 0.125,
+              "intersection_bounds_metres": [
+                [
+                  0.25,
+                  60.25,
+                  0.25
+                ],
+                [
+                  0.75,
+                  60.75,
+                  0.75
+                ]
+              ],
+              "minimum_translation_mm": 750.0,
+              "depth_status": "evaluated_convex_sat",
+              "translation_vector_metres": [
+                0.0,
+                -0.75,
+                0.0
+              ],
+              "threshold_status": "exceeds_threshold"
+            },
+            "review_status": "unresolved",
+            "detection_basis": "Manifold solid Boolean plus convex-polyhedron SAT; AABB used only for broad phase"
+          },
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "#269 versus #256: solid intersection 0.25 m\u00b3; convex minimum translation 250.000 mm exceeds 2 mm. Review coordination intent.",
+            "entity_id": 269,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "1ONhgV12XLbg7za6k3vYkr",
+            "name": "Rotated overlap 250 mm",
+            "related_entity_id": 256,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "3rkw7E_FDJV86jgVJ2bFxh",
+            "selection_ids": [
+              269,
+              256
+            ],
+            "minimum_translation_mm": 250.00000000000117,
+            "intersection_volume_m3": 0.24999999999999442,
+            "tolerance_mm": 2.0,
+            "measurement": {
+              "element_ids": [
+                269,
+                256
+              ],
+              "name": "Rotated overlap 250 mm",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 0.24999999999999442,
+              "intersection_bounds_metres": [
+                [
+                  -0.17677669529663143,
+                  90.53033008588991,
+                  0.0
+                ],
+                [
+                  0.7071067811865476,
+                  91.41421356237309,
+                  1.0
+                ]
+              ],
+              "minimum_translation_mm": 250.00000000000117,
+              "depth_status": "evaluated_convex_sat",
+              "translation_vector_metres": [
+                0.17677669529663664,
+                0.17677669529663878,
+                0.0
+              ],
+              "threshold_status": "exceeds_threshold"
+            },
+            "review_status": "unresolved",
+            "detection_basis": "Manifold solid Boolean plus convex-polyhedron SAT; AABB used only for broad phase"
+          },
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "#293 versus #281: solid intersection 0.003 m\u00b3; convex minimum translation 3.000 mm exceeds 2 mm. Review coordination intent.",
+            "entity_id": 293,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "3W2MAZebTLofCTjE67E1rY",
+            "name": "Large-coordinate overlap 3 mm",
+            "related_entity_id": 281,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "0GJ2FR5WTKLwb0$pM025xv",
+            "selection_ids": [
+              293,
+              281
+            ],
+            "minimum_translation_mm": 3.000000026077032,
+            "intersection_volume_m3": 0.0030000000260770087,
+            "tolerance_mm": 2.0,
+            "measurement": {
+              "element_ids": [
+                293,
+                281
+              ],
+              "name": "Large-coordinate overlap 3 mm",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 0.0030000000260770087,
+              "intersection_bounds_metres": [
+                [
+                  1000000.997,
+                  -1999900.0,
+                  1000.0
+                ],
+                [
+                  1000001.0,
+                  -1999899.0,
+                  1001.0
+                ]
+              ],
+              "minimum_translation_mm": 3.000000026077032,
+              "depth_status": "evaluated_convex_sat",
+              "translation_vector_metres": [
+                0.003000000026077032,
+                0.0,
+                0.0
+              ],
+              "threshold_status": "exceeds_threshold"
+            },
+            "review_status": "unresolved",
+            "detection_basis": "Manifold solid Boolean plus convex-polyhedron SAT; AABB used only for broad phase"
+          },
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "#317 versus #305: solid intersection 1 m\u00b3; convex minimum translation 1000.000 mm exceeds 2 mm. Review coordination intent.",
+            "entity_id": 317,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "18BUT1u1rN58xiec$k9W6e",
+            "name": "Identical boxes",
+            "related_entity_id": 305,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "01lxKaRSvQhADx07tec8_J",
+            "selection_ids": [
+              317,
+              305
+            ],
+            "minimum_translation_mm": 1000.0,
+            "intersection_volume_m3": 1.0,
+            "tolerance_mm": 2.0,
+            "measurement": {
+              "element_ids": [
+                317,
+                305
+              ],
+              "name": "Identical boxes",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 1.0,
+              "intersection_bounds_metres": [
+                [
+                  0.0,
+                  110.0,
+                  0.0
+                ],
+                [
+                  1.0,
+                  111.0,
+                  1.0
+                ]
+              ],
+              "minimum_translation_mm": 1000.0,
+              "depth_status": "evaluated_convex_sat",
+              "translation_vector_metres": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "threshold_status": "exceeds_threshold"
+            },
+            "review_status": "unresolved",
+            "detection_basis": "Manifold solid Boolean plus convex-polyhedron SAT; AABB used only for broad phase"
+          },
+          {
+            "rule_id": "hard_clash_depth_unresolved",
+            "severity": "info",
+            "title": "Intersection needs depth review",
+            "message": "#347 versus #335: positive volume intersection. Configured 2 mm threshold is Not evaluated; do not classify the pair as clear.",
+            "entity_id": 347,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "3LSDrhtyrPmvzvLwMVMOsC",
+            "name": "Non-convex intersection depth unknown",
+            "related_entity_id": 335,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "1YvrXQHCnKBwWA5Lfqkqfp",
+            "selection_ids": [
+              347,
+              335
+            ],
+            "review_status": "unresolved",
+            "measurement": {
+              "element_ids": [
+                347,
+                335
+              ],
+              "name": "Non-convex intersection depth unknown",
+              "intersection_status": "positive_volume_intersection",
+              "intersection_volume_m3": 0.004000000000000002,
+              "intersection_bounds_metres": [
+                [
+                  0.1,
+                  120.4,
+                  0.4
+                ],
+                [
+                  0.2,
+                  120.60000000000001,
+                  0.6000000000000001
+                ]
+              ],
+              "minimum_translation_mm": null,
+              "depth_status": "not_evaluated",
+              "threshold_status": "not_evaluated"
+            }
+          }
+        ],
+        "skipped_elements": [],
+        "unresolved_collisions": [
+          {
+            "element_ids": [
+              347,
+              335
+            ],
+            "name": "Non-convex intersection depth unknown",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.004000000000000002,
+            "intersection_bounds_metres": [
+              [
+                0.1,
+                120.4,
+                0.4
+              ],
+              [
+                0.2,
+                120.60000000000001,
+                0.6000000000000001
+              ]
+            ],
+            "minimum_translation_mm": null,
+            "depth_status": "not_evaluated",
+            "threshold_status": "not_evaluated"
+          }
+        ],
+        "pair_measurements": [
+          {
+            "element_ids": [
+              32,
+              20
+            ],
+            "name": "Overlap 250 mm",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.24999999999999997,
+            "intersection_bounds_metres": [
+              [
+                0.75,
+                0.0,
+                0.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ]
+            ],
+            "minimum_translation_mm": 250.0,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.25,
+              0.0,
+              0.0
+            ],
+            "threshold_status": "exceeds_threshold"
+          },
+          {
+            "element_ids": [
+              80,
+              68
+            ],
+            "name": "Touching",
+            "intersection_status": "no_positive_volume_intersection",
+            "intersection_volume_m3": 0.0,
+            "minimum_translation_mm": null,
+            "depth_status": "not_applicable",
+            "threshold_status": "not_applicable"
+          },
+          {
+            "element_ids": [
+              104,
+              92
+            ],
+            "name": "Below threshold 1 mm",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.001000000000000024,
+            "intersection_bounds_metres": [
+              [
+                0.999,
+                30.0,
+                0.0
+              ],
+              [
+                1.0,
+                31.0,
+                1.0
+              ]
+            ],
+            "minimum_translation_mm": 1.0000000000000009,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.0010000000000000009,
+              0.0,
+              0.0
+            ],
+            "threshold_status": "below_or_at_threshold"
+          },
+          {
+            "element_ids": [
+              128,
+              116
+            ],
+            "name": "Boundary 2 mm",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.001999999999999979,
+            "intersection_bounds_metres": [
+              [
+                0.998,
+                40.0,
+                0.0
+              ],
+              [
+                1.0,
+                41.0,
+                1.0
+              ]
+            ],
+            "minimum_translation_mm": 2.0000000000000018,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.0020000000000000018,
+              0.0,
+              0.0
+            ],
+            "threshold_status": "below_or_at_threshold"
+          },
+          {
+            "element_ids": [
+              152,
+              140
+            ],
+            "name": "Above threshold 3 mm",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.0030000000000000027,
+            "intersection_bounds_metres": [
+              [
+                0.997,
+                50.0,
+                0.0
+              ],
+              [
+                1.0,
+                51.0,
+                1.0
+              ]
+            ],
+            "minimum_translation_mm": 3.0000000000000027,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.0030000000000000027,
+              0.0,
+              0.0
+            ],
+            "threshold_status": "exceeds_threshold"
+          },
+          {
+            "element_ids": [
+              176,
+              164
+            ],
+            "name": "Contained box",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.125,
+            "intersection_bounds_metres": [
+              [
+                0.25,
+                60.25,
+                0.25
+              ],
+              [
+                0.75,
+                60.75,
+                0.75
+              ]
+            ],
+            "minimum_translation_mm": 750.0,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.0,
+              -0.75,
+              0.0
+            ],
+            "threshold_status": "exceeds_threshold"
+          },
+          {
+            "element_ids": [
+              200,
+              188
+            ],
+            "name": "Through opening",
+            "intersection_status": "no_positive_volume_intersection",
+            "intersection_volume_m3": 0.0,
+            "minimum_translation_mm": null,
+            "depth_status": "not_applicable",
+            "threshold_status": "not_applicable"
+          },
+          {
+            "element_ids": [
+              243,
+              231
+            ],
+            "name": "Bounds overlap only",
+            "intersection_status": "no_positive_volume_intersection",
+            "intersection_volume_m3": 0.0,
+            "minimum_translation_mm": null,
+            "depth_status": "not_applicable",
+            "threshold_status": "not_applicable"
+          },
+          {
+            "element_ids": [
+              269,
+              256
+            ],
+            "name": "Rotated overlap 250 mm",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.24999999999999442,
+            "intersection_bounds_metres": [
+              [
+                -0.17677669529663143,
+                90.53033008588991,
+                0.0
+              ],
+              [
+                0.7071067811865476,
+                91.41421356237309,
+                1.0
+              ]
+            ],
+            "minimum_translation_mm": 250.00000000000117,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.17677669529663664,
+              0.17677669529663878,
+              0.0
+            ],
+            "threshold_status": "exceeds_threshold"
+          },
+          {
+            "element_ids": [
+              293,
+              281
+            ],
+            "name": "Large-coordinate overlap 3 mm",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.0030000000260770087,
+            "intersection_bounds_metres": [
+              [
+                1000000.997,
+                -1999900.0,
+                1000.0
+              ],
+              [
+                1000001.0,
+                -1999899.0,
+                1001.0
+              ]
+            ],
+            "minimum_translation_mm": 3.000000026077032,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.003000000026077032,
+              0.0,
+              0.0
+            ],
+            "threshold_status": "exceeds_threshold"
+          },
+          {
+            "element_ids": [
+              317,
+              305
+            ],
+            "name": "Identical boxes",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 1.0,
+            "intersection_bounds_metres": [
+              [
+                0.0,
+                110.0,
+                0.0
+              ],
+              [
+                1.0,
+                111.0,
+                1.0
+              ]
+            ],
+            "minimum_translation_mm": 1000.0,
+            "depth_status": "evaluated_convex_sat",
+            "translation_vector_metres": [
+              0.0,
+              -1.0,
+              0.0
+            ],
+            "threshold_status": "exceeds_threshold"
+          },
+          {
+            "element_ids": [
+              347,
+              335
+            ],
+            "name": "Non-convex intersection depth unknown",
+            "intersection_status": "positive_volume_intersection",
+            "intersection_volume_m3": 0.004000000000000002,
+            "intersection_bounds_metres": [
+              [
+                0.1,
+                120.4,
+                0.4
+              ],
+              [
+                0.2,
+                120.60000000000001,
+                0.6000000000000001
+              ]
+            ],
+            "minimum_translation_mm": null,
+            "depth_status": "not_evaluated",
+            "threshold_status": "not_evaluated"
+          },
+          {
+            "element_ids": [
+              371,
+              359
+            ],
+            "name": "Edge touching",
+            "intersection_status": "no_positive_volume_intersection",
+            "intersection_volume_m3": 0.0,
+            "minimum_translation_mm": null,
+            "depth_status": "not_applicable",
+            "threshold_status": "not_applicable"
+          },
+          {
+            "element_ids": [
+              395,
+              383
+            ],
+            "name": "Vertex touching",
+            "intersection_status": "no_positive_volume_intersection",
+            "intersection_volume_m3": 0.0,
+            "minimum_translation_mm": null,
+            "depth_status": "not_applicable",
+            "threshold_status": "not_applicable"
+          }
+        ],
+        "duration_ms": 381.6,
+        "rule_source": "Manifold mesh Boolean; convex separating-axis theorem. Application threshold, not an industry acceptance limit.",
+        "claim_boundary": "Bounded MEP/structure pilot on extracted tessellated bodies. Convex minimum translation differs from old kernel protrusion/pierce distance; containment values may change. Non-convex or over-limit positive intersections have depth Not evaluated and remain unresolved. Missing/rejected geometry prevents complete scope status. No clearance, self-clash, project approval, exact curved-CAD equivalence or author-intent verdict. Zero candidates does not prove a clash-free project.",
+        "source_sha256": "4ba70cf19668925d7091130b91dfb7b9633c59bb72d048ccda902e2e8146215c"
+      },
+      "original_kernel_probe": {
+        "stage": 3,
+        "app_version": "0.7.16",
+        "engine": "ifcopenshell",
+        "engine_version": "0.8.5",
+        "schema": "IFC4",
+        "generated_at": "2026-10-10T08:03:12.638753+00:00",
+        "scope": "Selected IDs; MEP versus structure only",
+        "selected_element_ids": [
+          20,
+          32,
+          44,
+          56,
+          68,
+          80,
+          92,
+          104,
+          116,
+          128,
+          140,
+          152,
+          164,
+          176,
+          188,
+          200,
+          231,
+          243
+        ],
+        "tolerance_mm": 2.0,
+        "numeric_slack_mm": 1e-06,
+        "settings": {
+          "use_world_coords": true,
+          "disable_opening_subtractions": false,
+          "check_all": true
+        },
+        "extraction_complete_for_selected_scope": true,
+        "complete_for_selected_scope": false,
+        "detection_completeness_status": "not_certified_reference_gate_required",
+        "scope_status": "evaluated",
+        "summary": {
+          "eligible_elements": 18,
+          "measured_elements": 18,
+          "mep_elements": 9,
+          "structural_elements": 9,
+          "candidate_pairs": 1,
+          "skipped_elements": 0,
+          "unresolved_collisions": 0,
+          "triangles": 248
+        },
+        "issues": [
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "IfcDuctSegment #176 versus IfcWall #164: kernel protrusion distance 250.000 mm exceeds the 2 mm screening threshold. Review coordination intent.",
+            "entity_id": 176,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "3oF9qHPGXPDx8rIMSRuVcO",
+            "name": "Contained box",
+            "related_entity_id": 164,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "01PqjsbiXVdwSeJowfYW0_",
+            "selection_ids": [
+              176,
+              164
+            ],
+            "distance_mm": 250.0,
+            "tolerance_mm": 2.0,
+            "clash_type": "protrusion",
+            "witness_points_metres": [
+              [
+                0.25,
+                60.75,
+                0.75
+              ],
+              [
+                0.25,
+                61.0,
+                0.75
+              ]
+            ],
+            "review_status": "unresolved",
+            "detection_basis": "IfcOpenShell intersection of manifold tessellated bodies; not AABB overlap"
+          }
+        ],
+        "skipped_elements": [],
+        "unresolved_collisions": [],
+        "duration_ms": 191.7,
+        "rule_source": "IfcOpenShell clash_intersection_many; application threshold, not an industry acceptance limit.",
+        "claim_boundary": "Diagnostic kernel probe, not a released model clash verdict. Known aligned-overlap false negatives must be resolved before Stage 3 is enabled. Kernel protrusion/pierce distance is not overlap volume or a universal minimum-translation distance. IFC opening subtractions are enabled. No clearance, self-clash, project approval or author intent verdict. Missing/non-manifold geometry and absent groups remain Not evaluated; zero candidates does not prove a clash-free project.",
+        "source_sha256": "4ba70cf19668925d7091130b91dfb7b9633c59bb72d048ccda902e2e8146215c"
+      }
+    }
+  ],
+  "claim_boundary": "Synthetic reference validation enables only a bounded MEP/structure pilot. Positive intersection volume is measured by Manifold; threshold uses convex minimum translation, not the original kernel distance. Non-convex positive intersections retain depth Not evaluated. Passing controls does not prove accuracy on every IFC, project compliance or design intent.",
+  "sources": [
+    "scripts/generate_hard_clash_fixture.py",
+    "https://docs.ifcopenshell.org/ifcopenshell-python/geometry_tree.html",
+    "https://github.com/IfcOpenShell/IfcOpenShell/issues/4594",
+    "https://github.com/IfcOpenShell/IfcOpenShell/issues/6109"
+  ]
+}

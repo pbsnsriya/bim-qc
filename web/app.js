@@ -5,6 +5,9 @@ import { renderHardClashReference } from "./hard-clash-reference.js";
 const state = { result: null, selectedEntityId: null, viewerBaseStatus: "", baseIssues: [], idsValidation: null, geometryDiagnostics: null, geometryValidation: null, viewerDiagnostics: null, gpuValidation: null, ifcopenshellAvailable: false, activeGeometryJobId: null, duplicateReviews: {}, reviewStorageKey: null };
 state.source = null;
 state.hardClashReference = null;
+state.hardClashValidation = null;
+state.hardClashRunning = false;
+state.stage3SolidAvailable = false;
 const $ = (id) => document.getElementById(id);
 state.pairComparisons = new Map();
 state.openComparisons = new Set();
@@ -64,6 +67,7 @@ const dropzone = $("dropzone");
 const fileInput = $("fileInput");
 const ISSUE_RENDER_LIMIT = 250;
 const DUPLICATE_RULES = new Set(["exact_duplicate_candidate", "duplicate_opening_candidate", "near_duplicate_candidate"]);
+const CLASH_RULES = new Set(["hard_clash", "hard_clash_depth_unresolved"]);
 
 export function duplicateReviewKey(issue) {
   const ids = [issue.entity_id, issue.related_entity_id].filter((value) => value != null).map(Number).sort((a, b) => a - b);
@@ -103,6 +107,7 @@ async function runHardClashReference() {
   button.disabled = true;
   $("hardClashEvidenceButton").disabled = true;
   state.hardClashReference = null;
+  updateHardClashAvailability();
   const status = $("hardClashReferenceStatus");
   status.classList.remove("hidden");
   status.textContent = "Testing known intersections in two small reference IFCs…";
@@ -117,7 +122,56 @@ async function runHardClashReference() {
     status.textContent = `${error.message} Model clash checking remains blocked; no model verdict was generated.`;
   } finally {
     status.setAttribute("aria-busy", "false");
-    button.disabled = !state.ifcopenshellAvailable;
+    button.disabled = !state.stage3SolidAvailable;
+    updateHardClashAvailability();
+  }
+}
+
+function updateHardClashAvailability() {
+  const button=$("hardClashModelButton");
+  const referenceReady=state.hardClashReference?.passed && state.hardClashReference?.model_clash_checking_enabled;
+  const modelReady=state.source && duplicateStageAvailable(state.geometryDiagnostics);
+  button.disabled=state.hardClashRunning || !state.stage3SolidAvailable || !referenceReady || !modelReady;
+  button.textContent=state.hardClashRunning ? "Checking selected scope…" : !referenceReady ? "Validate reference cases first" : !modelReady ? "Complete extraction readiness first" : "Validate hard clashes (pilot)";
+}
+
+async function runHardClashes() {
+  if ($("hardClashModelButton").disabled) return;
+  const source=state.source;
+  const tolerance=Number($("hardClashTolerance").value);
+  const raw=$("hardClashIds").value.trim();
+  if (!$("hardClashTolerance").value.trim() || !Number.isFinite(tolerance) || tolerance<0 || tolerance>1000) throw new Error("Minimum-translation threshold must be between 0 and 1000 mm.");
+  const ids=raw ? raw.split(/[\s,]+/).map(value=>Number(value.replace(/^#/,""))) : null;
+  if (ids && ids.some(id=>!Number.isSafeInteger(id)||id<=0)) throw new Error("STEP IDs must be positive integers separated by commas or spaces.");
+  state.hardClashRunning=true;
+  state.hardClashValidation=null;
+  $("hardClashSettingsHint").classList.add("hidden");
+  rebuildIssues(); render();
+  updateHardClashAvailability();
+  $("hardClashTolerance").disabled=true; $("hardClashIds").disabled=true;
+  const status=$("hardClashModelStatus");
+  status.classList.remove("hidden"); status.textContent="Checking the reference gate, then extracting only the eligible selected scope…";
+  status.setAttribute("aria-busy","true");
+  try {
+    const response=await fetch("/api/hard-clashes",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model_id:source.modelId,content:source.modelId ? undefined : source.content,tolerance_mm:tolerance,element_ids:ids})});
+    const report=await readJsonResponse(response,"Hard-clash pilot failed.");
+    if (state.source!==source) return;
+    if (source.sha256 && report.source_sha256!==source.sha256) throw new Error("Clash evidence belongs to a different IFC; upload this model again.");
+    state.hardClashValidation=report;
+    rebuildIssues(); render();
+    const s=report.summary;
+    status.innerHTML=`<strong>Stage 3 pilot ${report.complete_for_selected_scope ? "scope evaluated" : "needs attention"}</strong> · ${s.candidate_pairs} hard-clash candidate(s) · ${s.unresolved_collisions} unresolved intersection(s) · ${s.skipped_elements} rejected/missing bodies.<p>${escapeHtml(report.scope)} · ${s.measured_elements}/${s.eligible_elements} selected eligible bodies · ${report.tolerance_mm} mm convex minimum-translation threshold. ${escapeHtml(report.source_scope)}. This is not a whole-project clearance or compliance verdict.</p><p>${escapeHtml(report.claim_boundary)}</p>${report.skipped_elements.length ? `<details><summary>Rejected or missing geometry</summary><ul>${report.skipped_elements.map(item=>`<li>#${item.element_id}: ${escapeHtml(item.reason)}</li>`).join("")}</ul></details>` : ""}`;
+    $("hardClashSettingsHint").classList.add("hidden");
+    if (report.issues.length) { $("severityFilter").value="all"; $("ruleFilter").value="hard_clash_review"; renderIssues(); }
+  } catch(error) {
+    if (state.source===source) status.textContent=`${error.message} No new model clash verdict was generated.`;
+  } finally {
+    if (state.source===source) {
+      state.hardClashRunning=false;
+      $("hardClashTolerance").disabled=false; $("hardClashIds").disabled=false;
+      status.setAttribute("aria-busy","false"); updateHardClashAvailability();
+    }
   }
 }
 
@@ -221,6 +275,7 @@ function rebuildIssues() {
   state.result.issues = [
     ...state.baseIssues,
     ...(state.geometryValidation?.issues || []),
+    ...(state.hardClashValidation?.issues || []),
     ...(state.idsValidation?.issues || []),
   ];
   const counts = { error: 0, warning: 0, info: 0 };
@@ -260,6 +315,11 @@ function applyAnalysis(result) {
   state.idsValidation = null;
   state.geometryDiagnostics = null;
   state.geometryValidation = null;
+  state.hardClashValidation=null; state.hardClashRunning=false;
+  $("hardClashModelStatus").classList.add("hidden");
+  $("hardClashSettingsHint").classList.add("hidden");
+  $("hardClashTolerance").disabled=false; $("hardClashIds").disabled=false;
+  updateHardClashAvailability();
   state.viewerDiagnostics = null;
   state.gpuValidation = null;
   state.activeGeometryJobId = null;
@@ -475,6 +535,7 @@ function finishGeometryDiagnostics(result, acceptance) {
   result.ready = result.ready && acceptance.passed;
   result.stage2_ready = result.duplicate_prerequisites_ready && acceptance.passed;
   state.geometryDiagnostics = result;
+  updateHardClashAvailability();
   const status = $("geometryDiagnosticsStatus");
   const checkRows = result.checks.map((check) => {
     const label = check.status === "pass" ? "PASS" : check.status === "fail" ? "FAIL" : "NOT EVALUATED";
@@ -677,7 +738,8 @@ function configureRuleFilter() {
   const duplicateReview = rules.some((rule) => DUPLICATE_RULES.has(rule))
     ? `<option value="duplicate_review">Duplicate review</option>`
     : "";
-  $("ruleFilter").innerHTML = `<option value="all">All rules</option>${duplicateReview}` + rules.map((rule) => `<option value="${rule}">${humanize(rule)}</option>`).join("");
+  const clashReview=rules.some(rule=>CLASH_RULES.has(rule)) ? '<option value="hard_clash_review">Hard-clash review</option>' : '';
+  $("ruleFilter").innerHTML = `<option value="all">All rules</option>${duplicateReview}${clashReview}` + rules.map((rule) => `<option value="${rule}">${humanize(rule)}</option>`).join("");
 }
 
 function renderIssues() {
@@ -685,7 +747,7 @@ function renderIssues() {
   const severity = $("severityFilter").value;
   const rule = $("ruleFilter").value;
   const issues = state.result.issues.filter((issue) => {
-    const ruleMatches = rule === "all" || issue.rule_id === rule || (rule === "duplicate_review" && DUPLICATE_RULES.has(issue.rule_id));
+    const ruleMatches = rule === "all" || issue.rule_id === rule || (rule === "duplicate_review" && DUPLICATE_RULES.has(issue.rule_id)) || (rule === "hard_clash_review" && CLASH_RULES.has(issue.rule_id));
     return (severity === "all" || issue.severity === severity) && ruleMatches;
   });
   const visibleIssues = issues.slice(0, ISSUE_RENDER_LIMIT);
@@ -826,7 +888,8 @@ function exportJson() {
   if (!state.result) return;
   downloadText(
     JSON.stringify({...state.result, exporter_version: APP_VERSION, exported_at: new Date().toISOString(), model_sha256: state.source?.sha256, geometry_validation: state.geometryValidation,
-      hard_clash_reference: state.hardClashReference, model_hard_clash_status: "not_evaluated_stage3_not_released",
+      hard_clash_reference: state.hardClashReference, hard_clash_validation:state.hardClashValidation,
+      model_hard_clash_status: state.hardClashValidation ? (state.hardClashValidation.complete_for_selected_scope ? "selected_scope_evaluated" : "selected_scope_needs_attention") : "not_evaluated",
       duplicate_review_ledger: state.duplicateReviews,
       pair_comparisons: Object.fromEntries([...state.pairComparisons].filter(([, entry]) => entry.result).map(([key, entry]) => [key, entry.result])),
       pair_comparison_export_scope: "Only comparisons opened and successfully measured for this model are included; unopened or failed comparisons are not evaluated."}, null, 2),
@@ -904,6 +967,15 @@ $("geometryDiagnosticsStatus").addEventListener("click", (event) => {
 $("geometryEvidenceButton").addEventListener("click", exportGeometryEvidence);
 $("geometryCheckButton").addEventListener("click", async () => { try { await runGeometryChecks(); } catch (error) { toast(error.message); } });
 $("hardClashReferenceButton").addEventListener("click", runHardClashReference);
+$("hardClashModelButton").addEventListener("click", async()=>{try {await runHardClashes();} catch(error) {toast(error.message);}});
+$("hardClashSampleButton").addEventListener("click",async()=>{
+  try {
+    const response=await fetch("/api/hard-clash-sample");
+    if (!response.ok) throw new Error("Hard-clash sample could not be loaded.");
+    await analyzeFile(new File([await response.arrayBuffer()],"hard_clash_pilot.ifc"));
+  } catch(error) {toast(error.message);}
+});
+for(const id of ["hardClashTolerance","hardClashIds"]) $(id).addEventListener("change",()=>$("hardClashSettingsHint").classList.toggle("hidden",!state.hardClashValidation));
 $("hardClashEvidenceButton").addEventListener("click", () => {
   if (!state.hardClashReference) return;
   downloadText(JSON.stringify({exporter_version: APP_VERSION, exported_at: new Date().toISOString(),
@@ -1058,10 +1130,13 @@ async function checkServer() {
     if (capabilityResponse.ok) {
       const engines = await capabilityResponse.json();
       state.ifcopenshellAvailable = engines.ifcopenshell_available;
+      state.stage3SolidAvailable=engines.stage3_solid_available;
       $("backendBadge").textContent = engines.ifcopenshell_available ? "IfcOpenShell ready" : "Lightweight + IDS subset";
       $("backendBadge").title = `Semantics: ${engines.semantic_backend}; IDS: ${engines.ids_backend}`;
       $("geometryDiagnosticsButton").disabled = !engines.ifcopenshell_available;
-      $("hardClashReferenceButton").disabled = !engines.ifcopenshell_available;
+      $("hardClashReferenceButton").disabled = !engines.stage3_solid_available;
+      $("hardClashReferenceButton").title=engines.stage3_solid_available ? "Run the independent volume/depth controls" : "Restart start_windows.bat to install IfcOpenShell and Manifold";
+      updateHardClashAvailability();
       $("geometryDiagnosticsButton").title = engines.ifcopenshell_available ? "Run Stage 1 diagnostics" : "Install IfcOpenShell to enable geometry diagnostics";
       $("geometryCheckButton").disabled = true;
       $("geometryCheckButton").title = engines.ifcopenshell_available ? "Stage 1 geometry validation must pass first" : "Install IfcOpenShell to enable geometry checks";

@@ -12,16 +12,17 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class HardClashReferenceTests(unittest.TestCase):
-    def test_known_false_negatives_block_stage3_instead_of_becoming_model_pass(self):
+    def test_corrected_reference_measurements_pass_without_hiding_original_misses(self):
         report = run_hard_clash_acceptance(ROOT / "samples")
         self.assertEqual("0.8.5", report["engine_version"], "Re-baseline kernel controls explicitly when upgrading IfcOpenShell.")
-        self.assertFalse(report["passed"])
-        self.assertFalse(report["model_clash_checking_enabled"])
-        self.assertEqual("blocked_reference_failure", report["gate_status"])
-        self.assertEqual((14,18), (report["passed_cases"], report["total_cases"]))
+        self.assertTrue(report["passed"])
+        self.assertTrue(report["model_clash_checking_enabled"])
+        self.assertEqual("bounded_pilot_available", report["gate_status"])
+        self.assertEqual((30,30), (report["passed_cases"], report["total_cases"]))
+        self.assertEqual(14,report['original_kernel_baseline']['passed_cases'])
         self.assertEqual({f"{unit}:{name}" for unit in ["metre", "millimetre"]
                           for name in ["Overlap 250 mm", "Above threshold 3 mm"]},
-                         {c["id"] for c in report["cases"] if c["result"] == "FALSE_NEGATIVE"})
+                         {c["id"] for c in report["cases"] if c['expected_candidate'] and c['original_kernel_candidate'] is False})
         self.assertTrue(all(c["geometry_complete"] for c in report["cases"]))
         self.assertTrue(all(len(f["source_sha256"]) == 64 for f in report["fixtures"]))
 
@@ -29,13 +30,14 @@ class HardClashReferenceTests(unittest.TestCase):
         report = run_hard_clashes_file(ROOT / "samples/golden/hard_clash_matrix.ifc")
         self.assertTrue(report["extraction_complete_for_selected_scope"])
         self.assertFalse(report["complete_for_selected_scope"])
-        issue, = report["issues"]
+        issue=next(i for i in report['issues'] if i['name']=='Contained box')
         self.assertEqual("Contained box", issue["name"])
         self.assertTrue(issue["global_id"])
         self.assertTrue(issue["related_global_id"])
         self.assertEqual([176,164], issue["selection_ids"])
-        self.assertAlmostEqual(250., issue["distance_mm"])
-        self.assertEqual(2, len(issue["witness_points_metres"]))
+        self.assertAlmostEqual(750., issue['minimum_translation_mm'])
+        self.assertAlmostEqual(.125,issue['intersection_volume_m3'])
+        self.assertEqual(1,report['summary']['unresolved_collisions'])
 
     def test_positive_controls_are_real_axis_aligned_box_intersections_in_both_units(self):
         # Independently inspect the actual tessellated control coordinates.

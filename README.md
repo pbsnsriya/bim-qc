@@ -28,8 +28,9 @@ information-quality issues, and exporting a review report.
 - Stage 2 exact-duplicate candidate detection with a four-assertion known-answer
   IFC matrix, 0.001 mm numerical tolerance, explicit exclusions, and paired
   3D highlighting
-- Stage 3 controlled hard-clash reference probe: known kernel misses are visible;
-  model clash checking remains blocked pending their resolution
+- Stage 3 bounded MEP/structure hard-clash pilot, gated by 30 known volume/depth
+  controls; solid Boolean intersections correct aligned-face misses while
+  retaining the original kernel baseline for comparison
 - Legacy experimental clearance, connectivity, alignment and dimension code is
   retained for development; these later milestones have not passed staged acceptance
 - Synthetic good/bad IFC fixtures and automated unit tests
@@ -173,9 +174,10 @@ The general JSON and CSV reports include review status, note, and timestamp.
 canonical pair key, physical/opening classification, opening and host IDs,
 selection IDs, decision, evidence, confidence, tolerance, and detection basis.
 
-The controlled Stage 3 probe compares `IfcDistributionElement` bodies against
-structural classes. Its failed reference gate is shown separately from model
-duplicate results. Legacy connectivity prototypes use exported
+The controlled Stage 3 pilot compares `IfcDistributionElement` bodies against
+structural classes, up to 100 eligible elements and 200,000 triangles. Positive
+non-convex intersections remain visible with threshold depth Not evaluated.
+Legacy connectivity prototypes use exported
 `IfcDistributionPort` relationships; they are not enabled in the released API.
 
 ## Test
@@ -223,14 +225,51 @@ candidates, separately reviewed exact opening-void candidates, and a persistent
 accept/reject truth-matrix workflow, plus translation-only near-duplicate
 candidates with a configurable 0.01–100 mm placement limit.
 Project-configurable intentional-repeat rules remain a later increment.
-Hard/clearance clashes, connectivity, alignment, and dimensions remain
-experimental rule prototypes and have **not** completed their individual stages.
+Stage 3 hard clashes now have a bounded pilot with a passed reference gate.
+Clearance, connectivity, alignment, and dimensions remain experimental
+prototypes and have **not** completed their individual stages.
 Alignment results are advisory because diagonal elements may be intentional,
 and the current dimension prototype only enforces a minimum geometric extent.
 
-The next milestone is controlled Stage 3 hard-clash validation. Its current
-18-case reference gate fails because aligned overlaps are missed. Resolve those
-misses before enabling model scans; clearance and subsequent stages remain deferred.
+Next: verify the Stage 3 pilot sample in the local browser and inspect bounded
+model subsets. Extend depth handling for non-convex intersections and validate
+complex geometry before scaling to full-model scans. Clearance remains deferred.
+
+## v0.7.16 aligned-overlap correction and bounded Stage 3 pilot
+
+Manifold 3.5.1 now intersects accepted double-precision IFC body meshes;
+convex-polyhedron SAT measures minimum translation to boundary contact.
+The four old aligned-overlap misses are detected. The old IfcOpenShell probe
+still reports **14/18** and is displayed as an original baseline, while the
+corrected volume/depth reference matrix passes **30/30**. No tolerance was
+relaxed and no input geometry was moved or repaired to force a detection.
+
+The threshold metric is explicitly different from the old kernel distance.
+The contained cube measures **750 mm minimum translation**, versus the old
+kernel's **250 mm protrusion/pierce distance**. Non-convex positive intersections
+retain depth **Not evaluated**; they do not become clear pairs.
+
+Local test sequence:
+
+1. Start this release and confirm v0.7.16. `start_windows.bat` installs the new
+   pinned Manifold dependency.
+2. Click **Load hard-clash sample**.
+3. Click **Verify extraction evidence** and **Validate Stage 3 reference cases**.
+4. Click **Validate hard clashes (pilot)**. At 2 mm the sample should show **five
+   candidates plus one unresolved complex intersection**. The pilot scope needs
+   attention because that depth is deliberately unknown.
+5. Click findings to highlight both elements, test isolate/fade/clear selection,
+   and export the QC JSON. An explicit sample subset **20, 32** should produce
+   one 250 mm candidate and an evaluated selected scope.
+
+Whole large-model scans are blocked by the 100-element cap before tessellation;
+use selected MEP and structure STEP IDs for a bounded subset. A subset report
+does not evaluate the rest of the model. Stage 1 readiness and the reference
+gate are both required by the UI; the server independently enforces the
+reference gate. Existing duplicates and later-stage API restrictions remain.
+
+See `docs/Stage3_Correction_v0.7.16.md` and the included reference/pilot evidence.
+The older v0.7.15 notes below document historical behavior.
 
 ## v0.7.15 review provenance and Stage 3 reference gate
 

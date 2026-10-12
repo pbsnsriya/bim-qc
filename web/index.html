@@ -15,7 +15,7 @@
       <span class="brand-mark">OQ</span>
       <span><strong>OpenBIM QC</strong><small>Model quality assistant</small></span>
     </a>
-    <div class="status"><span></span> Local analysis · v0.7.15</div>
+    <div class="status"><span></span> Local analysis · v0.7.16</div>
   </header>
 
   <main>
@@ -96,17 +96,24 @@
         <div>
           <p class="eyebrow">STAGE 3 · CONTROLLED HARD-CLASH TESTING</p>
           <h3>Check known intersections before model clashes</h3>
-          <p class="muted">Runs nine analytic cases in metre and millimetre IFCs: overlap, separation, touching, threshold boundaries, containment, an opening and overlapping bounds without contact. This tests the geometry engine independently of your model.</p>
+          <p class="muted">Runs fifteen analytic controls in metre and millimetre IFCs, including rotation, large coordinates and complex intersections with unknown depth. Original kernel misses remain visible beside corrected measurements.</p>
         </div>
         <div class="foundation-actions">
           <button id="hardClashReferenceButton" class="button primary" type="button" disabled>Validate Stage 3 reference cases</button>
           <button id="hardClashEvidenceButton" class="button secondary" type="button" disabled>Export Stage 3 reference JSON</button>
-          <a class="button secondary" href="/api/hard-clash-sample" download="hard_clash_matrix.ifc">Download hard-clash sample IFC</a>
-          <button id="hardClashModelButton" class="button secondary" type="button" disabled title="Known reference failures must be resolved before releasing model clash checking">Model clash checking blocked</button>
+          <a class="button secondary" href="/api/hard-clash-sample" download="hard_clash_pilot.ifc">Download hard-clash sample IFC</a>
+          <button id="hardClashSampleButton" class="button secondary" type="button">Load hard-clash sample</button>
         </div>
       </article>
-      <p class="claim-boundary"><strong>Stage 3 gate:</strong> Known aligned overlaps are missed by the current kernel probe. The reference matrix must be resolved before model clash checking is released. Stage 1 and duplicate review remain available.</p>
+      <div class="coordination-options">
+        <label for="hardClashTolerance">Convex minimum translation threshold (mm)<input id="hardClashTolerance" type="number" min="0" max="1000" step="any" value="2"></label>
+        <label for="hardClashIds">STEP IDs (optional for small models)<input id="hardClashIds" type="text" placeholder="e.g. 20, 32, 164, 176"></label>
+        <button id="hardClashModelButton" class="button primary" type="button" disabled>Validate reference cases first</button>
+      </div>
+      <p class="claim-boundary"><strong>Pilot scope:</strong> Up to 100 eligible elements and 200,000 triangles, MEP versus structure only. Larger models require an explicit subset of IDs. Bounds alone never prove a clash. Positive non-convex intersections retain depth Not evaluated. The threshold is a review setting, not an industry acceptance limit.</p>
+      <p id="hardClashSettingsHint" class="comparison-warning hidden">Settings changed. Existing findings retain their original threshold and scope; run Validate hard clashes to apply these settings.</p>
       <div id="hardClashReferenceStatus" class="ids-status diagnostics-status hidden" role="status"></div>
+      <div id="hardClashModelStatus" class="ids-status diagnostics-status hidden" role="status"></div>
 
       <div id="metrics" class="metrics"></div>
 
