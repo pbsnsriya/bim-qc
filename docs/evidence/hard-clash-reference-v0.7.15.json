@@ -1,0 +1,452 @@
+{
+  "stage": 3,
+  "report_type": "Hard-clash reference matrix",
+  "app_version": "0.7.15",
+  "engine": "ifcopenshell",
+  "engine_version": "0.8.5",
+  "generated_at": "2026-10-09T12:23:05.679876+00:00",
+  "tolerance_mm": 2.0,
+  "passed": false,
+  "passed_cases": 14,
+  "total_cases": 18,
+  "failed_cases": 4,
+  "model_clash_checking_enabled": false,
+  "gate_status": "blocked_reference_failure",
+  "cases": [
+    {
+      "id": "metre:Overlap 250 mm",
+      "name": "Overlap 250 mm",
+      "unit": "metre",
+      "expected_candidate": true,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.25,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": false,
+      "result": "FALSE_NEGATIVE",
+      "reference_basis": "Two unit boxes overlap 0.25 m along X and 1 m along Y/Z; coplanar faces must not hide the intersection."
+    },
+    {
+      "id": "metre:Separated 100 mm",
+      "name": "Separated 100 mm",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Unit boxes are separated by 0.1 m along X."
+    },
+    {
+      "id": "metre:Touching",
+      "name": "Touching",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Shared face only; no positive-volume intersection."
+    },
+    {
+      "id": "metre:Below threshold 1 mm",
+      "name": "Below threshold 1 mm",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.001,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "1 mm overlap is below the application screening threshold."
+    },
+    {
+      "id": "metre:Boundary 2 mm",
+      "name": "Boundary 2 mm",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.002,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Exactly 2 mm is excluded by the explicit strict-greater-than policy."
+    },
+    {
+      "id": "metre:Above threshold 3 mm",
+      "name": "Above threshold 3 mm",
+      "unit": "metre",
+      "expected_candidate": true,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.003,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": false,
+      "result": "FALSE_NEGATIVE",
+      "reference_basis": "3 mm overlap exceeds the threshold; faces align along Y/Z."
+    },
+    {
+      "id": "metre:Contained box",
+      "name": "Contained box",
+      "unit": "metre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 0.125,
+      "kernel_distance_mm": 250.0,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "A 0.5 m cube is wholly inside a unit cube, 0.25 m from each host face."
+    },
+    {
+      "id": "metre:Through opening",
+      "name": "Through opening",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "The duct passes through the explicitly subtracted opening with 0.1 m clearance on X/Z."
+    },
+    {
+      "id": "metre:Bounds overlap only",
+      "name": "Bounds overlap only",
+      "unit": "metre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "The duct sits between two disjoint wall solids. Overlapping combined bounds do not imply contact."
+    },
+    {
+      "id": "millimetre:Overlap 250 mm",
+      "name": "Overlap 250 mm",
+      "unit": "millimetre",
+      "expected_candidate": true,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.25,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": false,
+      "result": "FALSE_NEGATIVE",
+      "reference_basis": "Two unit boxes overlap 0.25 m along X and 1 m along Y/Z; coplanar faces must not hide the intersection."
+    },
+    {
+      "id": "millimetre:Separated 100 mm",
+      "name": "Separated 100 mm",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Unit boxes are separated by 0.1 m along X."
+    },
+    {
+      "id": "millimetre:Touching",
+      "name": "Touching",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Shared face only; no positive-volume intersection."
+    },
+    {
+      "id": "millimetre:Below threshold 1 mm",
+      "name": "Below threshold 1 mm",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.001,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "1 mm overlap is below the application screening threshold."
+    },
+    {
+      "id": "millimetre:Boundary 2 mm",
+      "name": "Boundary 2 mm",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.002,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "Exactly 2 mm is excluded by the explicit strict-greater-than policy."
+    },
+    {
+      "id": "millimetre:Above threshold 3 mm",
+      "name": "Above threshold 3 mm",
+      "unit": "millimetre",
+      "expected_candidate": true,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.003,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": false,
+      "result": "FALSE_NEGATIVE",
+      "reference_basis": "3 mm overlap exceeds the threshold; faces align along Y/Z."
+    },
+    {
+      "id": "millimetre:Contained box",
+      "name": "Contained box",
+      "unit": "millimetre",
+      "expected_candidate": true,
+      "measured_candidate": true,
+      "expected_intersection_volume_m3": 0.125,
+      "kernel_distance_mm": 250.0,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "A 0.5 m cube is wholly inside a unit cube, 0.25 m from each host face."
+    },
+    {
+      "id": "millimetre:Through opening",
+      "name": "Through opening",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "The duct passes through the explicitly subtracted opening with 0.1 m clearance on X/Z."
+    },
+    {
+      "id": "millimetre:Bounds overlap only",
+      "name": "Bounds overlap only",
+      "unit": "millimetre",
+      "expected_candidate": false,
+      "measured_candidate": false,
+      "expected_intersection_volume_m3": 0.0,
+      "kernel_distance_mm": null,
+      "geometry_complete": true,
+      "passed": true,
+      "result": "PASS",
+      "reference_basis": "The duct sits between two disjoint wall solids. Overlapping combined bounds do not imply contact."
+    }
+  ],
+  "fixtures": [
+    {
+      "filename": "hard_clash_matrix.ifc",
+      "source_sha256": "aae2070eda82305e09a1a9bec7ee87da4b37789b2c122529807d92294b29ffa4",
+      "probe": {
+        "stage": 3,
+        "app_version": "0.7.15",
+        "engine": "ifcopenshell",
+        "engine_version": "0.8.5",
+        "schema": "IFC4",
+        "generated_at": "2026-10-09T12:23:05.640766+00:00",
+        "scope": "MEP versus structure",
+        "selected_element_ids": [
+          20,
+          32,
+          44,
+          56,
+          68,
+          80,
+          92,
+          104,
+          116,
+          128,
+          140,
+          152,
+          164,
+          176,
+          188,
+          200,
+          231,
+          243
+        ],
+        "tolerance_mm": 2.0,
+        "numeric_slack_mm": 1e-06,
+        "settings": {
+          "use_world_coords": true,
+          "disable_opening_subtractions": false,
+          "check_all": true
+        },
+        "extraction_complete_for_selected_scope": true,
+        "complete_for_selected_scope": false,
+        "detection_completeness_status": "not_certified_reference_gate_required",
+        "scope_status": "evaluated",
+        "summary": {
+          "eligible_elements": 18,
+          "measured_elements": 18,
+          "mep_elements": 9,
+          "structural_elements": 9,
+          "candidate_pairs": 1,
+          "skipped_elements": 0,
+          "unresolved_collisions": 0,
+          "triangles": 248
+        },
+        "issues": [
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "IfcDuctSegment #176 versus IfcWall #164: kernel protrusion distance 250.000 mm exceeds the 2 mm screening threshold. Review coordination intent.",
+            "entity_id": 176,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "3oF9qHPGXPDx8rIMSRuVcO",
+            "name": "Contained box",
+            "related_entity_id": 164,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "01PqjsbiXVdwSeJowfYW0_",
+            "selection_ids": [
+              176,
+              164
+            ],
+            "distance_mm": 250.0,
+            "tolerance_mm": 2.0,
+            "clash_type": "protrusion",
+            "witness_points_metres": [
+              [
+                0.25,
+                60.75,
+                0.75
+              ],
+              [
+                0.25,
+                61.0,
+                0.75
+              ]
+            ],
+            "review_status": "unresolved",
+            "detection_basis": "IfcOpenShell intersection of manifold tessellated bodies; not AABB overlap"
+          }
+        ],
+        "skipped_elements": [],
+        "unresolved_collisions": [],
+        "duration_ms": 32.9,
+        "rule_source": "IfcOpenShell clash_intersection_many; application threshold, not an industry acceptance limit.",
+        "claim_boundary": "Diagnostic kernel probe, not a released model clash verdict. Known aligned-overlap false negatives must be resolved before Stage 3 is enabled. Kernel protrusion/pierce distance is not overlap volume or a universal minimum-translation distance. IFC opening subtractions are enabled. No clearance, self-clash, project approval or author intent verdict. Missing/non-manifold geometry and absent groups remain Not evaluated; zero candidates does not prove a clash-free project.",
+        "source_sha256": "aae2070eda82305e09a1a9bec7ee87da4b37789b2c122529807d92294b29ffa4"
+      }
+    },
+    {
+      "filename": "hard_clash_matrix_millimetre.ifc",
+      "source_sha256": "895daed1b36a7461f61a0a4bea5f0a07f75d11fc72aba0666fb176e8caeefe62",
+      "probe": {
+        "stage": 3,
+        "app_version": "0.7.15",
+        "engine": "ifcopenshell",
+        "engine_version": "0.8.5",
+        "schema": "IFC4",
+        "generated_at": "2026-10-09T12:23:05.679346+00:00",
+        "scope": "MEP versus structure",
+        "selected_element_ids": [
+          20,
+          32,
+          44,
+          56,
+          68,
+          80,
+          92,
+          104,
+          116,
+          128,
+          140,
+          152,
+          164,
+          176,
+          188,
+          200,
+          231,
+          243
+        ],
+        "tolerance_mm": 2.0,
+        "numeric_slack_mm": 1e-06,
+        "settings": {
+          "use_world_coords": true,
+          "disable_opening_subtractions": false,
+          "check_all": true
+        },
+        "extraction_complete_for_selected_scope": true,
+        "complete_for_selected_scope": false,
+        "detection_completeness_status": "not_certified_reference_gate_required",
+        "scope_status": "evaluated",
+        "summary": {
+          "eligible_elements": 18,
+          "measured_elements": 18,
+          "mep_elements": 9,
+          "structural_elements": 9,
+          "candidate_pairs": 1,
+          "skipped_elements": 0,
+          "unresolved_collisions": 0,
+          "triangles": 248
+        },
+        "issues": [
+          {
+            "rule_id": "hard_clash",
+            "severity": "warning",
+            "title": "Hard-clash candidate",
+            "message": "IfcDuctSegment #176 versus IfcWall #164: kernel protrusion distance 250.000 mm exceeds the 2 mm screening threshold. Review coordination intent.",
+            "entity_id": 176,
+            "entity_type": "IfcDuctSegment",
+            "global_id": "3oF9qHPGXPDx8rIMSRuVcO",
+            "name": "Contained box",
+            "related_entity_id": 164,
+            "related_entity_type": "IfcWall",
+            "related_global_id": "01PqjsbiXVdwSeJowfYW0_",
+            "selection_ids": [
+              176,
+              164
+            ],
+            "distance_mm": 250.0,
+            "tolerance_mm": 2.0,
+            "clash_type": "protrusion",
+            "witness_points_metres": [
+              [
+                0.25,
+                60.75,
+                0.75
+              ],
+              [
+                0.25,
+                61.0,
+                0.75
+              ]
+            ],
+            "review_status": "unresolved",
+            "detection_basis": "IfcOpenShell intersection of manifold tessellated bodies; not AABB overlap"
+          }
+        ],
+        "skipped_elements": [],
+        "unresolved_collisions": [],
+        "duration_ms": 36.9,
+        "rule_source": "IfcOpenShell clash_intersection_many; application threshold, not an industry acceptance limit.",
+        "claim_boundary": "Diagnostic kernel probe, not a released model clash verdict. Known aligned-overlap false negatives must be resolved before Stage 3 is enabled. Kernel protrusion/pierce distance is not overlap volume or a universal minimum-translation distance. IFC opening subtractions are enabled. No clearance, self-clash, project approval or author intent verdict. Missing/non-manifold geometry and absent groups remain Not evaluated; zero candidates does not prove a clash-free project.",
+        "source_sha256": "895daed1b36a7461f61a0a4bea5f0a07f75d11fc72aba0666fb176e8caeefe62"
+      }
+    }
+  ],
+  "claim_boundary": "Synthetic reference validation only. Model clash checking is not released in this version. Passing these controls would not prove accuracy on every IFC, project compliance or design intent. Expected volumes are analytic reference facts; this probe does not measure intersection volume.",
+  "sources": [
+    "scripts/generate_hard_clash_fixture.py",
+    "https://docs.ifcopenshell.org/ifcopenshell-python/geometry_tree.html",
+    "https://github.com/IfcOpenShell/IfcOpenShell/issues/4594",
+    "https://github.com/IfcOpenShell/IfcOpenShell/issues/6109"
+  ]
+}

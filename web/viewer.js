@@ -1,4 +1,5 @@
 import * as THREE from "./vendor/three/three.module.js";
+import { APP_VERSION } from "./version.js";
 import { OrbitControls } from "./vendor/three/examples/jsm/controls/OrbitControls.js";
 import * as WebIFC from "./vendor/web-ifc/web-ifc-api.js";
 
@@ -563,7 +564,7 @@ export async function runGpuValidation(durationMs = 2000) {
   };
   const renderingPassed = capabilityChecks.every((check) => check.passed);
   return {
-    viewer_version: "0.7.13",
+    viewer_version: APP_VERSION,
     passed: renderingPassed && performanceCheck.passed,
     rendering_capability_passed: renderingPassed,
     interactive_performance_passed: performanceCheck.passed,

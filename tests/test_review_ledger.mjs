@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {migrateKnownTestReview} from '../web/review-ledger.js';
+
+const sha = 'f99b62ccadd9d625c64c4b68f89eda544ea8cac5986970d0a21473d9fcb3fd76';
+const key = 'duplicate_opening_candidate|66076|108748';
+const original = {review_status: 'confirmed_duplicate', review_note: 'Synthetic reference case: expected matching geometry and offset verified against the configured tolerance. Decision recorded to test review persistence.', reviewed_at:'2026-10-08T07:42:14.000Z'};
+const unrelated = {review_status:'intentional_not_duplicate', review_note:'Reviewed intentional placement'};
+const ledger = {[key]: {...original}, 'exact_duplicate_candidate|63877|106773': unrelated};
+const at = '2026-10-09T12:00:00.000Z';
+const result = migrateKnownTestReview(ledger, sha, at);
+assert.equal(result.changed,true);
+assert.equal(result.reviews[key].review_status,'unresolved');
+assert.match(result.reviews[key].review_note,/58.71 m.*Investigate/);
+assert.deepEqual(result.reviews[key].review_history,[{...original, archived_at:at,reason:'Known persistence-test decision; not a real-model adjudication.'}]);
+assert.equal(ledger[key].review_status,'confirmed_duplicate','migration does not mutate input history');
+assert.equal(result.reviews['exact_duplicate_candidate|63877|106773'], unrelated,'other judgements remain unchanged');
+assert.equal(migrateKnownTestReview(result.reviews,sha).changed,false,'idempotent after correction');
+assert.equal(migrateKnownTestReview(ledger,'another-model').changed,false,'same IDs on another model are untouched');
+assert.equal(migrateKnownTestReview({[key]: {...original,review_note:'Confirmed using author reference'}},sha).changed,false,'a real judgement on this pair is untouched');
+console.log('review ledger migration tests passed');

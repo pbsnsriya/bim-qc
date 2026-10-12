@@ -15,7 +15,7 @@
       <span class="brand-mark">OQ</span>
       <span><strong>OpenBIM QC</strong><small>Model quality assistant</small></span>
     </a>
-    <div class="status"><span></span> Local analysis · v0.7.14</div>
+    <div class="status"><span></span> Local analysis · v0.7.15</div>
   </header>
 
   <main>
@@ -91,6 +91,22 @@
       <p id="duplicateSettingsHint" class="comparison-warning hidden">Settings changed. Run Validate duplicates to apply them; existing results retain their original tolerance.</p>
       <div id="geometryStatus" class="ids-status hidden" role="status"></div>
       <div id="duplicateReviewSummary" class="duplicate-review-summary hidden" role="status"></div>
+
+      <article class="coordination-panel foundation-panel">
+        <div>
+          <p class="eyebrow">STAGE 3 · CONTROLLED HARD-CLASH TESTING</p>
+          <h3>Check known intersections before model clashes</h3>
+          <p class="muted">Runs nine analytic cases in metre and millimetre IFCs: overlap, separation, touching, threshold boundaries, containment, an opening and overlapping bounds without contact. This tests the geometry engine independently of your model.</p>
+        </div>
+        <div class="foundation-actions">
+          <button id="hardClashReferenceButton" class="button primary" type="button" disabled>Validate Stage 3 reference cases</button>
+          <button id="hardClashEvidenceButton" class="button secondary" type="button" disabled>Export Stage 3 reference JSON</button>
+          <a class="button secondary" href="/api/hard-clash-sample" download="hard_clash_matrix.ifc">Download hard-clash sample IFC</a>
+          <button id="hardClashModelButton" class="button secondary" type="button" disabled title="Known reference failures must be resolved before releasing model clash checking">Model clash checking blocked</button>
+        </div>
+      </article>
+      <p class="claim-boundary"><strong>Stage 3 gate:</strong> Known aligned overlaps are missed by the current kernel probe. The reference matrix must be resolved before model clash checking is released. Stage 1 and duplicate review remain available.</p>
+      <div id="hardClashReferenceStatus" class="ids-status diagnostics-status hidden" role="status"></div>
 
       <div id="metrics" class="metrics"></div>
 

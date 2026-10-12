@@ -14,6 +14,7 @@ from time import monotonic, time
 import uuid
 
 from .geometry_worker import _atomic_json, run_geometry_job
+from .version import APP_VERSION
 
 
 @dataclass
@@ -172,7 +173,7 @@ class GeometryJobManager:
             no_progress_seconds = no_progress_timeout_seconds(timeout_seconds)
             evidence_json = json.dumps(browser_evidence or {}, sort_keys=True, separators=(",", ":"))
             evidence_hash = sha256(evidence_json.encode("utf-8")).hexdigest()
-            cache_key = f"public-stage1-v1:0.7.10:{model.sha256}:{evidence_hash}"
+            cache_key = f"public-stage1-v1:{APP_VERSION}:{model.sha256}:{evidence_hash}"
             cached_result = self._cache.get(cache_key)
             if cached_result is not None:
                 result_path.write_text(json.dumps(cached_result), encoding="utf-8")

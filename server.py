@@ -20,6 +20,7 @@ from ifcqc.geometry_diagnostics import diagnose_geometry
 from ifcqc.ids_validator import validate_ids
 from ifcqc.runtime import GeometryJobManager, ModelStore
 from ifcqc.element_comparison import compare_elements, compare_elements_file, validate_pair_ids
+from ifcqc.hard_clash_acceptance import run_hard_clash_acceptance
 
 
 ROOT = Path(__file__).resolve().parent
@@ -88,6 +89,21 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/capabilities":
             self.send_json(200, capabilities())
+            return
+        if path == "/api/hard-clash-reference":
+            if not capabilities()["ifcopenshell_available"]:
+                self.send_json(400, {"error": "Stage 3 reference testing requires IfcOpenShell. Restart using start_windows.bat."})
+                return
+            try:
+                with PAIR_COMPARISON_LOCK:
+                    report = run_hard_clash_acceptance(SAMPLES)
+                self.send_json(200, report)
+            except Exception:
+                self.send_json(500, {"error": "Stage 3 reference testing could not complete; model clash checking remains blocked."})
+            return
+        if path == "/api/hard-clash-sample":
+            self.send_bytes(200, (SAMPLES / "golden/hard_clash_matrix.ifc").read_bytes(),
+                            "application/octet-stream", "hard_clash_matrix.ifc")
             return
         if path == "/api/geometry-acceptance":
             self.send_json(200, run_acceptance_matrix(SAMPLES))
@@ -187,10 +203,17 @@ class Handler(BaseHTTPRequestHandler):
                 filename = str(payload.get("ids_filename", "requirements.ids"))[:200]
                 self.send_json(200, validate_ids(content, ids_content, filename))
             elif path == "/api/geometry-checks":
-                content = content_for_payload(payload)
                 config = payload.get("config", {})
                 if not isinstance(config, dict):
                     raise ValueError("Geometry configuration must be an object.")
+                # The released endpoint is Stage 2 only. Older internal code
+                # defaults later checks on; never let omitted configuration or
+                # a direct HTTP request bypass the staged acceptance gate.
+                later_checks = ("hard_clashes", "clearance_clashes", "connectivity", "alignment", "dimensions")
+                if any(name in config and config[name] is not False for name in later_checks):
+                    raise ValueError("Later geometry checks are not released. Stage 3 model clashes remain blocked pending reference validation; this endpoint supports Stage 2 duplicates only.")
+                config = {**config, **{name: False for name in later_checks}}
+                content = content_for_payload(payload)
                 self.send_json(200, run_geometry_checks(content, config))
             elif path == "/api/geometry-diagnostics":
                 content = content_for_payload(payload)

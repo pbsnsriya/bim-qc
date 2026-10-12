@@ -28,9 +28,10 @@ information-quality issues, and exporting a review report.
 - Stage 2 exact-duplicate candidate detection with a four-assertion known-answer
   IFC matrix, 0.001 mm numerical tolerance, explicit exclusions, and paired
   3D highlighting
-- MEP-to-structure hard and configurable clearance clash checks
-- IFC-port connectivity checks with explicit unverifiable-data reporting
-- Orthogonal-alignment and minimum-dimension review rules
+- Stage 3 controlled hard-clash reference probe: known kernel misses are visible;
+  model clash checking remains blocked pending their resolution
+- Legacy experimental clearance, connectivity, alignment and dimension code is
+  retained for development; these later milestones have not passed staged acceptance
 - Synthetic good/bad IFC fixtures and automated unit tests
 - No cloud upload: files are analysed by the local Python process
 - Precise selection outcomes for direct geometry, aggregate children, void
@@ -107,8 +108,9 @@ IfcOpenShell if missing, then starts the application. Do not open
 
 ## Geometry coordination checks
 
-Load a model and first choose **Verify extraction evidence**. Stage 1 must pass
-before the experimental coordination checks unlock. The evidence report shows:
+Load a model and first choose **Verify extraction evidence**. Stage 2 readiness
+must pass before duplicate review unlocks; strict extraction consistency can
+still need attention. The evidence report shows:
 
 - a ten-case known-answer matrix covering metre/millimetre units, IFC4/IFC2X3,
   nested rotated placement, large coordinates, openings, curved solids, mapped
@@ -135,7 +137,7 @@ Project compliance, drawing completeness and normative schema conformance remain
 intent, schedules, survey data, or the built asset; those require a selected
 external reference in a later comparison milestone.
 
-After Stage 1 passes, choose **Validate exact duplicates**. The application first
+After Stage 2 readiness passes, choose **Validate duplicates**. The application first
 checks its original synthetic truth fixture, then reports same-class physical
 elements with identical world-space tessellated geometry. Selecting a physical
 finding highlights both members of the candidate pair. Subtraction features such
@@ -162,7 +164,8 @@ evidence note. Uploaded IFCs receive a streaming SHA-256 fingerprint, and review
 decisions are stored locally against that exact model fingerprint, so rerunning
 Stage 2 retains the ledger while a different IFC revision cannot silently inherit
 old decisions. The live truth-matrix summary reports confirmed, intentional,
-and unresolved counts and reviewed precision. Recall remains explicitly
+and unresolved counts and reviewer confirmation rate. This rate is not measured
+detection accuracy. Recall remains explicitly
 unavailable until reviewers also record duplicates the detector missed.
 
 The general JSON and CSV reports include review status, note, and timestamp.
@@ -170,12 +173,10 @@ The general JSON and CSV reports include review status, note, and timestamp.
 canonical pair key, physical/opening classification, opening and host IDs,
 selection IDs, decision, evidence, confidence, tolerance, and detection basis.
 
-The clash matrix currently evaluates `IfcDistributionElement` objects against
-walls, slabs, beams, columns, footings, piles, roofs, ramps, and stairs. Exact
-coincident same-class geometry is labelled **exact duplicate candidate** for
-human confirmation.
-Connectivity uses exported `IfcDistributionPort` relationships; models without
-ports are reported as unverifiable instead of being incorrectly failed.
+The controlled Stage 3 probe compares `IfcDistributionElement` bodies against
+structural classes. Its failed reference gate is shown separately from model
+duplicate results. Legacy connectivity prototypes use exported
+`IfcDistributionPort` relationships; they are not enabled in the released API.
 
 ## Test
 
@@ -203,7 +204,8 @@ Browser UI -> one multipart IFC upload -> bounded local model session
                                             +-> isolated geometry job
 ```
 
-IfcOpenShell is the semantic and engineering source of truth. web-ifc handles
+IfcOpenShell measures semantics and backend geometry; those measurements still
+require independent checks and disclosed limitations. web-ifc handles
 browser rendering and independent geometry evidence. The original lightweight
 STEP parser remains only as a small educational/test utility and is not used by
 the production QC endpoint.
@@ -226,8 +228,34 @@ experimental rule prototypes and have **not** completed their individual stages.
 Alignment results are advisory because diagonal elements may be intentional,
 and the current dimension prototype only enforces a minimum geometric extent.
 
-Next Stage 2 increment: local acceptance of translation-only near candidates,
-then rotation tolerance and project-configurable intentional-repeat exclusions.
+The next milestone is controlled Stage 3 hard-clash validation. Its current
+18-case reference gate fails because aligned overlaps are missed. Resolve those
+misses before enabling model scans; clearance and subsequent stages remain deferred.
+
+## v0.7.15 review provenance and Stage 3 reference gate
+
+Fresh backend measurements, the viewer and exports now use the same release
+identity. Exporter version/time are separate from original measurement
+provenance, including cached evidence.
+
+The identified persistence-test confirmation for office openings #66076/#108748
+is returned to **Unresolved** when the same IFC SHA-256 and exact test note are
+loaded. Its old decision, note and time remain in archived review history and
+the JSON ledger. Other judgements are untouched. Reviewer confirmation rate is
+explicitly distinct from measured detection accuracy.
+
+Click **Validate Stage 3 reference cases** under the Stage 3 panel. The small
+metre/millimetre models run independently of the uploaded model and reveal
+expected versus measured answers. IfcOpenShell 0.8.5 passes **14/18** controls,
+missing aligned 250 mm and 3 mm overlaps in both units. This is a **failed
+engine/probe reference gate**, not an IFC model failure. Model clash checking
+remains blocked, including direct attempts to enable later checks through the
+legacy geometry API. Duplicate review remains available.
+
+Use **Export Stage 3 reference JSON** and **Download hard-clash sample IFC** to
+inspect the evidence. The package includes both unit variants and the fixture
+generator. See `docs/Stage3_Reference_Gate_v0.7.15.md` for measurements, limits,
+review repair and repeatable checks.
 
 ## v0.7.14 opening–host geometry screening
 

@@ -1,6 +1,10 @@
 import { renderPairComparison } from "./pair-comparison.js";
+import { APP_VERSION } from "./version.js";
+import { migrateKnownTestReview } from "./review-ledger.js";
+import { renderHardClashReference } from "./hard-clash-reference.js";
 const state = { result: null, selectedEntityId: null, viewerBaseStatus: "", baseIssues: [], idsValidation: null, geometryDiagnostics: null, geometryValidation: null, viewerDiagnostics: null, gpuValidation: null, ifcopenshellAvailable: false, activeGeometryJobId: null, duplicateReviews: {}, reviewStorageKey: null };
 state.source = null;
+state.hardClashReference = null;
 const $ = (id) => document.getElementById(id);
 state.pairComparisons = new Map();
 state.openComparisons = new Set();
@@ -81,8 +85,39 @@ function loadDuplicateReviews() {
   try {
     const saved = localStorage.getItem(state.reviewStorageKey);
     if (saved) state.duplicateReviews = JSON.parse(saved);
+    if (!state.duplicateReviews || typeof state.duplicateReviews !== "object" || Array.isArray(state.duplicateReviews)) state.duplicateReviews = {};
   } catch {
     state.duplicateReviews = {};
+  }
+  const migration = migrateKnownTestReview(state.duplicateReviews, state.source.sha256);
+  state.duplicateReviews = migration.reviews;
+  if (migration.changed) {
+    try { localStorage.setItem(state.reviewStorageKey, JSON.stringify(state.duplicateReviews)); }
+    catch { toast("Test review repaired in this session; browser storage could not save it. Export JSON to retain its history."); }
+  }
+}
+
+async function runHardClashReference() {
+  const button = $("hardClashReferenceButton");
+  if (button.disabled) return;
+  button.disabled = true;
+  $("hardClashEvidenceButton").disabled = true;
+  state.hardClashReference = null;
+  const status = $("hardClashReferenceStatus");
+  status.classList.remove("hidden");
+  status.textContent = "Testing known intersections in two small reference IFCs…";
+  status.setAttribute("aria-busy", "true");
+  try {
+    const response = await fetch("/api/hard-clash-reference");
+    const report = await readJsonResponse(response, "Stage 3 reference test could not complete.");
+    state.hardClashReference = report;
+    status.innerHTML = renderHardClashReference(report);
+    $("hardClashEvidenceButton").disabled = false;
+  } catch (error) {
+    status.textContent = `${error.message} Model clash checking remains blocked; no model verdict was generated.`;
+  } finally {
+    status.setAttribute("aria-busy", "false");
+    button.disabled = !state.ifcopenshellAvailable;
   }
 }
 
@@ -96,6 +131,8 @@ function applyDuplicateReviews() {
     issue.review_status = review.review_status || "unresolved";
     issue.review_note = review.review_note || "";
     issue.reviewed_at = review.reviewed_at || null;
+    issue.review_history = review.review_history || [];
+    issue.review_migration_id = review.migration_id || null;
   }
   updateDuplicateReviewSummary();
 }
@@ -105,6 +142,7 @@ function saveDuplicateReview(issue, reviewStatus, reviewNote) {
   const key = duplicateReviewKey(issue);
   const existing = state.duplicateReviews[key] || {};
   const review = {
+    ...existing,
     review_status: reviewStatus || existing.review_status || "unresolved",
     review_note: reviewNote ?? existing.review_note ?? "",
     reviewed_at: new Date().toISOString(),
@@ -126,7 +164,8 @@ function duplicateReviewSummary() {
   return {
     ...counts,
     reviewed,
-    reviewed_precision_percent: reviewed ? Math.round(counts.confirmed_duplicate * 1000 / reviewed) / 10 : null,
+    reviewer_confirmation_rate_percent: reviewed ? Math.round(counts.confirmed_duplicate * 1000 / reviewed) / 10 : null,
+    detection_accuracy_status: "not_measured_by_review_decisions_alone",
     recall_status: "not_measurable_until_missed_duplicates_are_logged",
   };
 }
@@ -141,8 +180,9 @@ function updateDuplicateReviewSummary() {
     return;
   }
   if (state.result) state.result.duplicate_review_summary = summary;
-  const precision = summary.reviewed_precision_percent == null ? "—" : `${summary.reviewed_precision_percent}%`;
-  node.innerHTML = `<div><strong>Project truth matrix</strong><span>${summary.total} candidates · ${summary.confirmed_duplicate} confirmed · ${summary.intentional_not_duplicate} intentional/not duplicate · ${summary.unresolved} unresolved · reviewed precision ${precision}</span><small>Recall is not measurable until reviewers also log duplicates the detector missed.</small></div><button id="truthMatrixButton" class="button secondary" type="button">Export truth matrix CSV</button>`;
+  const rate = summary.reviewer_confirmation_rate_percent == null ? "—" : `${summary.reviewer_confirmation_rate_percent}%`;
+  const archived = duplicateIssues().filter(issue => issue.review_history?.length).length;
+  node.innerHTML = `<div><strong>Review ledger</strong><span>${summary.total} candidates · ${summary.confirmed_duplicate} confirmed · ${summary.intentional_not_duplicate} intentional/not duplicate · ${summary.unresolved} unresolved · reviewer confirmation rate ${rate}</span><small>This rate reflects saved judgements, not measured detection accuracy. Recall requires independently logged missed duplicates.${archived ? ` ${archived} record(s) retain archived review history in JSON.` : ""}</small></div><button id="truthMatrixButton" class="button secondary" type="button">Export truth matrix CSV</button>`;
   node.classList.remove("hidden");
 }
 
@@ -578,6 +618,7 @@ function exportGeometryEvidence() {
   if (!state.geometryDiagnostics || !state.source) return;
   const report = {
     report_type: "OpenBIM QC Stage 1 extraction evidence",
+    exporter_version: APP_VERSION,
     generated_at: new Date().toISOString(),
     model_filename: state.source.filename,
     conclusion: state.geometryDiagnostics.ready ? "pass" : "needs_attention",
@@ -661,7 +702,8 @@ function renderIssues() {
     card += `<details class="pair-comparison" data-comparison-key="${escapeHtml(reviewKey)}"${state.openComparisons.has(reviewKey) ? " open" : ""}><summary>Compare #${issue.related_entity_id} ↔ #${issue.entity_id}</summary><div class="pair-comparison-content" role="status" aria-live="polite" aria-busy="${Boolean(state.pairComparisons.get(reviewKey)?.loading)}">${pairComparisonContent(reviewKey)}</div></details>`;
     const status = issue.review_status || "unresolved";
     const option = (value, label) => `<option value="${value}"${status === value ? " selected" : ""}>${label}</option>`;
-    return `<div class="duplicate-review-row ${status}">${card}<div class="duplicate-review-controls" data-review-key="${escapeHtml(reviewKey)}"><label>Decision<select class="review-decision" aria-label="Duplicate review decision">${option("unresolved", "Unresolved")}${option("confirmed_duplicate", "Confirmed duplicate")}${option("intentional_not_duplicate", "Intentional / not duplicate")}</select></label><label>Reviewer note<input class="review-note" type="text" value="${escapeHtml(issue.review_note || "")}" placeholder="Reason or evidence" aria-label="Duplicate review note"></label><span class="review-saved">${issue.reviewed_at ? `Saved ${escapeHtml(new Date(issue.reviewed_at).toLocaleString())}` : "Not reviewed"}</span></div></div>`;
+    const history = issue.review_history?.length ? `<details class="review-history"><summary>Archived review history (${issue.review_history.length})</summary>${issue.review_history.map(item => `<p><strong>${escapeHtml(item.review_status)}</strong> · ${escapeHtml(item.reviewed_at || "Original time unavailable")}<br>${escapeHtml(item.review_note)}<br>${escapeHtml(item.reason)}</p>`).join("")}</details>` : "";
+    return `<div class="duplicate-review-row ${status}">${card}<div class="duplicate-review-controls" data-review-key="${escapeHtml(reviewKey)}"><label>Decision<select class="review-decision" aria-label="Duplicate review decision">${option("unresolved", "Unresolved")}${option("confirmed_duplicate", "Confirmed duplicate")}${option("intentional_not_duplicate", "Intentional / not duplicate")}</select></label><label>Reviewer note<input class="review-note" type="text" value="${escapeHtml(issue.review_note || "")}" placeholder="Reason or evidence" aria-label="Duplicate review note"></label><span class="review-saved">${issue.reviewed_at ? `Saved ${escapeHtml(new Date(issue.reviewed_at).toLocaleString())}` : "Not reviewed"}</span></div>${history}</div>`;
   }).join("") + (issues.length > visibleIssues.length
     ? `<div class="issue-limit-note">Showing the first ${visibleIssues.length.toLocaleString()} of ${issues.length.toLocaleString()} matching issues. JSON and CSV exports still contain every issue; use the filters to narrow the review.</div>`
     : "") : `<div class="issue"><p>No issues match the selected filters.</p></div>`;
@@ -783,7 +825,9 @@ function exportTruthMatrixCsv() {
 function exportJson() {
   if (!state.result) return;
   downloadText(
-    JSON.stringify({...state.result, model_sha256: state.source?.sha256, geometry_validation: state.geometryValidation,
+    JSON.stringify({...state.result, exporter_version: APP_VERSION, exported_at: new Date().toISOString(), model_sha256: state.source?.sha256, geometry_validation: state.geometryValidation,
+      hard_clash_reference: state.hardClashReference, model_hard_clash_status: "not_evaluated_stage3_not_released",
+      duplicate_review_ledger: state.duplicateReviews,
       pair_comparisons: Object.fromEntries([...state.pairComparisons].filter(([, entry]) => entry.result).map(([key, entry]) => [key, entry.result])),
       pair_comparison_export_scope: "Only comparisons opened and successfully measured for this model are included; unopened or failed comparisons are not evaluated."}, null, 2),
     `${state.result.filename.replace(/\.ifc$/i, "")}-qc-report.json`,
@@ -844,6 +888,7 @@ $("gpuEvidenceButton").addEventListener("click", () => {
   if (!state.gpuValidation || !state.source) return;
   downloadText(JSON.stringify({
     report_type: "OpenBIM QC browser/GPU evidence",
+    exporter_version: APP_VERSION,
     generated_at: new Date().toISOString(),
     model_filename: state.source.filename,
     browser_gpu_validation: state.gpuValidation,
@@ -858,6 +903,12 @@ $("geometryDiagnosticsStatus").addEventListener("click", (event) => {
 });
 $("geometryEvidenceButton").addEventListener("click", exportGeometryEvidence);
 $("geometryCheckButton").addEventListener("click", async () => { try { await runGeometryChecks(); } catch (error) { toast(error.message); } });
+$("hardClashReferenceButton").addEventListener("click", runHardClashReference);
+$("hardClashEvidenceButton").addEventListener("click", () => {
+  if (!state.hardClashReference) return;
+  downloadText(JSON.stringify({exporter_version: APP_VERSION, exported_at: new Date().toISOString(),
+    ...state.hardClashReference}, null, 2), "stage3-hard-clash-reference.json", "application/json");
+});
 for (const id of ["nearDuplicatesCheckbox", "nearDuplicateTolerance"]) {
   $(id).addEventListener("change", () => {
     $("nearDuplicateTolerance").disabled = !$("nearDuplicatesCheckbox").checked;
@@ -1010,6 +1061,7 @@ async function checkServer() {
       $("backendBadge").textContent = engines.ifcopenshell_available ? "IfcOpenShell ready" : "Lightweight + IDS subset";
       $("backendBadge").title = `Semantics: ${engines.semantic_backend}; IDS: ${engines.ids_backend}`;
       $("geometryDiagnosticsButton").disabled = !engines.ifcopenshell_available;
+      $("hardClashReferenceButton").disabled = !engines.ifcopenshell_available;
       $("geometryDiagnosticsButton").title = engines.ifcopenshell_available ? "Run Stage 1 diagnostics" : "Install IfcOpenShell to enable geometry diagnostics";
       $("geometryCheckButton").disabled = true;
       $("geometryCheckButton").title = engines.ifcopenshell_available ? "Stage 1 geometry validation must pass first" : "Install IfcOpenShell to enable geometry checks";

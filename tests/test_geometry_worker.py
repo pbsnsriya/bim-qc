@@ -8,6 +8,7 @@ import unittest
 from unittest.mock import patch
 
 from ifcqc.geometry_worker import _atomic_json, run_geometry_job
+from ifcqc.version import APP_VERSION
 from ifcqc.runtime import (
     GeometryJobManager, JobRecord, ModelRecord,
     geometry_timeout_seconds, no_progress_timeout_seconds,
@@ -145,8 +146,9 @@ class GeometryWorkerTests(unittest.TestCase):
             evidence = {"element_ids": [1]}
             evidence_json = json.dumps(evidence, sort_keys=True, separators=(",", ":"))
             evidence_hash = sha256(evidence_json.encode("utf-8")).hexdigest()
-            diagnostic = {"counts": {"represented_products": 1}, "ready": True}
-            manager._cache[f"public-stage1-v1:0.7.10:model-hash:{evidence_hash}"] = diagnostic
+            diagnostic = {"counts": {"represented_products": 1}, "ready": True,
+                          "provenance": {"app_version": "0.7.10", "generated_at": "2026-10-08T12:51:03Z"}}
+            manager._cache[f"public-stage1-v1:{APP_VERSION}:model-hash:{evidence_hash}"] = diagnostic
             model = ModelRecord("model", model_path, "model.ifc", 3, "model-hash", 0.0)
 
             job_id = manager.start(model, evidence)

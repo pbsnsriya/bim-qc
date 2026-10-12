@@ -1,10 +1,10 @@
 [project]
 name = "openbim-qc-assistant"
-version = "0.7.14"
+version = "0.7.15"
 description = "Dependency-light IFC quality checking portfolio MVP"
 requires-python = ">=3.10"
 dependencies = [
-  "ifcopenshell>=0.8.5,<0.9",
+  "ifcopenshell==0.8.5",
   "legacy-cgi>=2.6; python_version >= '3.13'",
 ]
 

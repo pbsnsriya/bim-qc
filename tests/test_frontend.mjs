@@ -165,6 +165,7 @@ document.querySelector("#gpuEvidenceButton").click();
 const exportedGpu = JSON.parse(await exportedBlob.text());
 assert.match(exportedName, /-gpu-evidence\.json$/);
 assert.equal(exportedGpu.report_type, "OpenBIM QC browser/GPU evidence");
+assert.equal(exportedGpu.exporter_version, "0.7.15");
 assert.equal(exportedGpu.browser_gpu_validation.average_fps, 60);
 assert.match(exportedGpu.claim_boundary, /backend extraction.*not evaluated/);
 URL.createObjectURL = createObjectURL;
@@ -244,7 +245,8 @@ reviewNote.value = "Confirmed accidental overlapping wall";
 reviewDecision.value = "confirmed_duplicate";
 reviewDecision.dispatchEvent(new window.Event("change", { bubbles: true }));
 assert.match(document.querySelector("#duplicateReviewSummary").textContent, /1 confirmed/, "truth-matrix summary updates after review");
-assert.match(document.querySelector("#duplicateReviewSummary").textContent, /reviewed precision 100%/, "reviewed precision is explicitly reported");
+assert.match(document.querySelector("#duplicateReviewSummary").textContent, /confirmation rate 100%/, "review decisions are labelled as a confirmation rate");
+assert.match(document.querySelector("#duplicateReviewSummary").textContent, /not measured detection accuracy/, "a review rate does not certify accuracy");
 assert.equal(document.querySelector(".duplicate-review-row.confirmed_duplicate") !== null, true, "confirmed review receives visible state");
 assert.ok(document.querySelector(".pair-comparison").open, "saving review keeps the comparison open");
 assert.ok(document.querySelector(".pair-table"), "cached comparison survives review rerender");
@@ -459,6 +461,8 @@ const nearJson = JSON.parse(await exportedBlob.text());
 assert.equal(nearJson.geometry_validation.near_duplicate_scan.tolerance_mm, 5);
 assert.equal(nearJson.geometry_validation.near_duplicate_acceptance_matrix.passed_cases, 12);
 assert.equal(nearJson.model_sha256.length, 64);
+assert.equal(nearJson.exporter_version, '0.7.15');
+assert.equal(nearJson.duplicate_review_summary.detection_accuracy_status, 'not_measured_by_review_decisions_alone');
 URL.createObjectURL = createObjectURL;
 window.HTMLAnchorElement.prototype.click = anchorClick;
 
@@ -491,5 +495,78 @@ while (!/Near-duplicate scan disabled/.test(document.querySelector('#geometrySta
 assert.equal(document.querySelectorAll('[data-rule-id="near_duplicate_candidate"]').length, 0);
 assert.equal(document.querySelectorAll('[data-rule-id="exact_duplicate_candidate"]').length, 1, 'disabling near checks retains exact detection');
 
+// The Stage 3 reference probe must expose, rather than hide, known engine misses.
+document.querySelector('#hardClashReferenceButton').click();
+let clashDeadline = Date.now()+10000;
+while (document.querySelector('#hardClashEvidenceButton').disabled && Date.now()<clashDeadline) {
+  await new Promise(resolve => setTimeout(resolve,25));
+}
+assert.match(document.querySelector('#hardClashReferenceStatus').textContent,/FAIL.*14\/18/);
+assert.equal(document.querySelectorAll('#hardClashReferenceStatus tbody tr').length,18);
+assert.equal(document.querySelector('#hardClashModelButton').disabled,true);
+assert.match(document.querySelector('#hardClashReferenceStatus').textContent,/FALSE_NEGATIVE/);
+URL.createObjectURL = blob => {exportedBlob=blob; return createObjectURL(blob);};
+window.HTMLAnchorElement.prototype.click = function () {exportedName=this.download;};
+document.querySelector('#hardClashEvidenceButton').click();
+const clashJson=JSON.parse(await exportedBlob.text());
+assert.equal(exportedName,'stage3-hard-clash-reference.json');
+assert.equal(clashJson.exporter_version,'0.7.15');
+assert.equal(clashJson.model_clash_checking_enabled,false);
+assert.equal(clashJson.failed_cases,4);
+document.querySelector('#jsonButton').click();
+const withReference=JSON.parse(await exportedBlob.text());
+assert.equal(withReference.hard_clash_reference.failed_cases,4);
+assert.equal(withReference.model_hard_clash_status,'not_evaluated_stage3_not_released');
+const currentFetch=globalThis.fetch;
+globalThis.fetch=(input,init)=>String(input)==='/api/hard-clash-reference'
+  ? Promise.resolve(new Response(JSON.stringify({error:'Simulated reference failure'}),{status:500,headers:{'Content-Type':'application/json'}})) : currentFetch(input,init);
+document.querySelector('#hardClashReferenceButton').click();
+await new Promise(resolve=>setTimeout(resolve,25));
+assert.match(document.querySelector('#hardClashReferenceStatus').textContent,/Simulated reference failure.*remains blocked/);
+assert.equal(document.querySelector('#hardClashEvidenceButton').disabled,true,'failed rerun cannot export a stale matrix');
+assert.equal(document.querySelector('#hardClashReferenceButton').disabled,false,'failed reference test can be retried');
+assert.equal(document.querySelector('#hardClashModelButton').disabled,true);
+globalThis.fetch=currentFetch;
+// Simulate the identified persisted test record without uploading the large
+// office IFC. A storage write failure must not discard its archived history.
+const officeSha='f99b62ccadd9d625c64c4b68f89eda544ea8cac5986970d0a21473d9fcb3fd76';
+const officeReviewKey='duplicate_opening_candidate|66076|108748';
+const officeStorageKey=`openbim-qc:duplicate-reviews:v1:sha256:${officeSha}`;
+const testReview={review_status:'confirmed_duplicate',review_note:'Synthetic reference case: expected matching geometry and offset verified against the configured tolerance. Decision recorded to test review persistence.',reviewed_at:'2026-10-08T07:42:14Z'};
+localStorage.setItem(officeStorageKey,JSON.stringify({[officeReviewKey]:testReview}));
+const nativeSetItem=window.Storage.prototype.setItem;
+window.Storage.prototype.setItem=function () {throw new Error('Simulated storage quota');};
+let migrationFilename='review-migration-storage-failure.ifc';
+globalThis.fetch=(input,init)=>String(input)==='/api/models'
+  ? Promise.resolve(new Response(JSON.stringify({model_id:'migration-fixture',model_sha256:officeSha,
+      analysis:{...nearJson,filename:migrationFilename,issues:[]}}),{status:201,headers:{'Content-Type':'application/json'}})) : currentFetch(input,init);
+const uploadMigration=async()=>{
+  Object.defineProperty(uploadInput,'files',{configurable:true,value:[new File([nearText],migrationFilename)]});
+  uploadInput.dispatchEvent(new window.Event('change'));
+  const deadline=Date.now()+10000;
+  while(document.querySelector('#modelName').textContent!==migrationFilename && Date.now()<deadline) {
+    await new Promise(resolve=>setTimeout(resolve,25));
+  }
+  assert.equal(document.querySelector('#modelName').textContent,migrationFilename);
+};
+await uploadMigration();
+document.querySelector('#jsonButton').click();
+const corrected=JSON.parse(await exportedBlob.text());
+assert.equal(corrected.duplicate_review_ledger[officeReviewKey].review_status,'unresolved');
+assert.equal(corrected.duplicate_review_ledger[officeReviewKey].review_history.length,1);
+assert.equal(corrected.duplicate_review_ledger[officeReviewKey].review_history[0].review_note,testReview.review_note);
+assert.equal(JSON.parse(localStorage.getItem(officeStorageKey))[officeReviewKey].review_status,'confirmed_duplicate','failed save retains the original disk record');
+window.Storage.prototype.setItem=nativeSetItem;
+migrationFilename='review-migration-success.ifc';
+await uploadMigration();
+const savedCorrection=JSON.parse(localStorage.getItem(officeStorageKey))[officeReviewKey];
+assert.equal(savedCorrection.review_status,'unresolved');
+assert.equal(savedCorrection.review_history.length,1);
+migrationFilename='review-migration-idempotence.ifc';
+await uploadMigration();
+assert.deepEqual(JSON.parse(localStorage.getItem(officeStorageKey))[officeReviewKey],savedCorrection,'reopening does not add another archive or change timestamps');
+globalThis.fetch=currentFetch;
+URL.createObjectURL=createObjectURL;
+window.HTMLAnchorElement.prototype.click=anchorClick;
 serverProcess?.kill();
 console.log("frontend interaction tests passed");

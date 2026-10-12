@@ -13,6 +13,7 @@ import sys
 import re
 from time import perf_counter
 from typing import Callable
+from .version import APP_VERSION
 
 from .geometry_evidence import (mesh_metrics, extraction_failure, representation_details, rule_register,
     POSITION_TOLERANCE_M, SHAPE_ABSOLUTE_TOLERANCES, SHAPE_RELATIVE_TOLERANCE, PROFILE_VERSION)
@@ -603,7 +604,7 @@ def diagnose_geometry_file(
     result["provenance"] = {
         "model_filename": source.name, "model_sha256": digest.hexdigest(),
         "model_size_bytes": source.stat().st_size, "generated_at": datetime.now(timezone.utc).isoformat(),
-        "app_version": "0.7.10", "python_version": sys.version.split()[0], "platform": platform.platform(),
+        "app_version": APP_VERSION, "python_version": sys.version.split()[0], "platform": platform.platform(),
         "settings": {"use_world_coords": True, "batch_size": result["performance_profile"]["iterator_batch_size"], "threads": result["threads"]},
         "browser_engine_version": (browser_evidence or {}).get("engine_version"),
     }

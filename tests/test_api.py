@@ -33,6 +33,16 @@ class ApiTests(unittest.TestCase):
         with urlopen(f"{self.base}/api/health") as response:
             self.assertEqual({"status": "ok"}, json.load(response))
 
+    def test_hard_clash_reference_is_diagnostic_and_blocks_model_verdicts(self):
+        with urlopen(f"{self.base}/api/hard-clash-reference") as response:
+            result = json.load(response)
+        self.assertFalse(result["model_clash_checking_enabled"])
+        self.assertEqual("blocked_reference_failure",result["gate_status"])
+        self.assertEqual((14,18),(result["passed_cases"],result["total_cases"]))
+        with urlopen(f"{self.base}/api/hard-clash-sample") as response:
+            self.assertIn("hard_clash_matrix.ifc",response.headers["Content-Disposition"])
+            self.assertEqual((ROOT/"samples/golden/hard_clash_matrix.ifc").read_bytes(),response.read())
+
     def test_capacity_allows_100_mb_ifc_with_json_overhead(self):
         self.assertEqual(100 * 1024 * 1024, MAX_IFC_BYTES)
         self.assertGreater(MAX_BODY_BYTES, MAX_IFC_BYTES)
@@ -298,9 +308,19 @@ class ApiTests(unittest.TestCase):
         with urlopen(request) as response:
             result = json.load(response)
         self.assertEqual("ifcopenshell", result["engine"])
-        self.assertEqual(2, result["by_rule"]["hard_clash"])
+        self.assertNotIn("hard_clash", result["by_rule"])
+        self.assertFalse(result["config"]["hard_clashes"])
         self.assertEqual(1, result["by_rule"]["exact_duplicate_candidate"])
         self.assertTrue(result["duplicate_acceptance_matrix"]["passed"])
+
+    def test_legacy_api_cannot_bypass_later_stage_gates(self):
+        for name in ["hard_clashes", "clearance_clashes", "connectivity", "alignment", "dimensions"]:
+            request = Request(f"{self.base}/api/geometry-checks", data=json.dumps({
+                "config": {name: True},
+            }).encode(), headers={"Content-Type":"application/json"}, method="POST")
+            with self.assertRaises(HTTPError) as context: urlopen(request)
+            self.assertEqual(400,context.exception.code)
+            self.assertIn("not released",json.load(context.exception)["error"])
 
     def test_geometry_diagnostics_pass_demo(self):
         from ifcqc.geometry_diagnostics import diagnose_geometry
