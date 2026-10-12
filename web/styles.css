@@ -39,6 +39,7 @@ h1 { max-width: 680px; font: 600 clamp(42px, 6vw, 72px)/.98 Georgia, serif; lett
 .button { border: 0; border-radius: 10px; padding: 11px 16px; cursor: pointer; font-weight: 700; font-size: 13px; }
 .primary { background: var(--ink); color: white; }
 .secondary { background: white; color: var(--ink); border: 1px solid var(--line); }
+.danger { background: #fff1ee; color: var(--error); border: 1px solid #e4b9b0; }
 .workspace { margin-top: 70px; }
 .hidden { display: none !important; }
 .model-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
@@ -57,6 +58,8 @@ h3 { margin: 0; font-size: 17px; }
 .diagnostic-not_run strong { color: var(--muted); }
 .diagnostics-status details { margin-top: 8px; }
 .diagnostics-status details ul { margin: 6px 0; }
+.progress-track { height: 7px; margin-top: 10px; overflow: hidden; border-radius: 99px; background: #dfe5dc; }
+.progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--green); transition: width .25s ease; }
 .experimental-panel { border-style: dashed; }
 .foundation-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
 .claim-boundary { margin: -4px 0 14px; padding: 10px 14px; border-left: 4px solid var(--info); background: #f2f8fb; color: var(--muted); font-size: 12px; line-height: 1.5; }

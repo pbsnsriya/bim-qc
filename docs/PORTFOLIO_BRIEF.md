@@ -42,8 +42,17 @@ IfcRoot objects participate in GlobalId checks, physical elements receive
 element-quality rules, aggregate parents resolve to geometric children, and
 subtractive openings resolve to their host. The local upload path accepts IFC
 files up to 100 MiB and caps DOM rendering to 250 issue rows while retaining all
-findings for filtering and export. It has been exercised with models around
-77–78 MiB, including an 809,333-entity IFC.
+findings for filtering and export. A streaming multipart endpoint stores the
+model once in a bounded local session, and isolated geometry jobs add visible
+progress, real cancellation, timeout, memory, and concurrency controls. It has
+been exercised with models around 77–78 MiB, including an 809,333-entity IFC,
+plus a schema-valid 99 MiB boundary fixture.
+
+The 77.59 MiB office model completed exhaustive single-worker IfcOpenShell
+tessellation in 563.4 seconds at 99.9% coverage. The backend core gate passed,
+while the independent web-ifc comparison correctly retained a needs-attention
+result for seven element extents outside the strict 1 mm tolerance. A local
+browser probe now records actual WebGL renderer and frame evidence separately.
 
 Duplicate geometry, duplicate tags, MEP-to-structure clashes, IFC-port
 connectivity, off-axis placement, and minimum-dimension rules remain visible as

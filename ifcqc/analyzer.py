@@ -1,5 +1,7 @@
 """Application-facing IfcOpenShell semantic analysis service."""
 
+from pathlib import Path
+
 from collections import Counter
 
 from .rules import issue_summary
@@ -8,15 +10,9 @@ from .semantic_rules import (
 )
 
 
-def analyze_ifc(text: str, filename: str = "model.ifc", profile: str = "coordination") -> dict:
-    try:
-        import ifcopenshell
-    except ImportError as exc:
-        raise RuntimeError("IfcOpenShell is required for semantic IFC analysis.") from exc
-    try:
-        model = ifcopenshell.file.from_string(text)
-    except Exception as exc:
-        raise ValueError(f"IfcOpenShell could not open this IFC model: {exc}") from exc
+def _analyze_model(model, filename: str, profile: str) -> dict:
+    """Build the application result from an already-open IfcOpenShell model."""
+    import ifcopenshell
 
     enabled_rules = profile_rules(profile)
     issues = run_semantic_rules(model, enabled_rules)
@@ -71,3 +67,29 @@ def analyze_ifc(text: str, filename: str = "model.ifc", profile: str = "coordina
         "elements": element_rows,
         "issues": issue_rows,
     }
+
+
+def analyze_ifc(text: str, filename: str = "model.ifc", profile: str = "coordination") -> dict:
+    try:
+        import ifcopenshell
+    except ImportError as exc:
+        raise RuntimeError("IfcOpenShell is required for semantic IFC analysis.") from exc
+    try:
+        model = ifcopenshell.file.from_string(text)
+    except Exception as exc:
+        raise ValueError(f"IfcOpenShell could not open this IFC model: {exc}") from exc
+
+    return _analyze_model(model, filename, profile)
+
+
+def analyze_ifc_file(path: str | Path, filename: str = "model.ifc", profile: str = "coordination") -> dict:
+    """Analyse an IFC directly from disk, avoiding a second 100 MB text copy."""
+    try:
+        import ifcopenshell
+    except ImportError as exc:
+        raise RuntimeError("IfcOpenShell is required for semantic IFC analysis.") from exc
+    try:
+        model = ifcopenshell.open(str(path))
+    except Exception as exc:
+        raise ValueError(f"IfcOpenShell could not open this IFC model: {exc}") from exc
+    return _analyze_model(model, filename, profile)

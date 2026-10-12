@@ -89,10 +89,23 @@ function createScene(container) {
     selectionHelper: null,
     modelGroup: null,
     diagnostics: null,
+    frameCount: 0,
+    startedAt: performance.now(),
+    lastFrameAt: null,
+    contextLost: false,
   };
+  renderer.domElement.addEventListener("webglcontextlost", (event) => {
+    event.preventDefault();
+    current.contextLost = true;
+  });
+  renderer.domElement.addEventListener("webglcontextrestored", () => {
+    current.contextLost = false;
+  });
   const animate = () => {
     controls.update();
     renderer.render(scene, camera);
+    current.frameCount += 1;
+    current.lastFrameAt = performance.now();
     current.frame = requestAnimationFrame(animate);
   };
   animate();
@@ -287,6 +300,64 @@ export function getGeometryDiagnostics() {
   return sceneState?.diagnostics ? structuredClone(sceneState.diagnostics) : null;
 }
 
+function getRendererEvidence(current) {
+  const context = current.renderer.getContext();
+  const debugInfo = context.getExtension("WEBGL_debug_renderer_info");
+  const rendererInfo = current.renderer.info;
+  const canvasBounds = current.canvas.getBoundingClientRect();
+  return {
+    webgl_version: current.renderer.capabilities.isWebGL2 ? "WebGL 2" : "WebGL 1",
+    renderer: debugInfo
+      ? context.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+      : context.getParameter(context.RENDERER),
+    vendor: debugInfo
+      ? context.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)
+      : context.getParameter(context.VENDOR),
+    precision: current.renderer.capabilities.precision,
+    max_texture_size: current.renderer.capabilities.maxTextureSize,
+    max_samples: current.renderer.capabilities.maxSamples,
+    context_lost: current.contextLost || context.isContextLost(),
+    canvas_css_pixels: [Math.round(canvasBounds.width), Math.round(canvasBounds.height)],
+    drawing_buffer_pixels: [context.drawingBufferWidth, context.drawingBufferHeight],
+    render_calls: rendererInfo.render.calls,
+    rendered_triangles: rendererInfo.render.triangles,
+    gpu_geometries: rendererInfo.memory.geometries,
+    gpu_textures: rendererInfo.memory.textures,
+    frame_count: current.frameCount,
+  };
+}
+
+export async function runGpuValidation(durationMs = 2000) {
+  if (!sceneState) throw new Error("Load IFC geometry before running the browser/GPU check.");
+  const current = sceneState;
+  const startedAt = performance.now();
+  const startingFrame = current.frameCount;
+  await new Promise((resolve) => setTimeout(resolve, Math.max(500, durationMs)));
+  if (sceneState !== current) throw new Error("The active model changed during the GPU check.");
+  const elapsedMs = performance.now() - startedAt;
+  const renderedFrames = current.frameCount - startingFrame;
+  const evidence = getRendererEvidence(current);
+  const geometry = current.diagnostics || {};
+  const checks = [
+    { id: "webgl_context", passed: Boolean(evidence.webgl_version) && !evidence.context_lost, message: `${evidence.webgl_version} context is active.` },
+    { id: "canvas_size", passed: evidence.drawing_buffer_pixels.every((value) => value > 0), message: `Drawing buffer is ${evidence.drawing_buffer_pixels.join(" × ")} pixels.` },
+    { id: "visible_meshes", passed: Number(geometry.mesh_groups || 0) > 0, message: `${Number(geometry.mesh_groups || 0).toLocaleString()} mesh group(s) are loaded.` },
+    { id: "rendered_frames", passed: renderedFrames >= 10, message: `${renderedFrames} frames rendered during the probe.` },
+    { id: "draw_calls", passed: evidence.render_calls > 0 && evidence.rendered_triangles > 0, message: `${evidence.render_calls} draw call(s), ${evidence.rendered_triangles.toLocaleString()} triangle(s) in the latest frame.` },
+  ];
+  return {
+    passed: checks.every((check) => check.passed),
+    measured_at: new Date().toISOString(),
+    probe_duration_ms: Math.round(elapsedMs),
+    probe_frames: renderedFrames,
+    average_fps: Math.round((renderedFrames * 1000 / Math.max(elapsedMs, 1)) * 10) / 10,
+    geometry: structuredClone(geometry),
+    renderer: evidence,
+    checks,
+    claim_boundary: "This proves that this browser created an active WebGL context and rendered the loaded IFC during the probe. It does not benchmark every interaction or prove drawing/design correctness.",
+  };
+}
+
 // A stable global bridge avoids browsers failing on a late dynamic import.
 globalThis.OpenBIMViewer = {
   loadIfcGeometry,
@@ -294,6 +365,7 @@ globalThis.OpenBIMViewer = {
   selectExpressIDs,
   clearSelection,
   getGeometryDiagnostics,
+  runGpuValidation,
   applySelectionAppearance,
   restoreMaterialStates,
   fitCameraToBox,

@@ -5,7 +5,9 @@ from __future__ import annotations
 from collections import Counter
 from math import isfinite
 from os import cpu_count
+from pathlib import Path
 from time import perf_counter
+from typing import Callable
 
 
 MINIMUM_GEOMETRY_COVERAGE = 0.95
@@ -121,8 +123,16 @@ def _compare_browser_evidence(
     }
 
 
-def diagnose_geometry(ifc_text: str, browser_evidence: dict | None = None) -> dict:
-    """Verify the IFC-to-world-geometry pipeline before coordination rules run."""
+ProgressCallback = Callable[[dict], None]
+
+
+def _diagnose_model(
+    model,
+    source_size: int,
+    browser_evidence: dict | None = None,
+    progress_callback: ProgressCallback | None = None,
+) -> dict:
+    """Verify geometry for an open model, optionally emitting bounded progress."""
     started = perf_counter()
     try:
         import ifcopenshell
@@ -133,20 +143,23 @@ def diagnose_geometry(ifc_text: str, browser_evidence: dict | None = None) -> di
             "IfcOpenShell is required for geometry diagnostics. Install the project dependencies."
         ) from exc
 
-    try:
-        model = ifcopenshell.file.from_string(ifc_text)
-    except Exception as exc:
-        raise ValueError(f"IfcOpenShell could not open this IFC model: {exc}") from exc
-
     products = _physical_products(model)
     represented = [element for element in products if getattr(element, "Representation", None)]
     represented_by_id = {element.id(): element for element in represented}
     # Every worker may hold substantial OpenCASCADE state. Large IFCs are kept
     # single-threaded to avoid multiplying tessellation memory and killing the
     # local server process.
-    large_model = len(ifc_text) > 25 * 1024 * 1024 or len(represented) > 500
+    large_model = source_size > 25 * 1024 * 1024 or len(represented) > 500
     thread_count = 1 if large_model else max(1, min(cpu_count() or 1, 8))
     unit_name, unit_scale = _unit_details(model)
+    if progress_callback:
+        progress_callback({
+            "phase": "tessellating",
+            "processed": 0,
+            "total": len(represented),
+            "percent": 0.0,
+            "message": f"Preparing {len(represented)} represented product(s).",
+        })
 
     settings = ifcopenshell.geom.settings()
     settings.set("use-world-coords", True)
@@ -180,6 +193,15 @@ def diagnose_geometry(ifc_text: str, browser_evidence: dict | None = None) -> di
                     ]
                 else:
                     invalid_vertex_elements.append(element_id)
+                processed = len(successful_ids)
+                if progress_callback and (processed == 1 or processed % 25 == 0 or processed == len(represented)):
+                    progress_callback({
+                        "phase": "tessellating",
+                        "processed": processed,
+                        "total": len(represented),
+                        "percent": round(processed * 100 / max(len(represented), 1), 1),
+                        "message": f"Tessellated {processed} of {len(represented)} represented product(s).",
+                    })
                 if not iterator.next():
                     break
     except Exception as exc:  # Iterator failures are reported with element-level retries below.
@@ -277,7 +299,7 @@ def diagnose_geometry(ifc_text: str, browser_evidence: dict | None = None) -> di
     core_ready = all(check["status"] == "pass" for check in core_checks)
     ready = core_ready and cross_engine["status"] == "pass"
 
-    return {
+    result = {
         "stage": 1,
         "ready": ready,
         "core_ready": core_ready,
@@ -325,3 +347,47 @@ def diagnose_geometry(ifc_text: str, browser_evidence: dict | None = None) -> di
         "failed_elements": failed_elements[:100],
         "failed_elements_truncated": len(failed_elements) > 100,
     }
+    if progress_callback:
+        progress_callback({
+            "phase": "complete",
+            "processed": len(represented),
+            "total": len(represented),
+            "percent": 100.0,
+            "message": "Geometry extraction evidence is complete.",
+        })
+    return result
+
+
+def diagnose_geometry(ifc_text: str, browser_evidence: dict | None = None) -> dict:
+    """Verify geometry from IFC text (legacy/small-model API)."""
+    try:
+        import ifcopenshell
+    except ImportError as exc:
+        raise RuntimeError(
+            "IfcOpenShell is required for geometry diagnostics. Install the project dependencies."
+        ) from exc
+    try:
+        model = ifcopenshell.file.from_string(ifc_text)
+    except Exception as exc:
+        raise ValueError(f"IfcOpenShell could not open this IFC model: {exc}") from exc
+    return _diagnose_model(model, len(ifc_text.encode("utf-8")), browser_evidence)
+
+
+def diagnose_geometry_file(
+    path: str | Path,
+    browser_evidence: dict | None = None,
+    progress_callback: ProgressCallback | None = None,
+) -> dict:
+    """Verify geometry directly from an IFC file without duplicating it as JSON text."""
+    try:
+        import ifcopenshell
+    except ImportError as exc:
+        raise RuntimeError(
+            "IfcOpenShell is required for geometry diagnostics. Install the project dependencies."
+        ) from exc
+    source = Path(path)
+    try:
+        model = ifcopenshell.open(str(source))
+    except Exception as exc:
+        raise ValueError(f"IfcOpenShell could not open this IFC model: {exc}") from exc
+    return _diagnose_model(model, source.stat().st_size, browser_evidence, progress_callback)

@@ -5,7 +5,7 @@ information-quality issues, and exporting a review report.
 
 ## What works now
 
-- Drag-and-drop IFC upload up to 100 MB in the browser
+- Streaming multipart IFC upload up to 100 MiB; each model is sent once
 - Interactive local 3D geometry with orbit and zoom controls
 - Issue-to-model highlighting with camera framing and direct 3D selection
 - IFC2x3 / IFC4 schema detection
@@ -31,6 +31,10 @@ information-quality issues, and exporting a review report.
   features, metadata records, and genuine missing representations
 - Large-result protection: at most 250 issue rows are rendered at once while
   JSON and CSV exports retain the full result set
+- Isolated Stage 1 geometry jobs with live product progress, cancellation,
+  a 15-minute limit, a 4 GiB worker-memory ceiling, and one concurrent job
+- Browser/GPU evidence probe reporting WebGL version, renderer, drawing-buffer
+  size, loaded meshes, draw calls, rendered triangles, frames, and average FPS
 
 The 3D path uses the open-source `web-ifc` WASM parser and Three.js, both
 vendored so the app runs without a CDN or internet connection. If WebGL or
@@ -47,10 +51,13 @@ python3 server.py
 
 Open <http://127.0.0.1:8000>. Choose `Load demo model` or upload an IFC file.
 
-The upload limit is 100 MiB. JSON request overhead is allowed separately by the
-local server. Large-model semantic analysis remains interactive, while full
-IfcOpenShell tessellation automatically uses a single memory-conservative
-worker and may take several minutes for complex models.
+The upload limit is 100 MiB. The browser uses multipart upload and the local
+server keeps a bounded temporary model session, so IDS, profile changes, and
+geometry operations do not resend the IFC. Large-model semantic analysis
+remains interactive, while full IfcOpenShell tessellation runs in an isolated,
+single-worker background job. The UI reports product progress and provides a
+real cancel button; a 15-minute timeout and 4 GiB address-space ceiling protect
+the main application process.
 
 After loading a model, choose **Validate IDS** for your own `.ids` file or
 **Try sample IDS**. The dependency-free validator supports entity applicability
@@ -89,7 +96,9 @@ before the experimental coordination checks unlock. The evidence report shows:
   vertices/triangles, failures, warnings, and processing time.
 
 After validation, choose **Export evidence JSON** to retain the complete matrix,
-engine versions, measurements, deltas, tolerances, and conclusion.
+engine versions, measurements, deltas, tolerances, browser/GPU probe, and
+conclusion. Choose **Run browser/GPU check** after the 3D model loads and keep
+the tab visible during its two-second frame probe.
 
 This is deliberately an **extraction-consistency** claim. It proves that known
 fixtures behave as expected and that two geometry engines agree on the uploaded
@@ -127,11 +136,10 @@ synchronization, clearing, and accessible issue controls.
 ## Architecture
 
 ```text
-Browser UI -> web-ifc/Three.js geometry + issue highlighting
-     |
-     +------> JSON API -> IFC STEP rules ------> JSON / CSV
-                         + IfcOpenShell geometry ----> clashes / duplicates
-                         + IDS subset ----------> BCF 2.1
+Browser UI -> one multipart IFC upload -> bounded local model session
+     |                                      |
+     +-> web-ifc/Three.js viewer            +-> semantic QC / IDS / exports
+                                            +-> isolated geometry job
 ```
 
 IfcOpenShell is the semantic and engineering source of truth. web-ifc handles

@@ -56,6 +56,21 @@ globalThis.OpenBIMViewer = {
   selectExpressIDs(ids) { calls.selected.push(...ids); return true; },
   selectExpressID(id) { calls.selected.push(id); return true; },
   clearSelection() { calls.cleared += 1; },
+  async runGpuValidation() {
+    return {
+      passed: true,
+      probe_duration_ms: 2000,
+      probe_frames: 120,
+      average_fps: 60,
+      geometry: { mesh_groups: 5, triangles: 1200 },
+      renderer: { webgl_version: "WebGL 2", renderer: "Test GPU" },
+      checks: [
+        { id: "webgl_context", passed: true, message: "WebGL 2 context is active." },
+        { id: "visible_meshes", passed: true, message: "5 mesh groups are loaded." },
+      ],
+      claim_boundary: "Browser rendering evidence only.",
+    };
+  },
 };
 
 await import(`../web/app.js?frontend-test=${Date.now()}`);
@@ -98,6 +113,15 @@ assert.match(document.querySelector("#idsStatus").textContent, /1 failure/, "IDS
 assert.ok(document.querySelector('[data-rule-id="ids:wall-name"][data-entity-id="73"]'), "IDS issue remains linked to wall #73");
 assert.equal(document.querySelector("#bcfButton").disabled, false, "BCF export is available after analysis");
 
+assert.equal(document.querySelector("#gpuValidationButton").disabled, false, "GPU check unlocks after geometry loads");
+document.querySelector("#gpuValidationButton").click();
+const gpuDeadline = Date.now() + 5000;
+while (!/Browser\/GPU rendering evidence (passed|needs attention)/.test(document.querySelector("#gpuValidationStatus").textContent) && Date.now() < gpuDeadline) {
+  await new Promise((resolve) => setTimeout(resolve, 25));
+}
+assert.match(document.querySelector("#gpuValidationStatus").textContent, /Browser\/GPU rendering evidence passed/, "GPU evidence is visible");
+assert.match(document.querySelector("#gpuValidationStatus").textContent, /60 average FPS/, "GPU frame probe result is visible");
+
 assert.equal(document.querySelector("#geometryCheckButton").disabled, true, "experimental checks are gated before Stage 1 validation");
 const capabilityDeadline = Date.now() + 5000;
 while (document.querySelector("#geometryDiagnosticsButton").disabled && Date.now() < capabilityDeadline) {
@@ -106,7 +130,7 @@ while (document.querySelector("#geometryDiagnosticsButton").disabled && Date.now
 assert.equal(document.querySelector("#geometryDiagnosticsButton").disabled, false, "Stage 1 validation is enabled when IfcOpenShell is ready");
 document.querySelector("#geometryDiagnosticsButton").click();
 const diagnosticDeadline = Date.now() + 10000;
-while (document.querySelector("#geometryDiagnosticsStatus").classList.contains("hidden") && Date.now() < diagnosticDeadline) {
+while (!/Stage 1 extraction evidence (passed|needs attention)/.test(document.querySelector("#geometryDiagnosticsStatus").textContent) && Date.now() < diagnosticDeadline) {
   await new Promise((resolve) => setTimeout(resolve, 25));
 }
 assert.equal(document.querySelector("#geometryDiagnosticsStatus").classList.contains("hidden"), false, "Stage 1 diagnostic status becomes visible");

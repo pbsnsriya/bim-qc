@@ -5,6 +5,7 @@
     "test": "node ../tests/test_viewer.mjs && node ../tests/test_frontend.mjs"
   },
   "devDependencies": {
-    "jsdom": "^27.0.0"
+    "jsdom": "^27.0.0",
+    "web-ifc": "^0.0.78"
   }
 }

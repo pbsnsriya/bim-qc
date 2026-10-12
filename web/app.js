@@ -1,4 +1,4 @@
-const state = { result: null, selectedEntityId: null, viewerBaseStatus: "", baseIssues: [], idsValidation: null, geometryDiagnostics: null, geometryValidation: null, viewerDiagnostics: null, ifcopenshellAvailable: false };
+const state = { result: null, selectedEntityId: null, viewerBaseStatus: "", baseIssues: [], idsValidation: null, geometryDiagnostics: null, geometryValidation: null, viewerDiagnostics: null, gpuValidation: null, ifcopenshellAvailable: false, activeGeometryJobId: null };
 state.source = null;
 const $ = (id) => document.getElementById(id);
 
@@ -48,15 +48,46 @@ async function analyzeFile(file) {
   if (!file) throw new Error("No IFC file was received. Please choose the file again.");
   if (!file.name.toLowerCase().endsWith(".ifc")) throw new Error("Please choose an .ifc file.");
   if (file.size > 100 * 1024 * 1024) throw new Error("This version accepts IFC files up to 100 MB.");
-  setBusy(true, `Reading ${file.name}…`);
-  let content;
+  setBusy(true, `Uploading ${file.name} once…`);
+  const form = new FormData();
+  form.append("profile", $("profileSelect").value);
+  form.append("file", file, file.name);
   try {
-    content = await file.text();
-  } catch {
-    setBusy(false, "The file could not be read");
-    throw new Error("The browser could not read that IFC file.");
+    const response = await fetch("/api/models", { method: "POST", body: form });
+    const payload = await readJsonResponse(response, "Upload analysis failed.");
+    state.source = { filename: file.name, file, modelId: payload.model_id, size: file.size };
+    applyAnalysis(payload.analysis);
+    await renderGeometry(file);
+    if (file.size > 25 * 1024 * 1024) {
+      $("geometryDiagnosticsButton").title = "Large-model validation runs as a cancellable one-worker background job";
+    }
+    setBusy(false, `${payload.analysis.filename} analysed successfully`);
+  } catch (error) {
+    setBusy(false, "Upload failed — see the message below");
+    throw error;
   }
-  return requestAnalysis({ filename: file.name, content });
+}
+
+function applyAnalysis(result) {
+  state.result = result;
+  state.baseIssues = [...result.issues];
+  state.idsValidation = null;
+  state.geometryDiagnostics = null;
+  state.geometryValidation = null;
+  state.viewerDiagnostics = null;
+  state.gpuValidation = null;
+  state.activeGeometryJobId = null;
+  $("idsStatus").classList.add("hidden");
+  $("geometryDiagnosticsStatus").classList.add("hidden");
+  $("geometryStatus").classList.add("hidden");
+  $("gpuValidationStatus").classList.add("hidden");
+  $("geometryCancelButton").classList.add("hidden");
+  $("geometryCheckButton").disabled = true;
+  $("geometryEvidenceButton").disabled = true;
+  $("gpuValidationButton").disabled = true;
+  $("geometryCheckButton").title = "Stage 1 geometry validation must pass first";
+  clearEntitySelection();
+  render();
 }
 
 async function requestAnalysis(payload) {
@@ -70,20 +101,7 @@ async function requestAnalysis(payload) {
       body: JSON.stringify(payload),
     });
     const result = await readJsonResponse(response, "Analysis failed.");
-    state.result = result;
-    state.baseIssues = [...result.issues];
-    state.idsValidation = null;
-    state.geometryDiagnostics = null;
-    state.geometryValidation = null;
-    state.viewerDiagnostics = null;
-    $("idsStatus").classList.add("hidden");
-    $("geometryDiagnosticsStatus").classList.add("hidden");
-    $("geometryStatus").classList.add("hidden");
-    $("geometryCheckButton").disabled = true;
-    $("geometryEvidenceButton").disabled = true;
-    $("geometryCheckButton").title = "Stage 1 geometry validation must pass first";
-    clearEntitySelection();
-    render();
+    applyAnalysis(result);
     await renderGeometry(payload.content);
     if (payload.content.length > 25 * 1024 * 1024) {
       $("geometryDiagnosticsButton").title = "Large-model validation uses one geometry worker and may take several minutes";
@@ -98,8 +116,9 @@ async function requestAnalysis(payload) {
 async function loadDemo() {
   const response = await fetch("/api/demo-file");
   if (!response.ok) throw new Error("Demo could not be loaded.");
-  const content = await response.text();
-  await requestAnalysis({ filename: "geometry_demo.ifc", content });
+  const file = await response.blob();
+  Object.defineProperty(file, "name", { value: "geometry_demo.ifc" });
+  await analyzeFile(file);
 }
 
 async function validateIds(idsFilename, idsContent) {
@@ -108,7 +127,7 @@ async function validateIds(idsFilename, idsContent) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      content: state.source.content,
+      model_id: state.source.modelId,
       filename: state.source.filename,
       ids_filename: idsFilename,
       ids_content: idsContent,
@@ -137,7 +156,7 @@ async function runGeometryChecks() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        content: state.source.content,
+        model_id: state.source.modelId,
         config: {
           hard_clashes: $("hardClashCheck").checked,
           hard_tolerance_mm: Number($("hardToleranceInput").value),
@@ -174,64 +193,86 @@ function vectorText(values) {
 async function runGeometryDiagnostics() {
   if (!state.source || !state.result) throw new Error("Load an IFC model before validating its geometry foundation.");
   if (!state.ifcopenshellAvailable) throw new Error("IfcOpenShell is not available on the local server.");
+  if (!state.source.modelId) throw new Error("Re-upload this model to create a background-analysis session.");
   const button = $("geometryDiagnosticsButton");
   const coordinationButton = $("geometryCheckButton");
+  const status = $("geometryDiagnosticsStatus");
   button.disabled = true;
   coordinationButton.disabled = true;
   button.textContent = "Validating foundation…";
-  if (state.source.content.length > 25 * 1024 * 1024) {
-    const status = $("geometryDiagnosticsStatus");
-    status.classList.remove("hidden", "diagnostics-pass", "diagnostics-fail");
-    status.innerHTML = "<strong>Large-model conservative mode</strong> · Full IfcOpenShell tessellation is running with one worker to control memory. This can take several minutes; normal upload, viewing and semantic QC remain available.";
-  }
+  status.classList.remove("hidden", "diagnostics-pass", "diagnostics-fail");
+  status.innerHTML = "<strong>Starting isolated geometry worker…</strong>";
   try {
-    const [diagnosticResponse, acceptanceResponse] = await Promise.all([
-      fetch("/api/geometry-diagnostics", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: state.source.content,
-          browser_evidence: state.viewerDiagnostics,
-        }),
-      }),
-      fetch("/api/geometry-acceptance"),
-    ]);
-    const result = await readJsonResponse(diagnosticResponse, "Geometry foundation validation failed.");
+    const startResponse = await fetch("/api/geometry-jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model_id: state.source.modelId, browser_evidence: state.viewerDiagnostics }),
+    });
+    const started = await readJsonResponse(startResponse, "Geometry foundation validation could not start.");
+    state.activeGeometryJobId = started.job_id;
+    $("geometryCancelButton").classList.remove("hidden");
+    let job;
+    while (state.activeGeometryJobId === started.job_id) {
+      const response = await fetch(`/api/geometry-jobs/${started.job_id}`);
+      job = await readJsonResponse(response, "Geometry job status could not be read.");
+      const count = job.total == null ? "" : ` · ${Number(job.processed || 0).toLocaleString()}/${Number(job.total).toLocaleString()}`;
+      const percent = job.percent == null ? "" : ` · ${job.percent}%`;
+      status.innerHTML = `<strong>${escapeHtml(job.message || "Geometry validation is running.")}</strong>${count}${percent}<div class="progress-track"><span style="width:${Math.max(0, Math.min(100, Number(job.percent || 0)))}%"></span></div>`;
+      if (["completed", "failed", "cancelled", "timed_out"].includes(job.state)) break;
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+    if (state.activeGeometryJobId !== started.job_id) return;
+    if (!job || job.state === "cancelled") return;
+    if (job.state !== "completed" || !job.result) throw new Error(job.error || "Geometry validation did not complete.");
+    const acceptanceResponse = await fetch("/api/geometry-acceptance");
     const acceptance = await readJsonResponse(acceptanceResponse, "Known-answer acceptance matrix failed.");
-    result.acceptance_matrix = acceptance;
-    result.ready = result.ready && acceptance.passed;
-    state.geometryDiagnostics = result;
-    const status = $("geometryDiagnosticsStatus");
-    const checkRows = result.checks.map((check) => {
-      const label = check.status === "pass" ? "PASS" : check.status === "fail" ? "FAIL" : "NOT RUN";
-      return `<li class="diagnostic-${check.status}"><strong>${label}</strong> ${escapeHtml(check.message)}</li>`;
-    }).join("");
-    const failures = result.failed_elements.length
-      ? `<details><summary>${result.failed_elements.length} failed element(s)</summary><ul>${result.failed_elements.map((item) => `<li>#${item.step_id} ${escapeHtml(item.type)} · ${escapeHtml(item.error)}</li>`).join("")}</ul></details>`
-      : "";
-    const warnings = result.warnings.length
-      ? `<p><strong>Review:</strong> ${result.warnings.map(escapeHtml).join(" ")}</p>`
-      : "";
-    status.classList.toggle("diagnostics-pass", result.ready);
-    status.classList.toggle("diagnostics-fail", !result.ready);
-    const matrixRows = acceptance.cases.map((item) =>
-      `<li class="diagnostic-${item.passed ? "pass" : "fail"}"><strong>${item.passed ? "PASS" : "FAIL"}</strong> ${escapeHtml(item.purpose)}</li>`
-    ).join("");
-    status.innerHTML = `<strong>${result.ready ? "Stage 1 extraction evidence passed" : "Stage 1 extraction evidence needs attention"}</strong> · ${escapeHtml(result.schema)} · ${escapeHtml(result.units.length)} (${result.units.metres_per_project_unit} m/unit) · ${result.duration_ms} ms<br>` +
-      `${result.counts.generated_shapes}/${result.counts.represented_products} represented shapes (${result.coverage_percent}%) · ${result.counts.vertices} vertices · ${result.counts.triangles} triangles<br>` +
-      `Bounds min [${vectorText(result.bounds_metres.minimum)}] m · max [${vectorText(result.bounds_metres.maximum)}] m` +
-      `<ul class="diagnostic-checks">${checkRows}</ul>` +
-      `<details open><summary><strong>Known-answer matrix: ${acceptance.passed_cases}/${acceptance.total_cases} cases passed</strong> · tolerance ${acceptance.tolerance_metres * 1000} mm</summary><ul class="diagnostic-checks">${matrixRows}</ul></details>` +
-      `<p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(result.claim_boundary)}</p>${warnings}${failures}`;
-    status.classList.remove("hidden");
-    coordinationButton.disabled = !result.ready;
-    $("geometryEvidenceButton").disabled = false;
-    coordinationButton.title = result.ready ? "Stage 1 extraction evidence passed; experimental rule prototypes are available" : "Stage 1 extraction evidence must pass first";
-    toast(result.ready ? "Stage 1 extraction evidence passed" : "Stage 1 found extraction evidence problems");
+    finishGeometryDiagnostics(job.result, acceptance);
   } finally {
+    state.activeGeometryJobId = null;
+    $("geometryCancelButton").classList.add("hidden");
     button.disabled = false;
     button.textContent = "Verify extraction evidence";
   }
+}
+
+function finishGeometryDiagnostics(result, acceptance) {
+  result.acceptance_matrix = acceptance;
+  result.ready = result.ready && acceptance.passed;
+  state.geometryDiagnostics = result;
+  const status = $("geometryDiagnosticsStatus");
+  const checkRows = result.checks.map((check) => {
+    const label = check.status === "pass" ? "PASS" : check.status === "fail" ? "FAIL" : "NOT RUN";
+    return `<li class="diagnostic-${check.status}"><strong>${label}</strong> ${escapeHtml(check.message)}</li>`;
+  }).join("");
+  const failures = result.failed_elements.length
+    ? `<details><summary>${result.failed_elements.length} failed element(s)</summary><ul>${result.failed_elements.map((item) => `<li>#${item.step_id} ${escapeHtml(item.type)} · ${escapeHtml(item.error)}</li>`).join("")}</ul></details>`
+    : "";
+  const warnings = result.warnings.length ? `<p><strong>Review:</strong> ${result.warnings.map(escapeHtml).join(" ")}</p>` : "";
+  status.classList.toggle("diagnostics-pass", result.ready);
+  status.classList.toggle("diagnostics-fail", !result.ready);
+  const matrixRows = acceptance.cases.map((item) =>
+    `<li class="diagnostic-${item.passed ? "pass" : "fail"}"><strong>${item.passed ? "PASS" : "FAIL"}</strong> ${escapeHtml(item.purpose)}</li>`
+  ).join("");
+  status.innerHTML = `<strong>${result.ready ? "Stage 1 extraction evidence passed" : "Stage 1 extraction evidence needs attention"}</strong> · ${escapeHtml(result.schema)} · ${escapeHtml(result.units.length)} (${result.units.metres_per_project_unit} m/unit) · ${result.duration_ms} ms<br>` +
+    `${result.counts.generated_shapes}/${result.counts.represented_products} represented shapes (${result.coverage_percent}%) · ${result.counts.vertices} vertices · ${result.counts.triangles} triangles<br>` +
+    `Bounds min [${vectorText(result.bounds_metres.minimum)}] m · max [${vectorText(result.bounds_metres.maximum)}] m` +
+    `<ul class="diagnostic-checks">${checkRows}</ul>` +
+    `<details open><summary><strong>Known-answer matrix: ${acceptance.passed_cases}/${acceptance.total_cases} cases passed</strong> · tolerance ${acceptance.tolerance_metres * 1000} mm</summary><ul class="diagnostic-checks">${matrixRows}</ul></details>` +
+    `<p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(result.claim_boundary)}</p>${warnings}${failures}`;
+  $("geometryCheckButton").disabled = !result.ready;
+  $("geometryEvidenceButton").disabled = false;
+  $("geometryCheckButton").title = result.ready ? "Stage 1 extraction evidence passed; experimental rule prototypes are available" : "Stage 1 extraction evidence must pass first";
+  toast(result.ready ? "Stage 1 extraction evidence passed" : "Stage 1 found extraction evidence problems");
+}
+
+async function cancelGeometryDiagnostics() {
+  if (!state.activeGeometryJobId) return;
+  const jobId = state.activeGeometryJobId;
+  const response = await fetch(`/api/geometry-jobs/${jobId}/cancel`, { method: "POST" });
+  await readJsonResponse(response, "Geometry validation could not be cancelled.");
+  state.activeGeometryJobId = null;
+  $("geometryDiagnosticsStatus").innerHTML = "<strong>Geometry validation was cancelled.</strong> Semantic QC and the 3D viewer remain available.";
+  toast("Geometry validation cancelled");
 }
 
 async function loadSampleIds() {
@@ -241,17 +282,23 @@ async function loadSampleIds() {
   await validateIds("wall-naming.ids", await response.text());
 }
 
-async function renderGeometry(content) {
+async function renderGeometry(source) {
   $("viewerStatus").textContent = "Loading geometry…";
   try {
     // The viewer loads independently so QC remains usable if WebGL is unavailable.
     const loadIfcGeometry = globalThis.OpenBIMViewer?.loadIfcGeometry;
     if (!loadIfcGeometry) throw new Error("Viewer module did not start");
-    const count = await loadIfcGeometry(new TextEncoder().encode(content), $("viewer"));
+    const bytes = source instanceof Uint8Array
+      ? source
+      : typeof source === "string"
+        ? new TextEncoder().encode(source)
+        : new Uint8Array(await source.arrayBuffer());
+    const count = await loadIfcGeometry(bytes, $("viewer"));
     state.viewerDiagnostics = globalThis.OpenBIMViewer?.getGeometryDiagnostics?.() || null;
     if (count > 0) {
       $("modelMap").classList.add("hidden");
       setViewerStatus(`${count} mesh groups · Click an issue or model element`);
+      $("gpuValidationButton").disabled = false;
     } else {
       $("modelMap").classList.remove("hidden");
       renderMap();
@@ -267,6 +314,33 @@ async function renderGeometry(content) {
   }
 }
 
+async function runBrowserGpuValidation() {
+  const runGpuValidation = globalThis.OpenBIMViewer?.runGpuValidation;
+  if (!runGpuValidation) throw new Error("The browser/GPU evidence probe is unavailable. Refresh the application.");
+  const button = $("gpuValidationButton");
+  const status = $("gpuValidationStatus");
+  button.disabled = true;
+  button.textContent = "Testing browser/GPU…";
+  status.classList.remove("hidden", "diagnostics-pass", "diagnostics-fail");
+  status.innerHTML = "<strong>Rendering a two-second frame probe…</strong> Keep this tab visible.";
+  try {
+    const result = await runGpuValidation(2000);
+    state.gpuValidation = result;
+    status.classList.toggle("diagnostics-pass", result.passed);
+    status.classList.toggle("diagnostics-fail", !result.passed);
+    const checks = result.checks.map((check) =>
+      `<li class="diagnostic-${check.passed ? "pass" : "fail"}"><strong>${check.passed ? "PASS" : "FAIL"}</strong> ${escapeHtml(check.message)}</li>`
+    ).join("");
+    status.innerHTML = `<strong>${result.passed ? "Browser/GPU rendering evidence passed" : "Browser/GPU rendering evidence needs attention"}</strong> · ${escapeHtml(result.renderer.webgl_version)} · ${escapeHtml(result.renderer.renderer || "renderer hidden by browser")}<br>` +
+      `${result.probe_frames} frames in ${result.probe_duration_ms} ms · ${result.average_fps} average FPS · ${Number(result.geometry.mesh_groups || 0).toLocaleString()} mesh groups · ${Number(result.geometry.triangles || 0).toLocaleString()} loaded triangles` +
+      `<ul class="diagnostic-checks">${checks}</ul><p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(result.claim_boundary)}</p>`;
+    toast(result.passed ? "Browser/GPU evidence passed" : "Browser/GPU evidence needs attention");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Run browser/GPU check";
+  }
+}
+
 function exportGeometryEvidence() {
   if (!state.geometryDiagnostics || !state.source) return;
   const report = {
@@ -274,6 +348,7 @@ function exportGeometryEvidence() {
     generated_at: new Date().toISOString(),
     model_filename: state.source.filename,
     conclusion: state.geometryDiagnostics.ready ? "pass" : "needs_attention",
+    browser_gpu_validation: state.gpuValidation,
     ...state.geometryDiagnostics,
   };
   downloadText(
@@ -466,6 +541,8 @@ $("jsonButton").addEventListener("click", exportJson);
 $("bcfButton").addEventListener("click", async () => { try { await exportBcf(); } catch (error) { toast(error.message); } });
 $("sampleIdsButton").addEventListener("click", async () => { try { await loadSampleIds(); } catch (error) { toast(error.message); } });
 $("geometryDiagnosticsButton").addEventListener("click", async () => { try { await runGeometryDiagnostics(); } catch (error) { toast(error.message); } });
+$("gpuValidationButton").addEventListener("click", async () => { try { await runBrowserGpuValidation(); } catch (error) { toast(error.message); } });
+$("geometryCancelButton").addEventListener("click", async () => { try { await cancelGeometryDiagnostics(); } catch (error) { toast(error.message); } });
 $("geometryEvidenceButton").addEventListener("click", exportGeometryEvidence);
 $("geometryCheckButton").addEventListener("click", async () => { try { await runGeometryChecks(); } catch (error) { toast(error.message); } });
 $("idsInput").addEventListener("change", async (event) => {
@@ -479,8 +556,25 @@ $("idsInput").addEventListener("change", async (event) => {
 });
 $("profileSelect").addEventListener("change", async () => {
   if (!state.source) return;
-  try { await requestAnalysis({ ...state.source, profile: $("profileSelect").value }); }
-  catch (error) { toast(error.message); }
+  try {
+    if (!state.source.modelId) {
+      await requestAnalysis({ ...state.source, profile: $("profileSelect").value });
+      return;
+    }
+    setBusy(true, `Applying ${$("profileSelect").value.replaceAll("_", " ")} profile…`);
+    const response = await fetch(`/api/models/${state.source.modelId}/analyze`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile: $("profileSelect").value }),
+    });
+    applyAnalysis(await readJsonResponse(response, "Profile analysis failed."));
+    state.viewerDiagnostics = globalThis.OpenBIMViewer?.getGeometryDiagnostics?.() || null;
+    $("gpuValidationButton").disabled = !state.viewerDiagnostics?.mesh_groups;
+    setBusy(false, `${state.source.filename} analysed successfully`);
+  } catch (error) {
+    setBusy(false, "Profile analysis failed");
+    toast(error.message);
+  }
 });
 $("severityFilter").addEventListener("change", renderIssues);
 $("ruleFilter").addEventListener("change", renderIssues);

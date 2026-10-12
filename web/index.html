@@ -65,11 +65,14 @@
         </div>
         <div class="foundation-actions">
           <button id="geometryDiagnosticsButton" class="button primary" type="button" disabled>Verify extraction evidence</button>
+          <button id="gpuValidationButton" class="button secondary" type="button" disabled>Run browser/GPU check</button>
+          <button id="geometryCancelButton" class="button danger hidden" type="button">Cancel validation</button>
           <button id="geometryEvidenceButton" class="button secondary" type="button" disabled>Export evidence JSON</button>
         </div>
       </article>
       <p class="claim-boundary"><strong>Scope:</strong> This gate verifies geometry extraction consistency. It does not prove agreement with drawings, design intent, or site reality.</p>
       <div id="geometryDiagnosticsStatus" class="ids-status diagnostics-status hidden" role="status"></div>
+      <div id="gpuValidationStatus" class="ids-status diagnostics-status hidden" role="status"></div>
 
       <article class="coordination-panel experimental-panel">
         <div>
@@ -128,7 +131,7 @@
       document.getElementById("uploadStatus").textContent = "Start the local server before uploading";
     }
   </script>
-  <script type="module" src="./viewer.js?v=053"></script>
-  <script type="module" src="./app.js?v=053"></script>
+  <script type="module" src="./viewer.js?v=061"></script>
+  <script type="module" src="./app.js?v=061"></script>
 </body>
 </html>

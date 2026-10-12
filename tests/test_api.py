@@ -2,6 +2,7 @@ import json
 from io import BytesIO
 from pathlib import Path
 from threading import Thread
+import time
 import unittest
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
@@ -34,6 +35,91 @@ class ApiTests(unittest.TestCase):
     def test_capacity_allows_100_mb_ifc_with_json_overhead(self):
         self.assertEqual(100 * 1024 * 1024, MAX_IFC_BYTES)
         self.assertGreater(MAX_BODY_BYTES, MAX_IFC_BYTES)
+
+    def upload_model(self, fixture="geometry_demo.ifc", profile="coordination"):
+        content = (ROOT / "samples" / fixture).read_bytes()
+        boundary = "----OpenBIMQCTestBoundary"
+        body = (
+            f"--{boundary}\r\nContent-Disposition: form-data; name=\"profile\"\r\n\r\n"
+            f"{profile}\r\n--{boundary}\r\n"
+            f"Content-Disposition: form-data; name=\"file\"; filename=\"{fixture}\"\r\n"
+            "Content-Type: application/octet-stream\r\n\r\n"
+        ).encode() + content + f"\r\n--{boundary}--\r\n".encode()
+        request = Request(
+            f"{self.base}/api/models",
+            data=body,
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+            method="POST",
+        )
+        with urlopen(request) as response:
+            self.assertEqual(201, response.status)
+            return json.load(response)
+
+    def test_multipart_model_session_and_reanalysis(self):
+        uploaded = self.upload_model()
+        self.assertEqual("geometry_demo.ifc", uploaded["analysis"]["filename"])
+        self.assertGreater(uploaded["size_bytes"], 0)
+        request = Request(
+            f"{self.base}/api/models/{uploaded['model_id']}/analyze",
+            data=json.dumps({"profile": "handover"}).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urlopen(request) as response:
+            result = json.load(response)
+        self.assertEqual("handover", result["profile"])
+
+    def test_background_geometry_job_reports_progress_and_completes(self):
+        uploaded = self.upload_model()
+        backend = __import__("ifcqc.geometry_diagnostics", fromlist=["diagnose_geometry"])
+        evidence = backend.diagnose_geometry((ROOT / "samples/geometry_demo.ifc").read_text())
+        request = Request(
+            f"{self.base}/api/geometry-jobs",
+            data=json.dumps({
+                "model_id": uploaded["model_id"],
+                "browser_evidence": {
+                    "element_ids": [int(key) for key in evidence["element_extents_metres"]],
+                    "element_extents_metres": evidence["element_extents_metres"],
+                },
+            }).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urlopen(request) as response:
+            started = json.load(response)
+        states = []
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            with urlopen(f"{self.base}/api/geometry-jobs/{started['job_id']}") as response:
+                status = json.load(response)
+            states.append(status["state"])
+            if status["state"] in {"completed", "failed", "cancelled", "timed_out"}:
+                break
+            time.sleep(0.1)
+        self.assertEqual("completed", status["state"], status)
+        self.assertTrue(status["result"]["ready"])
+        self.assertEqual(100.0, status["percent"])
+        self.assertTrue({"queued", "running"} & set(states))
+
+    def test_background_geometry_job_can_be_cancelled(self):
+        uploaded = self.upload_model()
+        request = Request(
+            f"{self.base}/api/geometry-jobs",
+            data=json.dumps({"model_id": uploaded["model_id"]}).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urlopen(request) as response:
+            started = json.load(response)
+        cancel = Request(
+            f"{self.base}/api/geometry-jobs/{started['job_id']}/cancel",
+            data=b"{}",
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urlopen(cancel) as response:
+            status = json.load(response)
+        self.assertEqual("cancelled", status["state"])
 
     def test_capabilities_are_explicit(self):
         with urlopen(f"{self.base}/api/capabilities") as response:
@@ -83,6 +169,9 @@ class ApiTests(unittest.TestCase):
         self.assertIn("clearSelection", source)
         self.assertIn("new THREE.Box3Helper", source)
         self.assertIn("raycaster.intersectObjects", source)
+        self.assertIn("runGpuValidation", source)
+        self.assertIn("WEBGL_debug_renderer_info", source)
+        self.assertIn("webglcontextlost", source)
 
     def test_analyze_with_handover_profile(self):
         content = (ROOT / "samples/qc_demo.ifc").read_text()
