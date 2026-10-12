@@ -10,6 +10,7 @@ from time import perf_counter
 
 MINIMUM_GEOMETRY_COVERAGE = 0.95
 LARGE_COORDINATE_WARNING_METRES = 100_000.0
+CROSS_ENGINE_TOLERANCE_METRES = 0.001
 
 
 def _physical_products(model) -> list:
@@ -46,7 +47,81 @@ def _failure(element, error: str) -> dict:
     }
 
 
-def diagnose_geometry(ifc_text: str) -> dict:
+def _compare_browser_evidence(
+    backend_ids: set[int], backend_extents: dict[int, list[float]], browser: dict | None,
+) -> dict:
+    if not browser:
+        return {
+            "status": "not_run",
+            "tolerance_metres": CROSS_ENGINE_TOLERANCE_METRES,
+            "message": "Browser web-ifc measurements were not supplied.",
+            "missing_in_browser": sorted(backend_ids),
+            "extra_in_browser": [],
+            "compared_elements": 0,
+            "maximum_extent_delta_metres": None,
+        }
+    try:
+        browser_ids = {int(value) for value in browser.get("element_ids", [])}
+        browser_extents = {
+            int(key): [float(value) for value in values]
+            for key, values in browser.get("element_extents_metres", {}).items()
+        }
+    except (TypeError, ValueError):
+        return {
+            "status": "fail",
+            "tolerance_metres": CROSS_ENGINE_TOLERANCE_METRES,
+            "message": "Browser evidence has an invalid structure.",
+            "missing_in_browser": sorted(backend_ids),
+            "extra_in_browser": [],
+            "compared_elements": 0,
+            "maximum_extent_delta_metres": None,
+        }
+
+    missing = sorted(backend_ids - browser_ids)
+    extra = sorted(browser_ids - backend_ids)
+    extent_deltas: dict[int, float] = {}
+    for element_id in sorted(backend_ids & browser_ids):
+        candidate = browser_extents.get(element_id)
+        expected = backend_extents.get(element_id)
+        if candidate is None or expected is None or len(candidate) != 3:
+            continue
+        extent_deltas[element_id] = max(abs(a - b) for a, b in zip(expected, candidate))
+    maximum_delta = max(extent_deltas.values(), default=None)
+    missing_extents = sorted((backend_ids & browser_ids) - set(extent_deltas))
+    passed = (
+        not missing
+        and not missing_extents
+        and maximum_delta is not None
+        and maximum_delta <= CROSS_ENGINE_TOLERANCE_METRES
+    )
+    if passed:
+        message = (
+            f"IfcOpenShell and web-ifc agree for {len(extent_deltas)} element(s) "
+            f"within {CROSS_ENGINE_TOLERANCE_METRES * 1000:g} mm."
+        )
+    else:
+        message = (
+            "IfcOpenShell and web-ifc do not agree on all generated element IDs "
+            "and extents within the configured tolerance."
+        )
+    return {
+        "status": "pass" if passed else "fail",
+        "tolerance_metres": CROSS_ENGINE_TOLERANCE_METRES,
+        "message": message,
+        "missing_in_browser": missing,
+        "extra_in_browser": extra,
+        "missing_extent_ids": missing_extents,
+        "compared_elements": len(extent_deltas),
+        "maximum_extent_delta_metres": round(maximum_delta, 9) if maximum_delta is not None else None,
+        "element_extent_delta_metres": {
+            str(key): round(value, 9) for key, value in extent_deltas.items()
+        },
+        "browser_origin_mode": browser.get("origin_mode", "unknown"),
+        "browser_axis_mapping": browser.get("axis_mapping", "unknown"),
+    }
+
+
+def diagnose_geometry(ifc_text: str, browser_evidence: dict | None = None) -> dict:
     """Verify the IFC-to-world-geometry pipeline before coordination rules run."""
     started = perf_counter()
     try:
@@ -66,7 +141,11 @@ def diagnose_geometry(ifc_text: str) -> dict:
     products = _physical_products(model)
     represented = [element for element in products if getattr(element, "Representation", None)]
     represented_by_id = {element.id(): element for element in represented}
-    thread_count = max(1, min(cpu_count() or 1, 8))
+    # Every worker may hold substantial OpenCASCADE state. Large IFCs are kept
+    # single-threaded to avoid multiplying tessellation memory and killing the
+    # local server process.
+    large_model = len(ifc_text) > 25 * 1024 * 1024 or len(represented) > 500
+    thread_count = 1 if large_model else max(1, min(cpu_count() or 1, 8))
     unit_name, unit_scale = _unit_details(model)
 
     settings = ifcopenshell.geom.settings()
@@ -75,6 +154,7 @@ def diagnose_geometry(ifc_text: str) -> dict:
     vertex_count = 0
     triangle_count = 0
     invalid_vertex_elements: list[int] = []
+    element_extents: dict[int, list[float]] = {}
     minimum = np.array([np.inf, np.inf, np.inf], dtype=float)
     maximum = np.array([-np.inf, -np.inf, -np.inf], dtype=float)
     iterator_error = None
@@ -95,6 +175,9 @@ def diagnose_geometry(ifc_text: str) -> dict:
                 if len(vertices) and np.isfinite(vertices).all():
                     minimum = np.minimum(minimum, vertices.min(axis=0))
                     maximum = np.maximum(maximum, vertices.max(axis=0))
+                    element_extents[element_id] = [
+                        float(value) for value in np.ptp(vertices, axis=0)
+                    ]
                 else:
                     invalid_vertex_elements.append(element_id)
                 if not iterator.next():
@@ -121,7 +204,7 @@ def diagnose_geometry(ifc_text: str) -> dict:
     nonzero_extent = bool(finite_bounds and np.any(extents > 1e-9))
     global_id_count = sum(bool(getattr(element, "GlobalId", None)) for element in represented)
 
-    checks = [
+    core_checks = [
         {
             "id": "geometry_present",
             "status": "pass" if represented and unique_successful_ids else "fail",
@@ -166,13 +249,48 @@ def diagnose_geometry(ifc_text: str) -> dict:
     if iterator_error:
         warnings.append(f"Geometry iterator reported: {iterator_error}")
 
+    browser_expected_ids = {
+        element.id() for element in represented
+        if not element.is_a("IfcFeatureElementSubtraction")
+    } & unique_successful_ids
+    expected_browser_omissions = [
+        {
+            "step_id": element.id(),
+            "type": element.is_a(),
+            "name": getattr(element, "Name", None),
+            "reason": "Subtractive void features are not expected as separate visible solids.",
+        }
+        for element in represented
+        if element.id() in unique_successful_ids
+        and element.is_a("IfcFeatureElementSubtraction")
+    ]
+    cross_engine = _compare_browser_evidence(
+        browser_expected_ids, element_extents, browser_evidence,
+    )
+    cross_engine["expected_browser_omissions"] = expected_browser_omissions
+    cross_engine_check = {
+        "id": "cross_engine_agreement",
+        "status": cross_engine["status"],
+        "message": cross_engine["message"],
+    }
+    checks = [*core_checks, cross_engine_check]
+    core_ready = all(check["status"] == "pass" for check in core_checks)
+    ready = core_ready and cross_engine["status"] == "pass"
+
     return {
         "stage": 1,
-        "ready": all(check["status"] == "pass" for check in checks),
+        "ready": ready,
+        "core_ready": core_ready,
+        "claim": "geometry_extraction_consistency",
+        "claim_boundary": (
+            "A pass proves extraction consistency against known fixtures and two engines. "
+            "It does not prove that the model matches drawings, design intent, or site reality."
+        ),
         "engine": "ifcopenshell",
         "engine_version": str(getattr(ifcopenshell, "version", "unknown")),
         "schema": model.schema,
         "threads": thread_count,
+        "memory_mode": "large-model-conservative" if large_model else "standard",
         "duration_ms": round((perf_counter() - started) * 1000, 1),
         "units": {"length": unit_name, "metres_per_project_unit": unit_scale},
         "counts": {
@@ -197,6 +315,11 @@ def diagnose_geometry(ifc_text: str) -> dict:
             "unexpected_shape_ids": unexpected_shape_ids,
             "invalid_vertex_element_ids": sorted(invalid_vertex_elements),
         },
+        "element_extents_metres": {
+            str(key): [round(value, 6) for value in values]
+            for key, values in sorted(element_extents.items())
+        },
+        "cross_engine": cross_engine,
         "checks": checks,
         "warnings": warnings,
         "failed_elements": failed_elements[:100],

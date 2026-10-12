@@ -8,7 +8,7 @@ from urllib.request import Request, urlopen
 from zipfile import ZipFile
 
 from http.server import ThreadingHTTPServer
-from server import Handler
+from server import Handler, MAX_BODY_BYTES, MAX_IFC_BYTES
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,6 +30,10 @@ class ApiTests(unittest.TestCase):
     def test_health(self):
         with urlopen(f"{self.base}/api/health") as response:
             self.assertEqual({"status": "ok"}, json.load(response))
+
+    def test_capacity_allows_100_mb_ifc_with_json_overhead(self):
+        self.assertEqual(100 * 1024 * 1024, MAX_IFC_BYTES)
+        self.assertGreater(MAX_BODY_BYTES, MAX_IFC_BYTES)
 
     def test_capabilities_are_explicit(self):
         with urlopen(f"{self.base}/api/capabilities") as response:
@@ -74,6 +78,7 @@ class ApiTests(unittest.TestCase):
     def test_viewer_exposes_issue_selection_bridge(self):
         source = (ROOT / "web/viewer.js").read_text()
         self.assertIn("selectExpressID", source)
+        self.assertIn("selectExpressIDs", source)
         self.assertIn("ifc-element-selected", source)
         self.assertIn("clearSelection", source)
         self.assertIn("new THREE.Box3Helper", source)
@@ -137,10 +142,18 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(1, result["by_rule"]["probable_duplicate_element"])
 
     def test_geometry_diagnostics_pass_demo(self):
+        from ifcqc.geometry_diagnostics import diagnose_geometry
+
+        content = (ROOT / "samples/geometry_demo.ifc").read_text()
+        backend = diagnose_geometry(content)
         request = Request(
             f"{self.base}/api/geometry-diagnostics",
             data=json.dumps({
-                "content": (ROOT / "samples/geometry_demo.ifc").read_text(),
+                "content": content,
+                "browser_evidence": {
+                    "element_ids": [int(key) for key in backend["element_extents_metres"]],
+                    "element_extents_metres": backend["element_extents_metres"],
+                },
             }).encode(),
             headers={"Content-Type": "application/json"},
             method="POST",
@@ -150,6 +163,12 @@ class ApiTests(unittest.TestCase):
         self.assertTrue(result["ready"])
         self.assertEqual(7, result["counts"]["generated_shapes"])
         self.assertEqual(100.0, result["coverage_percent"])
+
+    def test_known_answer_geometry_matrix(self):
+        with urlopen(f"{self.base}/api/geometry-acceptance") as response:
+            result = json.load(response)
+        self.assertTrue(result["passed"])
+        self.assertEqual(6, result["passed_cases"])
 
     def test_export_bcf(self):
         request = Request(

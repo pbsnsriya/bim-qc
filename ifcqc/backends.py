@@ -1,4 +1,4 @@
-"""Optional backend discovery without making heavyweight packages mandatory."""
+"""Backend discovery for the local IFC application."""
 
 from __future__ import annotations
 
@@ -17,7 +17,8 @@ def capabilities() -> dict:
     ifcopenshell = _available("ifcopenshell")
     ifctester = _available("ifctester")
     return {
-        "semantic_backend": "ifcopenshell" if ifcopenshell else "lightweight-step",
+        "semantic_backend": "ifcopenshell" if ifcopenshell else "unavailable",
+        "semantic_backend_required": True,
         "ids_backend": "builtin-subset",
         "ifcopenshell_available": ifcopenshell,
         "ifctester_available": ifctester,

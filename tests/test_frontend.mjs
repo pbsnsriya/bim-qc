@@ -41,6 +41,19 @@ globalThis.fetch = (input, init) => nativeFetch(new URL(String(input), window.lo
 const calls = { selected: [], cleared: 0 };
 globalThis.OpenBIMViewer = {
   async loadIfcGeometry() { return 5; },
+  getGeometryDiagnostics() {
+    return {
+      engine: "web-ifc",
+      origin_mode: "model-centred",
+      element_ids: [57, 68, 73, 77, 85, 103, 104],
+      element_extents_metres: {
+        57: [8, 0.2, 3], 68: [0.2, 6, 3], 73: [8, 0.2, 3],
+        77: [0.2, 6, 3], 85: [8, 6, 0.2], 103: [0.2, 1, 0.2],
+        104: [8, 0.2, 3],
+      },
+    };
+  },
+  selectExpressIDs(ids) { calls.selected.push(...ids); return true; },
   selectExpressID(id) { calls.selected.push(id); return true; },
   clearSelection() { calls.cleared += 1; },
 };
@@ -97,9 +110,12 @@ while (document.querySelector("#geometryDiagnosticsStatus").classList.contains("
   await new Promise((resolve) => setTimeout(resolve, 25));
 }
 assert.equal(document.querySelector("#geometryDiagnosticsStatus").classList.contains("hidden"), false, "Stage 1 diagnostic status becomes visible");
-assert.match(document.querySelector("#geometryDiagnosticsStatus").textContent, /Stage 1 passed/, "geometry foundation explicitly passes");
+assert.match(document.querySelector("#geometryDiagnosticsStatus").textContent, /Stage 1 extraction evidence passed/, "geometry extraction evidence explicitly passes");
 assert.match(document.querySelector("#geometryDiagnosticsStatus").textContent, /7\/7 represented shapes \(100%\)/, "shape coverage is visible");
+assert.match(document.querySelector("#geometryDiagnosticsStatus").textContent, /Known-answer matrix: 6\/6 cases passed/, "known-answer factual matrix is visible");
+assert.match(document.querySelector("#geometryDiagnosticsStatus").textContent, /does not prove that the model matches drawings/, "claim boundary is visible");
 assert.equal(document.querySelector("#geometryCheckButton").disabled, false, "experimental checks unlock only after Stage 1 passes");
+assert.equal(document.querySelector("#geometryEvidenceButton").disabled, false, "evidence export unlocks after validation");
 
 document.querySelector("#geometryCheckButton").click();
 const geometryDeadline = Date.now() + 10000;

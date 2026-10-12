@@ -4,6 +4,7 @@ import {
   applySelectionAppearance,
   fitCameraToBox,
   restoreMaterialStates,
+  summarizeGeometryEvidence,
 } from "../web/viewer.js";
 
 const material = new THREE.MeshStandardMaterial({
@@ -43,5 +44,14 @@ assert.equal(raycaster.intersectObject(mesh, false).length > 0, true, "direct ca
 restoreMaterialStates(states);
 assert.equal(material.color.getHex(), originalColor, "clear selection restores the original colour");
 assert.equal(material.opacity, 0.65, "clear selection restores the original opacity");
+
+const firstBounds = new THREE.Box3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 2, 3));
+const secondBounds = new THREE.Box3(new THREE.Vector3(5, 5, 5), new THREE.Vector3(7, 6, 6));
+const evidence = summarizeGeometryEvidence(new Map([[10, firstBounds], [20, secondBounds]]), 16, 24, 2);
+assert.deepEqual(evidence.element_ids, [10, 20], "browser evidence records stable IFC element ids");
+assert.deepEqual(evidence.element_extents_metres["10"], [1, 3, 2], "browser evidence normalizes Y-up viewer extents to IFC Z-up axes");
+assert.deepEqual(evidence.overall_extents_metres, [7, 6, 6], "browser evidence records normalized overall extents");
+assert.equal(evidence.origin_mode, "model-centred", "browser evidence discloses coordinate recentering");
+assert.match(evidence.axis_mapping, /Y-up normalized to IFC Z-up/, "browser evidence discloses its axis mapping");
 
 console.log("viewer selection tests passed");

@@ -23,11 +23,27 @@ reports without sending project files to a third party.
 
 ## Current result
 
-Stage 1 now provides a formal IfcOpenShell geometry-foundation gate. It reports
-schema and length units, represented/generated shape coverage, world-coordinate
-bounds, STEP-id mapping, invalid geometry, vertices/triangles, processing time,
-and element-level extraction failures. The synthetic demonstration model passes
-with seven of seven represented products and 100% extraction coverage.
+Stage 1 now provides a formal geometry-extraction evidence gate. Six synthetic
+IFC fixtures provide analytically predetermined units, placements, bounds,
+schema behavior, large-coordinate warnings, and expected rejection outcomes.
+IfcOpenShell and browser web-ifc independently measure the uploaded model's
+element IDs and extents and must agree within 1 mm. The downloadable evidence
+report records the complete matrix, tolerances, engine measurements, and claim
+boundary. The demonstration model passes with seven of seven represented
+products and 100% extraction coverage.
+
+The claim is intentionally limited to extraction consistency. Agreement with
+approved drawings, schedules, survey control, design intent, or site reality
+requires a future externally referenced validation stage.
+
+The application now uses IfcOpenShell schema traversal for production semantic
+QC instead of inferring IFC attributes from raw STEP argument positions. Only
+IfcRoot objects participate in GlobalId checks, physical elements receive
+element-quality rules, aggregate parents resolve to geometric children, and
+subtractive openings resolve to their host. The local upload path accepts IFC
+files up to 100 MiB and caps DOM rendering to 250 issue rows while retaining all
+findings for filtering and export. It has been exercised with models around
+77–78 MiB, including an 809,333-entity IFC.
 
 Duplicate geometry, duplicate tags, MEP-to-structure clashes, IFC-port
 connectivity, off-axis placement, and minimum-dimension rules remain visible as

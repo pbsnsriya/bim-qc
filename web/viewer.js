@@ -4,6 +4,31 @@ import * as WebIFC from "./vendor/web-ifc/web-ifc-api.js";
 
 let sceneState = null;
 
+export function summarizeGeometryEvidence(elementBounds, vertexCount, triangleCount, meshCount) {
+  const elementExtents = {};
+  const overall = new THREE.Box3();
+  for (const [expressID, box] of elementBounds) {
+    const size = box.getSize(new THREE.Vector3());
+    // web-ifc's viewer coordinates are Y-up. Normalize measurements back to
+    // IFC/IfcOpenShell Z-up axes before cross-engine comparison.
+    elementExtents[String(expressID)] = [size.x, size.z, size.y];
+    overall.union(box);
+  }
+  const overallVector = overall.isEmpty() ? null : overall.getSize(new THREE.Vector3());
+  const overallSize = overallVector ? [overallVector.x, overallVector.z, overallVector.y] : null;
+  return {
+    engine: "web-ifc",
+    origin_mode: "model-centred",
+    axis_mapping: "web-ifc Y-up normalized to IFC Z-up [x,z,y]",
+    element_ids: [...elementBounds.keys()].sort((a, b) => a - b),
+    element_extents_metres: elementExtents,
+    overall_extents_metres: overallSize,
+    vertices: vertexCount,
+    triangles: triangleCount,
+    mesh_groups: meshCount,
+  };
+}
+
 function disposePrevious() {
   if (!sceneState) return;
   clearSelection();
@@ -63,6 +88,7 @@ function createScene(container) {
     selectedMaterials: [],
     selectionHelper: null,
     modelGroup: null,
+    diagnostics: null,
   };
   const animate = () => {
     controls.update();
@@ -147,8 +173,13 @@ export function clearSelection() {
 }
 
 export function selectExpressID(expressID, focus = true) {
+  return selectExpressIDs([expressID], focus);
+}
+
+export function selectExpressIDs(expressIDs, focus = true) {
   if (!sceneState) return false;
-  const meshes = sceneState.expressMeshes.get(Number(expressID));
+  const meshes = [...new Set(expressIDs.map(Number))]
+    .flatMap((expressID) => sceneState.expressMeshes.get(expressID) || []);
   if (!meshes?.length) return false;
   clearSelection();
   const { states, selectedBox } = applySelectionAppearance(meshes);
@@ -189,6 +220,9 @@ export async function loadIfcGeometry(bytes, container) {
   const modelID = api.OpenModel(bytes, { COORDINATE_TO_ORIGIN: true });
   const group = new THREE.Group();
   let meshCount = 0;
+  let vertexCount = 0;
+  let triangleCount = 0;
+  const elementBounds = new Map();
 
   api.StreamAllMeshes(modelID, (flatMesh) => {
     const geometries = flatMesh.geometries;
@@ -219,16 +253,27 @@ export async function loadIfcGeometry(bytes, container) {
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.expressID = flatMesh.expressID;
       mesh.applyMatrix4(new THREE.Matrix4().fromArray(placed.flatTransformation));
+      mesh.updateMatrixWorld(true);
+      geometry.computeBoundingBox();
+      const placedBounds = geometry.boundingBox.clone().applyMatrix4(mesh.matrixWorld);
+      const accumulatedBounds = elementBounds.get(flatMesh.expressID) || new THREE.Box3();
+      accumulatedBounds.union(placedBounds);
+      elementBounds.set(flatMesh.expressID, accumulatedBounds);
       group.add(mesh);
       const elementMeshes = current.expressMeshes.get(flatMesh.expressID) || [];
       elementMeshes.push(mesh);
       current.expressMeshes.set(flatMesh.expressID, elementMeshes);
       meshCount += 1;
+      vertexCount += positions.length / 3;
+      triangleCount += indexData.length / 3;
       source.delete();
     }
   });
 
   api.CloseModel(modelID);
+  current.diagnostics = summarizeGeometryEvidence(
+    elementBounds, vertexCount, triangleCount, meshCount,
+  );
   if (meshCount) {
     current.modelGroup = group;
     current.scene.add(group);
@@ -238,11 +283,17 @@ export async function loadIfcGeometry(bytes, container) {
   return meshCount;
 }
 
+export function getGeometryDiagnostics() {
+  return sceneState?.diagnostics ? structuredClone(sceneState.diagnostics) : null;
+}
+
 // A stable global bridge avoids browsers failing on a late dynamic import.
 globalThis.OpenBIMViewer = {
   loadIfcGeometry,
   selectExpressID,
+  selectExpressIDs,
   clearSelection,
+  getGeometryDiagnostics,
   applySelectionAppearance,
   restoreMaterialStates,
   fitCameraToBox,

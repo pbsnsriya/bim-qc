@@ -5,11 +5,11 @@ information-quality issues, and exporting a review report.
 
 ## What works now
 
-- Drag-and-drop IFC upload in the browser
+- Drag-and-drop IFC upload up to 100 MB in the browser
 - Interactive local 3D geometry with orbit and zoom controls
 - Issue-to-model highlighting with camera framing and direct 3D selection
 - IFC2x3 / IFC4 schema detection
-- STEP entity parsing and type counts
+- IfcOpenShell-backed semantic traversal and schema-aware type counts
 - Deterministic checks for missing names, duplicate GlobalIds, missing spatial
   containment, missing type assignment, and missing classification
 - Coordination, handover, and model-health QC profiles
@@ -18,14 +18,19 @@ information-quality issues, and exporting a review report.
 - JSON, CSV, and BCF 2.1 issue export
 - IDS validation with issue-to-model highlighting
 - IfcOpenShell geometry processing and semantic inspection
-- Stage 1 geometry-foundation diagnostics for units, world coordinates, shape
-  coverage, STEP-id mapping, finite bounds, extraction failures, and timing
+- Stage 1 geometry-extraction evidence with six analytically known IFC fixtures,
+  IfcOpenShell/web-ifc element comparison, explicit 1 mm tolerance, units,
+  world coordinates, STEP-id mapping, failures, and timing
 - Duplicate-element and duplicate-tag detection
 - MEP-to-structure hard and configurable clearance clash checks
 - IFC-port connectivity checks with explicit unverifiable-data reporting
 - Orthogonal-alignment and minimum-dimension review rules
 - Synthetic good/bad IFC fixtures and automated unit tests
 - No cloud upload: files are analysed by the local Python process
+- Precise selection outcomes for direct geometry, aggregate children, void
+  features, metadata records, and genuine missing representations
+- Large-result protection: at most 250 issue rows are rendered at once while
+  JSON and CSV exports retain the full result set
 
 The 3D path uses the open-source `web-ifc` WASM parser and Three.js, both
 vendored so the app runs without a CDN or internet connection. If WebGL or
@@ -41,6 +46,11 @@ python3 server.py
 ```
 
 Open <http://127.0.0.1:8000>. Choose `Load demo model` or upload an IFC file.
+
+The upload limit is 100 MiB. JSON request overhead is allowed separately by the
+local server. Large-model semantic analysis remains interactive, while full
+IfcOpenShell tessellation automatically uses a single memory-conservative
+worker and may take several minutes for complex models.
 
 After loading a model, choose **Validate IDS** for your own `.ids` file or
 **Try sample IDS**. The dependency-free validator supports entity applicability
@@ -67,11 +77,25 @@ IfcOpenShell if missing, then starts the application. Do not open
 
 ## Geometry coordination checks
 
-Load a model and first choose **Validate geometry foundation**. Stage 1 must
-pass before the experimental coordination checks unlock. The diagnostic report
-shows the IFC schema and length unit, represented/generated shape counts,
-coverage percentage, world-coordinate bounds, vertex/triangle counts, failed
-elements, warnings, processing time, and the individual pass/fail gates.
+Load a model and first choose **Verify extraction evidence**. Stage 1 must pass
+before the experimental coordination checks unlock. The evidence report shows:
+
+- a six-case known-answer matrix covering metre/millimetre units, IFC4/IFC2X3,
+  nested rotated placement, large coordinates, and expected rejection when a
+  product has no representation;
+- independently measured IfcOpenShell and browser web-ifc element IDs and
+  extents, compared at a 1 mm tolerance;
+- schema, units, extraction coverage, world bounds, STEP-id mapping,
+  vertices/triangles, failures, warnings, and processing time.
+
+After validation, choose **Export evidence JSON** to retain the complete matrix,
+engine versions, measurements, deltas, tolerances, and conclusion.
+
+This is deliberately an **extraction-consistency** claim. It proves that known
+fixtures behave as expected and that two geometry engines agree on the uploaded
+model. It does not prove that the IFC agrees with approved drawings, design
+intent, schedules, survey data, or the built asset; those require a selected
+external reference in a later comparison milestone.
 
 After Stage 1 passes, configure the clearance/alignment/dimension tolerances and
 choose **Run experimental checks**. Results join the normal issue list and remain
@@ -110,8 +134,10 @@ Browser UI -> web-ifc/Three.js geometry + issue highlighting
                          + IDS subset ----------> BCF 2.1
 ```
 
-The code intentionally separates parsing, rules, exchange formats, and optional
-backends so the UI issue contract remains stable.
+IfcOpenShell is the semantic and engineering source of truth. web-ifc handles
+browser rendering and independent geometry evidence. The original lightweight
+STEP parser remains only as a small educational/test utility and is not used by
+the production QC endpoint.
 
 ## Current boundary and next milestone
 

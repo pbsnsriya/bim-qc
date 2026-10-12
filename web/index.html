@@ -28,7 +28,7 @@
       <div id="dropzone" class="dropzone" tabindex="0" role="button">
         <div class="upload-icon">⇧</div>
         <strong id="uploadStatus">Drop an IFC model here</strong>
-        <span>or choose a file up to 25 MB</span>
+        <span>or choose a file up to 100 MB</span>
         <div class="actions">
           <label class="button primary">Choose IFC<input id="fileInput" type="file" accept=".ifc"></label>
           <button id="demoButton" class="button secondary">Load demo model</button>
@@ -63,8 +63,12 @@
           <h3>Validate IFC geometry pipeline</h3>
           <p class="muted">Checks units, world coordinates, shape coverage, STEP-id mapping, finite bounds and extraction failures.</p>
         </div>
-        <button id="geometryDiagnosticsButton" class="button primary" type="button" disabled>Validate geometry foundation</button>
+        <div class="foundation-actions">
+          <button id="geometryDiagnosticsButton" class="button primary" type="button" disabled>Verify extraction evidence</button>
+          <button id="geometryEvidenceButton" class="button secondary" type="button" disabled>Export evidence JSON</button>
+        </div>
       </article>
+      <p class="claim-boundary"><strong>Scope:</strong> This gate verifies geometry extraction consistency. It does not prove agreement with drawings, design intent, or site reality.</p>
       <div id="geometryDiagnosticsStatus" class="ids-status diagnostics-status hidden" role="status"></div>
 
       <article class="coordination-panel experimental-panel">
@@ -124,7 +128,7 @@
       document.getElementById("uploadStatus").textContent = "Start the local server before uploading";
     }
   </script>
-  <script type="module" src="./viewer.js?v=050"></script>
-  <script type="module" src="./app.js?v=051"></script>
+  <script type="module" src="./viewer.js?v=053"></script>
+  <script type="module" src="./app.js?v=053"></script>
 </body>
 </html>

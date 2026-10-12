@@ -11,6 +11,7 @@ from ifcqc import analyze_ifc
 from ifcqc.backends import capabilities
 from ifcqc.bcf import build_bcfzip
 from ifcqc.geometry_checks import run_geometry_checks
+from ifcqc.geometry_acceptance import run_acceptance_matrix
 from ifcqc.geometry_diagnostics import diagnose_geometry
 from ifcqc.ids_validator import validate_ids
 
@@ -18,7 +19,18 @@ from ifcqc.ids_validator import validate_ids
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
 SAMPLES = ROOT / "samples"
-MAX_BODY_BYTES = 25 * 1024 * 1024
+MAX_IFC_BYTES = 100 * 1024 * 1024
+# JSON escaping adds overhead beyond the source IFC byte count.
+MAX_BODY_BYTES = 120 * 1024 * 1024
+
+
+def require_ifc_content(payload: dict) -> str:
+    content = payload.get("content")
+    if not isinstance(content, str):
+        raise ValueError("The IFC content must be text.")
+    if len(content.encode("utf-8")) > MAX_IFC_BYTES:
+        raise ValueError("The IFC file must not exceed 100 MB.")
+    return content
 
 MIME_TYPES = {
     ".html": "text/html; charset=utf-8",
@@ -57,6 +69,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/capabilities":
             self.send_json(200, capabilities())
+            return
+        if path == "/api/geometry-acceptance":
+            self.send_json(200, run_acceptance_matrix(SAMPLES))
             return
         if path == "/api/demo":
             text = (SAMPLES / "geometry_demo.ifc").read_text(encoding="utf-8")
@@ -98,35 +113,32 @@ class Handler(BaseHTTPRequestHandler):
         try:
             size = int(self.headers.get("Content-Length", "0"))
             if size <= 0 or size > MAX_BODY_BYTES:
-                raise ValueError("Request must be between 1 byte and 25 MB.")
+                raise ValueError("Request must be between 1 byte and 120 MB; IFC files are limited to 100 MB.")
             payload = json.loads(self.rfile.read(size))
             if path == "/api/analyze":
                 filename = str(payload.get("filename", "model.ifc"))[:200]
                 profile = str(payload.get("profile", "coordination"))
-                content = payload.get("content")
-                if not isinstance(content, str):
-                    raise ValueError("The IFC content must be text.")
+                content = require_ifc_content(payload)
                 self.send_json(200, analyze_ifc(content, filename, profile))
             elif path == "/api/validate-ids":
-                content = payload.get("content")
+                content = require_ifc_content(payload)
                 ids_content = payload.get("ids_content")
-                if not isinstance(content, str) or not isinstance(ids_content, str):
+                if not isinstance(ids_content, str):
                     raise ValueError("Both IFC and IDS content must be text.")
                 filename = str(payload.get("ids_filename", "requirements.ids"))[:200]
                 self.send_json(200, validate_ids(content, ids_content, filename))
             elif path == "/api/geometry-checks":
-                content = payload.get("content")
+                content = require_ifc_content(payload)
                 config = payload.get("config", {})
-                if not isinstance(content, str):
-                    raise ValueError("The IFC content must be text.")
                 if not isinstance(config, dict):
                     raise ValueError("Geometry configuration must be an object.")
                 self.send_json(200, run_geometry_checks(content, config))
             elif path == "/api/geometry-diagnostics":
-                content = payload.get("content")
-                if not isinstance(content, str):
-                    raise ValueError("The IFC content must be text.")
-                self.send_json(200, diagnose_geometry(content))
+                content = require_ifc_content(payload)
+                browser_evidence = payload.get("browser_evidence")
+                if browser_evidence is not None and not isinstance(browser_evidence, dict):
+                    raise ValueError("Browser geometry evidence must be an object.")
+                self.send_json(200, diagnose_geometry(content, browser_evidence))
             else:
                 issues = payload.get("issues")
                 if not isinstance(issues, list) or not all(isinstance(issue, dict) for issue in issues):

@@ -88,9 +88,9 @@ def _shape_data(model):
 
     settings = ifcopenshell.geom.settings()
     settings.set("use-world-coords", True)
-    iterator = ifcopenshell.geom.iterator(
-        settings, model, max(1, min(cpu_count() or 1, 8)),
-    )
+    product_count = len(model.by_type("IfcProduct"))
+    threads = 1 if product_count > 500 else max(1, min(cpu_count() or 1, 8))
+    iterator = ifcopenshell.geom.iterator(settings, model, threads)
     shapes: dict[int, object] = {}
     vertices: dict[int, object] = {}
     tree = ifcopenshell.geom.tree()
