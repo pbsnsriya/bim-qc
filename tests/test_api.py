@@ -120,6 +120,37 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(1, result["summary"]["failed"])
         self.assertEqual(73, result["issues"][0]["entity_id"])
 
+    def test_run_geometry_checks(self):
+        request = Request(
+            f"{self.base}/api/geometry-checks",
+            data=json.dumps({
+                "content": (ROOT / "samples/geometry_demo.ifc").read_text(),
+                "config": {"clearance_mm": 50},
+            }).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urlopen(request) as response:
+            result = json.load(response)
+        self.assertEqual("ifcopenshell", result["engine"])
+        self.assertEqual(2, result["by_rule"]["hard_clash"])
+        self.assertEqual(1, result["by_rule"]["probable_duplicate_element"])
+
+    def test_geometry_diagnostics_pass_demo(self):
+        request = Request(
+            f"{self.base}/api/geometry-diagnostics",
+            data=json.dumps({
+                "content": (ROOT / "samples/geometry_demo.ifc").read_text(),
+            }).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urlopen(request) as response:
+            result = json.load(response)
+        self.assertTrue(result["ready"])
+        self.assertEqual(7, result["counts"]["generated_shapes"])
+        self.assertEqual(100.0, result["coverage_percent"])
+
     def test_export_bcf(self):
         request = Request(
             f"{self.base}/api/export-bcf",

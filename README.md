@@ -17,7 +17,13 @@ information-quality issues, and exporting a review report.
 - Element-level issue details
 - JSON, CSV, and BCF 2.1 issue export
 - IDS validation with issue-to-model highlighting
-- Optional IfcOpenShell model inspection and IfcTester capability detection
+- IfcOpenShell geometry processing and semantic inspection
+- Stage 1 geometry-foundation diagnostics for units, world coordinates, shape
+  coverage, STEP-id mapping, finite bounds, extraction failures, and timing
+- Duplicate-element and duplicate-tag detection
+- MEP-to-structure hard and configurable clearance clash checks
+- IFC-port connectivity checks with explicit unverifiable-data reporting
+- Orthogonal-alignment and minimum-dimension review rules
 - Synthetic good/bad IFC fixtures and automated unit tests
 - No cloud upload: files are analysed by the local Python process
 
@@ -27,9 +33,10 @@ geometry parsing is unavailable, the UI falls back to a data-oriented model map.
 
 ## Run
 
-Requires Python 3.10+ and no third-party packages.
+Requires Python 3.10+. Install the geometry dependency once:
 
 ```bash
+python3 -m pip install -e .
 python3 server.py
 ```
 
@@ -44,19 +51,37 @@ IDS failures join the issue list, so selecting one highlights its IFC element.
 Choose **Export BCF** to create a BCF 2.1 `.bcfzip` with one topic per QC/IDS
 finding and an IFC component selection when a GlobalId is available.
 
-For optional production-grade IFC parsing and full IDS tooling, install:
+For the optional full IDS toolkit, install:
 
 ```bash
 python3 -m pip install -e ".[full]"
 ```
 
-When present, IfcOpenShell parses each loaded model as a parallel semantic
-inspection. The capability API also detects IfcTester. The built-in IDS subset
-remains the current interactive issue adapter.
+IfcOpenShell is the geometry engine for coordination checks. The capability API
+also detects IfcTester, while the built-in IDS subset remains the current
+interactive issue adapter.
 
-On Windows, you can instead extract the ZIP and double-click
-`start_windows.bat`. Do not open `web/index.html` directly: the API and WASM
-viewer require the included local server.
+On Windows, extract the ZIP and double-click `start_windows.bat`; it installs
+IfcOpenShell if missing, then starts the application. Do not open
+`web/index.html` directly: the API and WASM viewer require the local server.
+
+## Geometry coordination checks
+
+Load a model and first choose **Validate geometry foundation**. Stage 1 must
+pass before the experimental coordination checks unlock. The diagnostic report
+shows the IFC schema and length unit, represented/generated shape counts,
+coverage percentage, world-coordinate bounds, vertex/triangle counts, failed
+elements, warnings, processing time, and the individual pass/fail gates.
+
+After Stage 1 passes, configure the clearance/alignment/dimension tolerances and
+choose **Run experimental checks**. Results join the normal issue list and remain
+selectable in the 3D viewer and exportable to BCF, JSON, or CSV.
+
+The clash matrix currently evaluates `IfcDistributionElement` objects against
+walls, slabs, beams, columns, footings, piles, roofs, ramps, and stairs. Exact
+coincident geometry is labelled **probable duplicate** for human confirmation.
+Connectivity uses exported `IfcDistributionPort` relationships; models without
+ports are reported as unverifiable instead of being incorrectly failed.
 
 ## Test
 
@@ -81,7 +106,7 @@ synchronization, clearing, and accessible issue controls.
 Browser UI -> web-ifc/Three.js geometry + issue highlighting
      |
      +------> JSON API -> IFC STEP rules ------> JSON / CSV
-                         + optional IfcOpenShell inspection
+                         + IfcOpenShell geometry ----> clashes / duplicates
                          + IDS subset ----------> BCF 2.1
 ```
 
@@ -95,9 +120,14 @@ classification, part-of, and advanced restriction facets need a full IfcTester
 adapter. BCF export contains topics and component viewpoints, but no camera or
 snapshot yet.
 
-Next: map full IfcTester results into the interactive issue contract, enrich
-BCF viewpoints with the current camera/snapshot, then add safe assisted checks
-that compile into allow-listed model queries.
+Stage 1 is the currently refined milestone. Duplicate geometry, hard/clearance
+clashes, connectivity, alignment, and dimensions remain experimental rule
+prototypes and have **not** yet completed their individual refinement stages.
+Alignment results are advisory because diagonal elements may be intentional,
+and the current dimension prototype only enforces a minimum geometric extent.
+
+Next milestone: refine Stage 2 duplicate-element detection, including tolerance,
+confidence, intentional-duplicate exclusions, and a focused validation fixture.
 
 ## Licence
 

@@ -1,6 +1,26 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { JSDOM } from "../web/node_modules/jsdom/lib/api.js";
+
+const projectRoot = fileURLToPath(new URL("..", import.meta.url));
+let serverProcess = null;
+try {
+  const health = await fetch("http://127.0.0.1:8000/api/health");
+  if (!health.ok) throw new Error("server unavailable");
+} catch {
+  serverProcess = spawn("python3", ["server.py"], { cwd: projectRoot, stdio: "ignore" });
+  process.on("exit", () => serverProcess?.kill());
+  const serverDeadline = Date.now() + 5000;
+  while (Date.now() < serverDeadline) {
+    try {
+      const health = await fetch("http://127.0.0.1:8000/api/health");
+      if (health.ok) break;
+    } catch {}
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
 
 const html = await fs.readFile(new URL("../web/index.html", import.meta.url), "utf8");
 const dom = new JSDOM(html, { url: "http://127.0.0.1:8000/", pretendToBeVisual: true });
@@ -65,4 +85,32 @@ assert.match(document.querySelector("#idsStatus").textContent, /1 failure/, "IDS
 assert.ok(document.querySelector('[data-rule-id="ids:wall-name"][data-entity-id="73"]'), "IDS issue remains linked to wall #73");
 assert.equal(document.querySelector("#bcfButton").disabled, false, "BCF export is available after analysis");
 
+assert.equal(document.querySelector("#geometryCheckButton").disabled, true, "experimental checks are gated before Stage 1 validation");
+const capabilityDeadline = Date.now() + 5000;
+while (document.querySelector("#geometryDiagnosticsButton").disabled && Date.now() < capabilityDeadline) {
+  await new Promise((resolve) => setTimeout(resolve, 25));
+}
+assert.equal(document.querySelector("#geometryDiagnosticsButton").disabled, false, "Stage 1 validation is enabled when IfcOpenShell is ready");
+document.querySelector("#geometryDiagnosticsButton").click();
+const diagnosticDeadline = Date.now() + 10000;
+while (document.querySelector("#geometryDiagnosticsStatus").classList.contains("hidden") && Date.now() < diagnosticDeadline) {
+  await new Promise((resolve) => setTimeout(resolve, 25));
+}
+assert.equal(document.querySelector("#geometryDiagnosticsStatus").classList.contains("hidden"), false, "Stage 1 diagnostic status becomes visible");
+assert.match(document.querySelector("#geometryDiagnosticsStatus").textContent, /Stage 1 passed/, "geometry foundation explicitly passes");
+assert.match(document.querySelector("#geometryDiagnosticsStatus").textContent, /7\/7 represented shapes \(100%\)/, "shape coverage is visible");
+assert.equal(document.querySelector("#geometryCheckButton").disabled, false, "experimental checks unlock only after Stage 1 passes");
+
+document.querySelector("#geometryCheckButton").click();
+const geometryDeadline = Date.now() + 10000;
+while (document.querySelector("#geometryStatus").classList.contains("hidden") && Date.now() < geometryDeadline) {
+  await new Promise((resolve) => setTimeout(resolve, 25));
+}
+assert.equal(document.querySelector("#geometryStatus").classList.contains("hidden"), false, "coordination check status becomes visible");
+assert.match(document.querySelector("#geometryStatus").textContent, /4 finding/, "geometry result count is visible");
+assert.ok(document.querySelector('[data-rule-id="probable_duplicate_element"][data-entity-id="104"]'), "duplicate wall is linked to its geometry");
+assert.equal(document.querySelectorAll('[data-rule-id="hard_clash"]').length, 2, "two pipe-to-wall clashes join the issue list");
+assert.ok(document.querySelector('[data-rule-id="ids:wall-name"]'), "IDS findings remain after geometry checks");
+
+serverProcess?.kill();
 console.log("frontend interaction tests passed");

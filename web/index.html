@@ -57,6 +57,34 @@
 
       <div id="idsStatus" class="ids-status hidden" role="status"></div>
 
+      <article class="coordination-panel foundation-panel">
+        <div>
+          <p class="eyebrow">STAGE 1 · GEOMETRY FOUNDATION</p>
+          <h3>Validate IFC geometry pipeline</h3>
+          <p class="muted">Checks units, world coordinates, shape coverage, STEP-id mapping, finite bounds and extraction failures.</p>
+        </div>
+        <button id="geometryDiagnosticsButton" class="button primary" type="button" disabled>Validate geometry foundation</button>
+      </article>
+      <div id="geometryDiagnosticsStatus" class="ids-status diagnostics-status hidden" role="status"></div>
+
+      <article class="coordination-panel experimental-panel">
+        <div>
+          <p class="eyebrow">EXPERIMENTAL · STAGES 2–5</p>
+          <h3>Coordination rule prototypes</h3>
+          <p class="muted">Unlocked only after Stage 1 passes. Duplicate, clash, connection, alignment and dimension rules still need separate refinement.</p>
+        </div>
+        <div class="coordination-options">
+          <label><input id="hardClashCheck" type="checkbox" checked> Hard clashes</label>
+          <label>Hard tolerance <input id="hardToleranceInput" type="number" min="0" max="1000" step="1" value="2"> mm</label>
+          <label><input id="clearanceCheck" type="checkbox" checked> Clearance</label>
+          <label>Clearance <input id="clearanceInput" type="number" min="0" max="10000" step="5" value="50"> mm</label>
+          <label>Alignment <input id="alignmentInput" type="number" min="0" max="45" step="0.5" value="1">°</label>
+          <label>Min dimension <input id="dimensionInput" type="number" min="0" max="10000" step="1" value="5"> mm</label>
+          <button id="geometryCheckButton" class="button primary" type="button" disabled>Run experimental checks</button>
+        </div>
+      </article>
+      <div id="geometryStatus" class="ids-status hidden" role="status"></div>
+
       <div id="metrics" class="metrics"></div>
 
       <div class="dashboard-grid">
@@ -96,7 +124,7 @@
       document.getElementById("uploadStatus").textContent = "Start the local server before uploading";
     }
   </script>
-  <script type="module" src="./viewer.js?v=040"></script>
-  <script type="module" src="./app.js?v=040"></script>
+  <script type="module" src="./viewer.js?v=050"></script>
+  <script type="module" src="./app.js?v=051"></script>
 </body>
 </html>

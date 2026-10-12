@@ -1,4 +1,4 @@
-const state = { result: null, selectedEntityId: null, viewerBaseStatus: "", baseIssues: [], idsValidation: null };
+const state = { result: null, selectedEntityId: null, viewerBaseStatus: "", baseIssues: [], idsValidation: null, geometryDiagnostics: null, geometryValidation: null, ifcopenshellAvailable: false };
 state.source = null;
 const $ = (id) => document.getElementById(id);
 
@@ -19,6 +19,28 @@ function setBusy(busy, message = "Drop an IFC model here") {
   fileInput.disabled = busy;
   $("demoButton").disabled = busy;
   $("uploadStatus").textContent = message;
+}
+
+async function readJsonResponse(response, fallback) {
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    throw new Error("The analysis API returned a web page instead of data. Restart server.py and open http://127.0.0.1:8000.");
+  }
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || fallback);
+  return result;
+}
+
+function rebuildIssues() {
+  if (!state.result) return;
+  state.result.issues = [
+    ...state.baseIssues,
+    ...(state.geometryValidation?.issues || []),
+    ...(state.idsValidation?.issues || []),
+  ];
+  const counts = { error: 0, warning: 0, info: 0 };
+  state.result.issues.forEach((issue) => { counts[issue.severity] = (counts[issue.severity] || 0) + 1; });
+  Object.assign(state.result.summary, counts, { issues: state.result.issues.length });
 }
 
 async function analyzeFile(file) {
@@ -46,12 +68,17 @@ async function requestAnalysis(payload) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || "Analysis failed.");
+    const result = await readJsonResponse(response, "Analysis failed.");
     state.result = result;
     state.baseIssues = [...result.issues];
     state.idsValidation = null;
+    state.geometryDiagnostics = null;
+    state.geometryValidation = null;
     $("idsStatus").classList.add("hidden");
+    $("geometryDiagnosticsStatus").classList.add("hidden");
+    $("geometryStatus").classList.add("hidden");
+    $("geometryCheckButton").disabled = true;
+    $("geometryCheckButton").title = "Stage 1 geometry validation must pass first";
     clearEntitySelection();
     render();
     await renderGeometry(payload.content);
@@ -81,13 +108,9 @@ async function validateIds(idsFilename, idsContent) {
       ids_content: idsContent,
     }),
   });
-  const validation = await response.json();
-  if (!response.ok) throw new Error(validation.error || "IDS validation failed.");
+  const validation = await readJsonResponse(response, "IDS validation failed.");
   state.idsValidation = validation;
-  state.result.issues = [...state.baseIssues, ...validation.issues];
-  const counts = { error: 0, warning: 0, info: 0 };
-  state.result.issues.forEach((issue) => { counts[issue.severity] = (counts[issue.severity] || 0) + 1; });
-  Object.assign(state.result.summary, counts, { issues: state.result.issues.length });
+  rebuildIssues();
   render();
   const status = $("idsStatus");
   const unsupported = validation.summary.unsupported_facets;
@@ -95,6 +118,93 @@ async function validateIds(idsFilename, idsContent) {
     (unsupported ? ` · ${unsupported} unsupported facet(s); result is partial` : " · supported subset fully evaluated");
   status.classList.remove("hidden");
   toast(`IDS validation found ${validation.summary.failed} failure(s)`);
+}
+
+async function runGeometryChecks() {
+  if (!state.source || !state.result) throw new Error("Load an IFC model before running coordination checks.");
+  if (!state.geometryDiagnostics?.ready) throw new Error("Validate the Stage 1 geometry foundation first.");
+  const button = $("geometryCheckButton");
+  button.disabled = true;
+  button.textContent = "Checking geometry…";
+  try {
+    const response = await fetch("/api/geometry-checks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: state.source.content,
+        config: {
+          hard_clashes: $("hardClashCheck").checked,
+          hard_tolerance_mm: Number($("hardToleranceInput").value),
+          clearance_clashes: $("clearanceCheck").checked,
+          clearance_mm: Number($("clearanceInput").value),
+          alignment_tolerance_degrees: Number($("alignmentInput").value),
+          minimum_dimension_mm: Number($("dimensionInput").value),
+        },
+      }),
+    });
+    const validation = await readJsonResponse(response, "Geometry checks failed.");
+    state.geometryValidation = validation;
+    rebuildIssues();
+    render();
+    const rules = Object.entries(validation.by_rule)
+      .map(([rule, count]) => `${humanize(rule)}: ${count}`)
+      .join(" · ");
+    const status = $("geometryStatus");
+    status.innerHTML = `<strong>Coordination checks complete</strong> · ${validation.summary.geometric_products} geometric products · ${validation.summary.issues} finding(s)` +
+      (rules ? `<br>${escapeHtml(rules)}` : " · No coordination findings") +
+      (validation.summary.connectivity_unverifiable ? `<br>${validation.summary.connectivity_unverifiable} MEP element(s) had no IFC ports, so connectivity is partial.` : "");
+    status.classList.remove("hidden");
+    toast(`Coordination checks found ${validation.summary.issues} issue(s)`);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Run experimental checks";
+  }
+}
+
+function vectorText(values) {
+  return values ? values.map((value) => Number(value).toFixed(2)).join(", ") : "unavailable";
+}
+
+async function runGeometryDiagnostics() {
+  if (!state.source || !state.result) throw new Error("Load an IFC model before validating its geometry foundation.");
+  if (!state.ifcopenshellAvailable) throw new Error("IfcOpenShell is not available on the local server.");
+  const button = $("geometryDiagnosticsButton");
+  const coordinationButton = $("geometryCheckButton");
+  button.disabled = true;
+  coordinationButton.disabled = true;
+  button.textContent = "Validating foundation…";
+  try {
+    const response = await fetch("/api/geometry-diagnostics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: state.source.content }),
+    });
+    const result = await readJsonResponse(response, "Geometry foundation validation failed.");
+    state.geometryDiagnostics = result;
+    const status = $("geometryDiagnosticsStatus");
+    const checkRows = result.checks.map((check) =>
+      `<li class="diagnostic-${check.status}"><strong>${check.status === "pass" ? "PASS" : "FAIL"}</strong> ${escapeHtml(check.message)}</li>`
+    ).join("");
+    const failures = result.failed_elements.length
+      ? `<details><summary>${result.failed_elements.length} failed element(s)</summary><ul>${result.failed_elements.map((item) => `<li>#${item.step_id} ${escapeHtml(item.type)} · ${escapeHtml(item.error)}</li>`).join("")}</ul></details>`
+      : "";
+    const warnings = result.warnings.length
+      ? `<p><strong>Review:</strong> ${result.warnings.map(escapeHtml).join(" ")}</p>`
+      : "";
+    status.classList.toggle("diagnostics-pass", result.ready);
+    status.classList.toggle("diagnostics-fail", !result.ready);
+    status.innerHTML = `<strong>${result.ready ? "Stage 1 passed" : "Stage 1 needs attention"}</strong> · ${escapeHtml(result.schema)} · ${escapeHtml(result.units.length)} (${result.units.metres_per_project_unit} m/unit) · ${result.duration_ms} ms<br>` +
+      `${result.counts.generated_shapes}/${result.counts.represented_products} represented shapes (${result.coverage_percent}%) · ${result.counts.vertices} vertices · ${result.counts.triangles} triangles<br>` +
+      `Bounds min [${vectorText(result.bounds_metres.minimum)}] m · max [${vectorText(result.bounds_metres.maximum)}] m` +
+      `<ul class="diagnostic-checks">${checkRows}</ul>${warnings}${failures}`;
+    status.classList.remove("hidden");
+    coordinationButton.disabled = !result.ready;
+    coordinationButton.title = result.ready ? "Stage 1 passed; experimental rule prototypes are available" : "Stage 1 must pass first";
+    toast(result.ready ? "Stage 1 geometry foundation passed" : "Stage 1 found geometry foundation problems");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Validate geometry foundation";
+  }
 }
 
 async function loadSampleIds() {
@@ -281,6 +391,8 @@ $("exportButton").addEventListener("click", exportCsv);
 $("jsonButton").addEventListener("click", exportJson);
 $("bcfButton").addEventListener("click", async () => { try { await exportBcf(); } catch (error) { toast(error.message); } });
 $("sampleIdsButton").addEventListener("click", async () => { try { await loadSampleIds(); } catch (error) { toast(error.message); } });
+$("geometryDiagnosticsButton").addEventListener("click", async () => { try { await runGeometryDiagnostics(); } catch (error) { toast(error.message); } });
+$("geometryCheckButton").addEventListener("click", async () => { try { await runGeometryChecks(); } catch (error) { toast(error.message); } });
 $("idsInput").addEventListener("change", async (event) => {
   const file = event.target.files[0];
   if (!file) return;
@@ -321,8 +433,13 @@ async function checkServer() {
     const capabilityResponse = await fetch("/api/capabilities");
     if (capabilityResponse.ok) {
       const engines = await capabilityResponse.json();
+      state.ifcopenshellAvailable = engines.ifcopenshell_available;
       $("backendBadge").textContent = engines.ifcopenshell_available ? "IfcOpenShell ready" : "Lightweight + IDS subset";
       $("backendBadge").title = `Semantics: ${engines.semantic_backend}; IDS: ${engines.ids_backend}`;
+      $("geometryDiagnosticsButton").disabled = !engines.ifcopenshell_available;
+      $("geometryDiagnosticsButton").title = engines.ifcopenshell_available ? "Run Stage 1 diagnostics" : "Install IfcOpenShell to enable geometry diagnostics";
+      $("geometryCheckButton").disabled = true;
+      $("geometryCheckButton").title = engines.ifcopenshell_available ? "Stage 1 geometry validation must pass first" : "Install IfcOpenShell to enable geometry checks";
     }
     setBusy(false, "Drop an IFC model here");
   } catch {

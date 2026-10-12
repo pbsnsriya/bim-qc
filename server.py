@@ -10,6 +10,8 @@ from urllib.parse import urlparse
 from ifcqc import analyze_ifc
 from ifcqc.backends import capabilities
 from ifcqc.bcf import build_bcfzip
+from ifcqc.geometry_checks import run_geometry_checks
+from ifcqc.geometry_diagnostics import diagnose_geometry
 from ifcqc.ids_validator import validate_ids
 
 
@@ -87,7 +89,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
-        if path not in {"/api/analyze", "/api/validate-ids", "/api/export-bcf"}:
+        if path not in {
+            "/api/analyze", "/api/validate-ids", "/api/geometry-diagnostics",
+            "/api/geometry-checks", "/api/export-bcf",
+        }:
             self.send_error(404)
             return
         try:
@@ -109,6 +114,19 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("Both IFC and IDS content must be text.")
                 filename = str(payload.get("ids_filename", "requirements.ids"))[:200]
                 self.send_json(200, validate_ids(content, ids_content, filename))
+            elif path == "/api/geometry-checks":
+                content = payload.get("content")
+                config = payload.get("config", {})
+                if not isinstance(content, str):
+                    raise ValueError("The IFC content must be text.")
+                if not isinstance(config, dict):
+                    raise ValueError("Geometry configuration must be an object.")
+                self.send_json(200, run_geometry_checks(content, config))
+            elif path == "/api/geometry-diagnostics":
+                content = payload.get("content")
+                if not isinstance(content, str):
+                    raise ValueError("The IFC content must be text.")
+                self.send_json(200, diagnose_geometry(content))
             else:
                 issues = payload.get("issues")
                 if not isinstance(issues, list) or not all(isinstance(issue, dict) for issue in issues):
@@ -119,7 +137,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not filename.lower().endswith(".bcfzip"):
                     filename += ".bcfzip"
                 self.send_bytes(200, build_bcfzip(issues), "application/zip", filename)
-        except (ValueError, json.JSONDecodeError) as exc:
+        except (ValueError, RuntimeError, json.JSONDecodeError) as exc:
             self.send_json(400, {"error": str(exc)})
         except Exception:
             self.send_json(500, {"error": "The model could not be analysed."})

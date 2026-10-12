@@ -48,6 +48,21 @@ h3 { margin: 0; font-size: 17px; }
 .badge.subtle { background: #eef0eb; color: var(--muted); font-weight: 700; }
 .ids-status { margin: -6px 0 12px; padding: 12px 15px; border: 1px solid #d7dfc7; border-left: 4px solid var(--green); border-radius: 10px; background: #f8faef; color: var(--muted); font-size: 12px; }
 .ids-status strong { color: var(--ink); }
+.diagnostics-status { margin-bottom: 12px; }
+.diagnostics-status.diagnostics-fail { border-color: #e4c3bc; border-left-color: var(--error); background: #fff7f5; }
+.diagnostic-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 16px; margin: 10px 0 0; padding: 0; list-style: none; }
+.diagnostic-checks li { line-height: 1.45; }
+.diagnostic-pass strong { color: var(--green); }
+.diagnostic-fail strong { color: var(--error); }
+.diagnostics-status details { margin-top: 8px; }
+.diagnostics-status details ul { margin: 6px 0; }
+.experimental-panel { border-style: dashed; }
+.coordination-panel { margin-bottom: 12px; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; gap: 24px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+.coordination-panel h3 { margin-bottom: 5px; }
+.coordination-panel p { margin-top: 5px; margin-bottom: 0; }
+.coordination-options { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 10px 14px; }
+.coordination-options label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.coordination-options input[type="number"] { width: 68px; padding: 7px; border: 1px solid var(--line); border-radius: 7px; background: white; }
 .metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 12px; }
 .metric { padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
 .metric strong { display: block; font-size: 28px; margin-bottom: 4px; }
@@ -100,6 +115,9 @@ select { background: white; border: 1px solid var(--line); border-radius: 8px; p
   .metrics { grid-template-columns: repeat(2, 1fr); }
   .model-map { grid-template-columns: repeat(3, 1fr); }
   .empty-state { grid-template-columns: 40px 1fr; }
+  .coordination-panel { align-items: stretch; flex-direction: column; }
+  .coordination-options { justify-content: flex-start; }
+  .diagnostic-checks { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   main { width: 92vw; padding-top: 40px; }

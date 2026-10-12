@@ -15,7 +15,7 @@ class IdsValidationTests(unittest.TestCase):
             "wall-naming.ids",
         )
         self.assertTrue(result["complete"])
-        self.assertEqual(4, result["summary"]["applicable"])
+        self.assertEqual(5, result["summary"]["applicable"])
         self.assertEqual(1, result["summary"]["failed"])
         self.assertEqual(73, result["issues"][0]["entity_id"])
         self.assertEqual("ids:wall-name", result["issues"][0]["rule_id"])

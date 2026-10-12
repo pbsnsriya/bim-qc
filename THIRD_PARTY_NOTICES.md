@@ -12,6 +12,12 @@ no functional upstream code was changed.
 
 The upstream licence text is included alongside the vendored files.
 
+## IfcOpenShell 0.8.5
+
+- Project: <https://github.com/IfcOpenShell/IfcOpenShell>
+- Distribution: installed Python dependency; not vendored in this archive
+- Licence: GNU Lesser General Public License 3.0 or later
+
 ## Three.js 0.180.0
 
 - Project: <https://github.com/mrdoob/three.js>

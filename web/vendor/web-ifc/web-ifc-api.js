@@ -72304,26 +72304,29 @@ var IfcAPI2 = class {
    * @param modelID Model handle retrieved by OpenModel
    * @param expressIDs expressIDs of elements to stream
    * @param meshCallback callback function that is called for each mesh
+   * @param applyLinearScalingFactor Whether to apply the model's linear scaling factor to the geometry (default: true)
    */
-  StreamMeshes(modelID, expressIDs, meshCallback) {
-    this.wasmModule.StreamMeshes(modelID, expressIDs, meshCallback);
+  StreamMeshes(modelID, expressIDs, meshCallback, applyLinearScalingFactor = true) {
+    this.wasmModule.StreamMeshes(modelID, expressIDs, meshCallback, applyLinearScalingFactor);
   }
   /**
    * Streams all meshes of a model
    * @param modelID Model handle retrieved by OpenModel
    * @param meshCallback callback function that is called for each mesh
+   * @param applyLinearScalingFactor Whether to apply the model's linear scaling factor to the geometry (default: true)
    */
-  StreamAllMeshes(modelID, meshCallback) {
-    this.wasmModule.StreamAllMeshes(modelID, meshCallback);
+  StreamAllMeshes(modelID, meshCallback, applyLinearScalingFactor = true) {
+    this.wasmModule.StreamAllMeshes(modelID, meshCallback, applyLinearScalingFactor);
   }
   /**
    * Streams all meshes of a model with a specific ifc type
    * @param modelID Model handle retrieved by OpenModel
    * @param types types of elements to stream
    * @param meshCallback callback function that is called for each mesh
+   * @param applyLinearScalingFactor Whether to apply the model's linear scaling factor to the geometry (default: true)
    */
-  StreamAllMeshesWithTypes(modelID, types, meshCallback) {
-    this.wasmModule.StreamAllMeshesWithTypes(modelID, types, meshCallback);
+  StreamAllMeshesWithTypes(modelID, types, meshCallback, applyLinearScalingFactor = true) {
+    this.wasmModule.StreamAllMeshesWithTypes(modelID, types, meshCallback, applyLinearScalingFactor);
   }
   /**
    * Checks if a specific model ID is open or closed
@@ -72336,10 +72339,11 @@ var IfcAPI2 = class {
   /**
    * Load all geometry in a model
    * @param modelID Model handle retrieved by OpenModel
+   * @param applyLinearScalingFactor Whether to apply the model's linear scaling factor to the geometry (default: true)
    * @returns Vector of FlatMesh objects
    */
-  LoadAllGeometry(modelID) {
-    let flatMeshes = this.wasmModule.LoadAllGeometry(modelID);
+  LoadAllGeometry(modelID, applyLinearScalingFactor = true) {
+    let flatMeshes = this.wasmModule.LoadAllGeometry(modelID, applyLinearScalingFactor);
     flatMeshes[Symbol.iterator] = function* () {
       for (let i = 0; i < flatMeshes.size(); i++) yield flatMeshes.get(i);
     };
@@ -72349,10 +72353,11 @@ var IfcAPI2 = class {
    * Load geometry for a single element
    * @param modelID Model handle retrieved by OpenModel
    * @param expressID ExpressID of the element
+   * @param applyLinearScalingFactor Whether to apply the model's linear scaling factor to the geometry (default: true)
    * @returns FlatMesh object
    */
-  GetFlatMesh(modelID, expressID) {
-    return this.wasmModule.GetFlatMesh(modelID, expressID);
+  GetFlatMesh(modelID, expressID, applyLinearScalingFactor = true) {
+    return this.wasmModule.GetFlatMesh(modelID, expressID, applyLinearScalingFactor);
   }
   /**
    * Returns the maximum ExpressID value in the IFC file, ex.- #9999999

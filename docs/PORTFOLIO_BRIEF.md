@@ -17,23 +17,28 @@ reports without sending project files to a third party.
 - Accessible responsive frontend development
 - File handling and defensive validation
 - Automated testing with known clean and defective fixtures
+- IfcOpenShell spatial geometry processing and clash detection
+- Configurable engineering tolerances and conservative confidence reporting
 - Privacy-conscious local processing
 
 ## Current result
 
-The third milestone adds bidirectional element selection: clicking a QC issue
-highlights and frames its IFC geometry, while clicking model geometry identifies
-the corresponding element and issue. The offline viewer includes three
-selectable QC profiles and detects duplicate GlobalIds, missing element
-names, missing spatial containment, absent type assignments, and absent
-classification associations, then exports traceable JSON or CSV findings. The
-included synthetic building produces five verified mesh groups and a
-reproducible set of known findings.
+Stage 1 now provides a formal IfcOpenShell geometry-foundation gate. It reports
+schema and length units, represented/generated shape coverage, world-coordinate
+bounds, STEP-id mapping, invalid geometry, vertices/triangles, processing time,
+and element-level extraction failures. The synthetic demonstration model passes
+with seven of seven represented products and 100% extraction coverage.
+
+Duplicate geometry, duplicate tags, MEP-to-structure clashes, IFC-port
+connectivity, off-axis placement, and minimum-dimension rules remain visible as
+experimental prototypes. They unlock only after Stage 1 passes and will be
+tested and refined one milestone at a time.
 
 ## Planned production evolution
 
-- IfcOpenShell parsing and IFC writeback
-- IDS-defined requirements
-- BCF issue export
+- Pair highlighting and camera/snapshot BCF viewpoints
+- Reference IFC/DWG drawing comparison
+- IfcOpenShell IFC writeback with correction review
+- Full IfcTester IDS result mapping
 - Safe AI commands compiled to allow-listed operations
 - PostgreSQL-backed projects and model revisions
