@@ -1,0 +1,18 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('ViewDefinition [ReferenceView_V1.2]'),'2;1');
+FILE_NAME('clean_demo.ifc','2026-09-18T00:00:00',('OpenBIM QC'),('Portfolio'), 'OpenBIM QC Assistant','OpenBIM QC Assistant','');
+FILE_SCHEMA(('IFC4'));
+ENDSEC;
+DATA;
+#1=IFCPROJECT('1ProjectDemoGuid000001',$,'Clean Demo Project',$,$,$,$,$,$);
+#2=IFCBUILDINGSTOREY('1StoreyDemoGuid0000001',$,'Ground Floor',$,$,$,$,$,$,0.);
+#10=IFCWALL('1WallDemoGuid000000001',$,'External Wall 01',$,$,$,$,$,.NOTDEFINED.);
+#20=IFCWALLTYPE('1WallTypeGuid000000001',$,'Basic Wall 150',$,$,$,$,$,$,.NOTDEFINED.);
+#30=IFCRELCONTAINEDINSPATIALSTRUCTURE('1ContainGuid0000000001',$,$,$,(#10),#2);
+#31=IFCRELDEFINESBYTYPE('1TypeRelGuid0000000001',$,$,$,(#10),#20);
+#40=IFCCLASSIFICATION($,$,$,'Portfolio classification',$,$,$,$);
+#41=IFCCLASSIFICATIONREFERENCE($,'A-WALL','Walls',#40,$,$);
+#42=IFCRELASSOCIATESCLASSIFICATION('1ClassRelGuid00000001',$,$,$,(#10),#41);
+ENDSEC;
+END-ISO-10303-21;

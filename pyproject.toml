@@ -1,0 +1,20 @@
+[project]
+name = "openbim-qc-assistant"
+version = "0.7.9"
+description = "Dependency-light IFC quality checking portfolio MVP"
+requires-python = ">=3.10"
+dependencies = [
+  "ifcopenshell>=0.8.5,<0.9",
+  "legacy-cgi>=2.6; python_version >= '3.13'",
+]
+
+[tool.setuptools]
+packages = ["ifcqc"]
+
+[project.optional-dependencies]
+full = [
+  "ifctester>=0.8.5,<0.9",
+]
+
+[tool.ruff]
+line-length = 100

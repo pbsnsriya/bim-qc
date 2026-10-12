@@ -1,0 +1,509 @@
+[
+  {
+    "id": "ifc4_metre_cube",
+    "comparison": {
+      "status": "pass",
+      "position_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_delta_metres": {
+          "40": 0.0
+        }
+      },
+      "shape_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_deltas": {
+          "40": {
+            "volume_m3": {
+              "delta": 1.1102230246251565e-16,
+              "allowed": 0.006,
+              "passed": true
+            },
+            "surface_area_m2": {
+              "delta": 0.0,
+              "allowed": 0.031,
+              "passed": true
+            }
+          }
+        },
+        "relative_tolerance": 0.005,
+        "absolute_tolerances": {
+          "volume_m3": 0.001,
+          "surface_area_m2": 0.001
+        },
+        "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+      },
+      "tolerance_authority": "demo_profile",
+      "tolerance_metres": 0.001,
+      "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+      "missing_in_browser": [],
+      "extra_in_browser": [],
+      "missing_extent_ids": [],
+      "compared_elements": 1,
+      "maximum_extent_delta_metres": 0.0,
+      "element_extent_delta_metres": {
+        "40": 0.0
+      },
+      "browser_origin_mode": "model-centred",
+      "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+      "expected_browser_omissions": []
+    },
+    "ready": true
+  },
+  {
+    "id": "ifc4_millimetre_cube",
+    "comparison": {
+      "status": "pass",
+      "position_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_delta_metres": {
+          "40": 0.0
+        }
+      },
+      "shape_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_deltas": {
+          "40": {
+            "volume_m3": {
+              "delta": 1.1102230246251565e-16,
+              "allowed": 0.006,
+              "passed": true
+            },
+            "surface_area_m2": {
+              "delta": 0.0,
+              "allowed": 0.031,
+              "passed": true
+            }
+          }
+        },
+        "relative_tolerance": 0.005,
+        "absolute_tolerances": {
+          "volume_m3": 0.001,
+          "surface_area_m2": 0.001
+        },
+        "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+      },
+      "tolerance_authority": "demo_profile",
+      "tolerance_metres": 0.001,
+      "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+      "missing_in_browser": [],
+      "extra_in_browser": [],
+      "missing_extent_ids": [],
+      "compared_elements": 1,
+      "maximum_extent_delta_metres": 0.0,
+      "element_extent_delta_metres": {
+        "40": 0.0
+      },
+      "browser_origin_mode": "model-centred",
+      "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+      "expected_browser_omissions": []
+    },
+    "ready": true
+  },
+  {
+    "id": "nested_rotated_placement",
+    "comparison": {
+      "status": "pass",
+      "position_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_delta_metres": {
+          "40": 0.0
+        }
+      },
+      "shape_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_deltas": {
+          "40": {
+            "volume_m3": {
+              "delta": 2.220446049250313e-16,
+              "allowed": 0.011,
+              "passed": true
+            },
+            "surface_area_m2": {
+              "delta": 0.0,
+              "allowed": 0.051000000000000004,
+              "passed": true
+            }
+          }
+        },
+        "relative_tolerance": 0.005,
+        "absolute_tolerances": {
+          "volume_m3": 0.001,
+          "surface_area_m2": 0.001
+        },
+        "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+      },
+      "tolerance_authority": "demo_profile",
+      "tolerance_metres": 0.001,
+      "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+      "missing_in_browser": [],
+      "extra_in_browser": [],
+      "missing_extent_ids": [],
+      "compared_elements": 1,
+      "maximum_extent_delta_metres": 0.0,
+      "element_extent_delta_metres": {
+        "40": 0.0
+      },
+      "browser_origin_mode": "model-centred",
+      "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+      "expected_browser_omissions": []
+    },
+    "ready": true
+  },
+  {
+    "id": "ifc2x3_metre_cube",
+    "comparison": {
+      "status": "pass",
+      "position_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_delta_metres": {
+          "40": 0.0
+        }
+      },
+      "shape_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_deltas": {
+          "40": {
+            "volume_m3": {
+              "delta": 1.1102230246251565e-16,
+              "allowed": 0.006,
+              "passed": true
+            },
+            "surface_area_m2": {
+              "delta": 0.0,
+              "allowed": 0.031,
+              "passed": true
+            }
+          }
+        },
+        "relative_tolerance": 0.005,
+        "absolute_tolerances": {
+          "volume_m3": 0.001,
+          "surface_area_m2": 0.001
+        },
+        "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+      },
+      "tolerance_authority": "demo_profile",
+      "tolerance_metres": 0.001,
+      "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+      "missing_in_browser": [],
+      "extra_in_browser": [],
+      "missing_extent_ids": [],
+      "compared_elements": 1,
+      "maximum_extent_delta_metres": 0.0,
+      "element_extent_delta_metres": {
+        "40": 0.0
+      },
+      "browser_origin_mode": "model-centred",
+      "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+      "expected_browser_omissions": []
+    },
+    "ready": true
+  },
+  {
+    "id": "large_world_coordinates",
+    "comparison": {
+      "status": "pass",
+      "position_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_delta_metres": {
+          "40": 0.0
+        }
+      },
+      "shape_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_deltas": {
+          "40": {
+            "volume_m3": {
+              "delta": 1.1102230246251565e-16,
+              "allowed": 0.006,
+              "passed": true
+            },
+            "surface_area_m2": {
+              "delta": 0.0,
+              "allowed": 0.031,
+              "passed": true
+            }
+          }
+        },
+        "relative_tolerance": 0.005,
+        "absolute_tolerances": {
+          "volume_m3": 0.001,
+          "surface_area_m2": 0.001
+        },
+        "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+      },
+      "tolerance_authority": "demo_profile",
+      "tolerance_metres": 0.001,
+      "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+      "missing_in_browser": [],
+      "extra_in_browser": [],
+      "missing_extent_ids": [],
+      "compared_elements": 1,
+      "maximum_extent_delta_metres": 0.0,
+      "element_extent_delta_metres": {
+        "40": 0.0
+      },
+      "browser_origin_mode": "model-centred",
+      "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+      "expected_browser_omissions": []
+    },
+    "ready": true
+  },
+  {
+    "id": "opening_cutout",
+    "comparison": {
+      "status": "pass",
+      "position_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_delta_metres": {
+          "20": 5.960464510845753e-09
+        }
+      },
+      "shape_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_deltas": {
+          "20": {
+            "volume_m3": {
+              "delta": 1.1920928999487046e-07,
+              "allowed": 0.015999999999999997,
+              "passed": true
+            },
+            "surface_area_m2": {
+              "delta": 2.1457672261249172e-07,
+              "allowed": 0.128,
+              "passed": true
+            }
+          }
+        },
+        "relative_tolerance": 0.005,
+        "absolute_tolerances": {
+          "volume_m3": 0.001,
+          "surface_area_m2": 0.001
+        },
+        "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+      },
+      "tolerance_authority": "demo_profile",
+      "tolerance_metres": 0.001,
+      "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+      "missing_in_browser": [],
+      "extra_in_browser": [],
+      "missing_extent_ids": [],
+      "compared_elements": 1,
+      "maximum_extent_delta_metres": 1.2e-08,
+      "element_extent_delta_metres": {
+        "20": 1.2e-08
+      },
+      "browser_origin_mode": "model-centred",
+      "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+      "expected_browser_omissions": [
+        {
+          "step_id": 32,
+          "type": "IfcOpeningElement",
+          "name": "1 m wide by 2 m high cutout",
+          "reason": "Subtractive void features are not expected as separate visible solids."
+        }
+      ]
+    },
+    "ready": true
+  },
+  {
+    "id": "curved_cylinder",
+    "comparison": {
+      "status": "pass",
+      "position_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_delta_metres": {
+          "18": 0.00030591689195169636
+        }
+      },
+      "shape_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_deltas": {
+          "18": {
+            "volume_m3": {
+              "delta": 0.0015704658067123844,
+              "allowed": 0.03239525976465669,
+              "passed": true
+            },
+            "surface_area_m2": {
+              "delta": 0.002355881341156163,
+              "allowed": 0.09521677792091329,
+              "passed": true
+            }
+          }
+        },
+        "relative_tolerance": 0.005,
+        "absolute_tolerances": {
+          "volume_m3": 0.001,
+          "surface_area_m2": 0.001
+        },
+        "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+      },
+      "tolerance_authority": "demo_profile",
+      "tolerance_metres": 0.001,
+      "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+      "missing_in_browser": [],
+      "extra_in_browser": [],
+      "missing_extent_ids": [],
+      "compared_elements": 1,
+      "maximum_extent_delta_metres": 0.000305891,
+      "element_extent_delta_metres": {
+        "18": 0.000305891
+      },
+      "browser_origin_mode": "model-centred",
+      "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+      "expected_browser_omissions": []
+    },
+    "ready": true
+  },
+  {
+    "id": "mapped_instances",
+    "comparison": {
+      "status": "pass",
+      "position_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_delta_metres": {
+          "27": 0.0,
+          "37": 0.0
+        }
+      },
+      "shape_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_deltas": {
+          "27": {
+            "volume_m3": {
+              "delta": 2.220446049250313e-16,
+              "allowed": 0.011,
+              "passed": true
+            },
+            "surface_area_m2": {
+              "delta": 0.0,
+              "allowed": 0.051000000000000004,
+              "passed": true
+            }
+          },
+          "37": {
+            "volume_m3": {
+              "delta": 2.220446049250313e-16,
+              "allowed": 0.011,
+              "passed": true
+            },
+            "surface_area_m2": {
+              "delta": 0.0,
+              "allowed": 0.051000000000000004,
+              "passed": true
+            }
+          }
+        },
+        "relative_tolerance": 0.005,
+        "absolute_tolerances": {
+          "volume_m3": 0.001,
+          "surface_area_m2": 0.001
+        },
+        "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+      },
+      "tolerance_authority": "demo_profile",
+      "tolerance_metres": 0.001,
+      "message": "IfcOpenShell and web-ifc agree for 2 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+      "missing_in_browser": [],
+      "extra_in_browser": [],
+      "missing_extent_ids": [],
+      "compared_elements": 2,
+      "maximum_extent_delta_metres": 0.0,
+      "element_extent_delta_metres": {
+        "27": 0.0,
+        "37": 0.0
+      },
+      "browser_origin_mode": "model-centred",
+      "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+      "expected_browser_omissions": []
+    },
+    "ready": true
+  },
+  {
+    "id": "complex_placement",
+    "comparison": {
+      "status": "pass",
+      "position_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_delta_metres": {
+          "28": 0.0
+        }
+      },
+      "shape_comparison": {
+        "missing_ids": [],
+        "invalid_ids": [],
+        "outlier_ids": [],
+        "element_deltas": {
+          "28": {
+            "volume_m3": {
+              "delta": 2.220446049250313e-16,
+              "allowed": 0.011,
+              "passed": true
+            },
+            "surface_area_m2": {
+              "delta": 0.0,
+              "allowed": 0.051000000000000004,
+              "passed": true
+            }
+          }
+        },
+        "relative_tolerance": 0.005,
+        "absolute_tolerances": {
+          "volume_m3": 0.001,
+          "surface_area_m2": 0.001
+        },
+        "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+      },
+      "tolerance_authority": "demo_profile",
+      "tolerance_metres": 0.001,
+      "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+      "missing_in_browser": [],
+      "extra_in_browser": [],
+      "missing_extent_ids": [],
+      "compared_elements": 1,
+      "maximum_extent_delta_metres": 0.0,
+      "element_extent_delta_metres": {
+        "28": 0.0
+      },
+      "browser_origin_mode": "model-centred",
+      "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+      "expected_browser_omissions": []
+    },
+    "ready": true
+  }
+]

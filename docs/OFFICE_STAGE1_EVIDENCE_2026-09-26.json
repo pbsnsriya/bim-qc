@@ -1,0 +1,85 @@
+{
+  "report_type": "OpenBIM QC Stage 1 large-model evidence summary",
+  "measured_at": "2026-09-26",
+  "model": {
+    "filename": "01-ARK_NordicLCA_Office_Timber_As-Built_Revit.ifc",
+    "size_bytes": 81357305,
+    "sha256": "f99b62ccadd9d625c64c4b68f89eda544ea8cac5986970d0a21473d9fcb3fd76",
+    "schema": "IFC4",
+    "length_unit": "millimetre",
+    "metres_per_project_unit": 0.001
+  },
+  "conclusion": "needs_attention",
+  "backend_core": {
+    "passed": true,
+    "engine": "IfcOpenShell 0.8.5",
+    "threads": 1,
+    "duration_ms": 563393.5,
+    "coverage_percent": 99.9,
+    "physical_products": 11321,
+    "represented_products": 11137,
+    "generated_shapes": 11129,
+    "failed_shapes": 8,
+    "products_without_representation": 184,
+    "vertices": 1456792,
+    "triangles": 2803050,
+    "bounds_metres": {
+      "minimum": [-10.31983, 0.0, 0.0],
+      "maximum": [80.550201, 86.483761, 79.715],
+      "extents": [90.870031, 86.483761, 79.715]
+    },
+    "failed_shape_note": "All eight failed represented products are IfcGrid GeometricCurveSet records; no wall, slab, door, window, structural member, or MEP solid is in this failure list."
+  },
+  "independent_web_ifc": {
+    "engine": "web-ifc 0.0.78 Node.js WASM",
+    "duration_ms": 6958.2,
+    "visible_elements": 10446,
+    "mesh_groups": 19757,
+    "vertices": 6869677,
+    "triangles": 2808099
+  },
+  "cross_engine": {
+    "passed": false,
+    "tolerance_metres": 0.001,
+    "compared_elements": 10446,
+    "matching_element_ids": 10446,
+    "missing_element_ids": 0,
+    "extra_element_ids": 0,
+    "elements_outside_extent_tolerance": 7,
+    "maximum_extent_delta_metres": 0.103169434,
+    "outliers": [
+      {"step_id": 69082, "type": "IfcWall", "maximum_extent_delta_metres": 0.103169434},
+      {"step_id": 69358, "type": "IfcWall", "maximum_extent_delta_metres": 0.103169434},
+      {"step_id": 69635, "type": "IfcWall", "maximum_extent_delta_metres": 0.103169434},
+      {"step_id": 70390, "type": "IfcWall", "maximum_extent_delta_metres": 0.103169434},
+      {"step_id": 71477, "type": "IfcWall", "maximum_extent_delta_metres": 0.103169434},
+      {"step_id": 71761, "type": "IfcWall", "maximum_extent_delta_metres": 0.103169434},
+      {"step_id": 107875, "type": "IfcSlab", "maximum_extent_delta_metres": 0.002498607}
+    ]
+  },
+  "known_answer_matrix": {
+    "passed": true,
+    "passed_cases": 6,
+    "total_cases": 6,
+    "tolerance_metres": 0.001
+  },
+  "browser_gpu": {
+    "status": "rendering_passed_performance_needs_attention",
+    "measured_at": "2026-09-27",
+    "webgl_version": "WebGL 2",
+    "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x000015BF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "probe_duration_ms": 2248,
+    "probe_frames": 11,
+    "average_fps": 4.9,
+    "interactive_target_fps": 20,
+    "drawing_buffer_pixels": [1180, 570],
+    "mesh_groups": 19757,
+    "loaded_triangles": 2808099,
+    "latest_frame_draw_calls": 21239,
+    "latest_frame_triangles": 2855299,
+    "rendering_capability_passed": true,
+    "interactive_performance_passed": false,
+    "note": "The browser used the integrated AMD Radeon 780M rather than the available discrete RTX 5060."
+  },
+  "claim_boundary": "IfcOpenShell exhaustive extraction and local WebGL rendering capability passed. The overall Stage 1 gate remains needs-attention because seven of 10,446 shared element extents differ by more than 1 mm and the measured 4.9 FPS is below the 20 FPS interactive target."
+}

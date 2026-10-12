@@ -1,0 +1,23 @@
+[
+  {
+    "expressID": 582910,
+    "mesh_groups": 3,
+    "vertices": 102,
+    "triangles": 36,
+    "engine_version": "0.0.78"
+  },
+  {
+    "expressID": 73006,
+    "mesh_groups": 1,
+    "vertices": 34,
+    "triangles": 12,
+    "engine_version": "0.0.78"
+  },
+  {
+    "expressID": 116644,
+    "mesh_groups": 1,
+    "vertices": 34,
+    "triangles": 12,
+    "engine_version": "0.0.78"
+  }
+]

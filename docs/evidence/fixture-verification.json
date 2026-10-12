@@ -1,0 +1,1407 @@
+{
+  "scope": "Analytic and Node WASM checks; no browser/GPU certification",
+  "passed": true,
+  "analytic_matrix": {
+    "name": "Stage 1 known-answer geometry matrix",
+    "source_of_truth": "Original synthetic IFC fixtures with analytically predetermined units, placements, bounds, cutouts and area/volume. No third-party certification is claimed.",
+    "tolerance_metres": 0.001,
+    "tolerance_authority": "demo_profile",
+    "shape_relative_tolerance": 0.005,
+    "passed": true,
+    "passed_cases": 10,
+    "total_cases": 10,
+    "duration_ms": 114.7,
+    "cases": [
+      {
+        "id": "ifc4_metre_cube",
+        "purpose": "Known 1 m cube in IFC4 metre units",
+        "fixture": "golden/cube_metre.ifc",
+        "fixture_sha256": "842007f3a64e81d0baaf0f6a31b7db7b531c9682a50870438211eac0e9b578a8",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "schema",
+            "passed": true,
+            "expected": "IFC4",
+            "actual": "IFC4",
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "unit_scale",
+            "passed": true,
+            "expected": 1.0,
+            "actual": 1.0,
+            "tolerance": 1e-12,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "generated_shapes",
+            "passed": true,
+            "expected": 1,
+            "actual": 1,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "minimum_bounds",
+            "passed": true,
+            "expected": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "actual": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "maximum_bounds",
+            "passed": true,
+            "expected": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "actual": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "expected_gate_outcome",
+            "passed": true,
+            "expected": true,
+            "actual": true,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          }
+        ]
+      },
+      {
+        "id": "ifc4_millimetre_cube",
+        "purpose": "1000 mm input must become a 1 m world-space cube",
+        "fixture": "golden/cube_millimetre.ifc",
+        "fixture_sha256": "3fd1f78ccb90bd54cb39f1f20b72193ce2294351622384bda9078c7a061d72d4",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "schema",
+            "passed": true,
+            "expected": "IFC4",
+            "actual": "IFC4",
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "unit_scale",
+            "passed": true,
+            "expected": 0.001,
+            "actual": 0.001,
+            "tolerance": 1e-12,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "generated_shapes",
+            "passed": true,
+            "expected": 1,
+            "actual": 1,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "minimum_bounds",
+            "passed": true,
+            "expected": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "actual": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "maximum_bounds",
+            "passed": true,
+            "expected": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "actual": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "expected_gate_outcome",
+            "passed": true,
+            "expected": true,
+            "actual": true,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          }
+        ]
+      },
+      {
+        "id": "nested_rotated_placement",
+        "purpose": "Nested placement and 90-degree rotation in world coordinates",
+        "fixture": "golden/nested_rotated.ifc",
+        "fixture_sha256": "464079c443ccb70088638eb11923b96b1ed41677bcd4ef1c55fb96be441cbc23",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "schema",
+            "passed": true,
+            "expected": "IFC4",
+            "actual": "IFC4",
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "unit_scale",
+            "passed": true,
+            "expected": 1.0,
+            "actual": 1.0,
+            "tolerance": 1e-12,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "generated_shapes",
+            "passed": true,
+            "expected": 1,
+            "actual": 1,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "minimum_bounds",
+            "passed": true,
+            "expected": [
+              11.0,
+              20.0,
+              3.0
+            ],
+            "actual": [
+              11.0,
+              20.0,
+              3.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "maximum_bounds",
+            "passed": true,
+            "expected": [
+              12.0,
+              22.0,
+              4.0
+            ],
+            "actual": [
+              12.0,
+              22.0,
+              4.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "expected_gate_outcome",
+            "passed": true,
+            "expected": true,
+            "actual": true,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          }
+        ]
+      },
+      {
+        "id": "ifc2x3_metre_cube",
+        "purpose": "Equivalent known geometry through the IFC2X3 schema",
+        "fixture": "golden/cube_ifc2x3.ifc",
+        "fixture_sha256": "756490e63264edab5d37986a2230d6346a38cdcdb0c6bb74b72eeb7dcd517433",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "schema",
+            "passed": true,
+            "expected": "IFC2X3",
+            "actual": "IFC2X3",
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "unit_scale",
+            "passed": true,
+            "expected": 1.0,
+            "actual": 1.0,
+            "tolerance": 1e-12,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "generated_shapes",
+            "passed": true,
+            "expected": 1,
+            "actual": 1,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "minimum_bounds",
+            "passed": true,
+            "expected": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "actual": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "maximum_bounds",
+            "passed": true,
+            "expected": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "actual": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "expected_gate_outcome",
+            "passed": true,
+            "expected": true,
+            "actual": true,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          }
+        ]
+      },
+      {
+        "id": "large_world_coordinates",
+        "purpose": "Preserve world placement and trigger the GPU precision warning",
+        "fixture": "golden/large_coordinates.ifc",
+        "fixture_sha256": "abba05b01940e61078adae4ae6a6e6c196629f7adfad2116f2dd85270a11db34",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "schema",
+            "passed": true,
+            "expected": "IFC4",
+            "actual": "IFC4",
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "unit_scale",
+            "passed": true,
+            "expected": 1.0,
+            "actual": 1.0,
+            "tolerance": 1e-12,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "generated_shapes",
+            "passed": true,
+            "expected": 1,
+            "actual": 1,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "minimum_bounds",
+            "passed": true,
+            "expected": [
+              200000.0,
+              300000.0,
+              0.0
+            ],
+            "actual": [
+              200000.0,
+              300000.0,
+              0.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "maximum_bounds",
+            "passed": true,
+            "expected": [
+              200001.0,
+              300001.0,
+              1.0
+            ],
+            "actual": [
+              200001.0,
+              300001.0,
+              1.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "expected_gate_outcome",
+            "passed": true,
+            "expected": true,
+            "actual": true,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "expected_warning",
+            "passed": true,
+            "expected": "GPU precision",
+            "actual": "World coordinates reach 300,001 m from the origin; browser GPU precision may be reduced.",
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          }
+        ]
+      },
+      {
+        "id": "missing_representation_rejection",
+        "purpose": "A product with no representation must be rejected by the gate",
+        "fixture": "clean_demo.ifc",
+        "fixture_sha256": "c378c63614099fc2d355cd98c6b0f53631b36273831c84cd574e945552b110d3",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "schema",
+            "passed": true,
+            "expected": "IFC4",
+            "actual": "IFC4",
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "unit_scale",
+            "passed": true,
+            "expected": 1.0,
+            "actual": 1.0,
+            "tolerance": 1e-12,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "generated_shapes",
+            "passed": true,
+            "expected": 0,
+            "actual": 0,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "minimum_bounds",
+            "passed": true,
+            "expected": null,
+            "actual": null,
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "maximum_bounds",
+            "passed": true,
+            "expected": null,
+            "actual": null,
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "expected_gate_outcome",
+            "passed": true,
+            "expected": false,
+            "actual": false,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          }
+        ]
+      },
+      {
+        "id": "opening_cutout",
+        "purpose": "4 x 0.3 x 3 m wall minus a 1 x 0.3 x 2 m cutout: host volume 3 m3",
+        "fixture": "golden/opening_cutout.ifc",
+        "fixture_sha256": "6fa99490000cc9beaa90e9a2c39e62bc8487a99d15d8c7a87a10c7747d658351",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "schema",
+            "passed": true,
+            "expected": "IFC4",
+            "actual": "IFC4",
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "unit_scale",
+            "passed": true,
+            "expected": 1.0,
+            "actual": 1.0,
+            "tolerance": 1e-12,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "generated_shapes",
+            "passed": true,
+            "expected": 2,
+            "actual": 2,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "minimum_bounds",
+            "passed": true,
+            "expected": [
+              0.0,
+              -0.1,
+              0.0
+            ],
+            "actual": [
+              0.0,
+              -0.1,
+              0.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "maximum_bounds",
+            "passed": true,
+            "expected": [
+              4.0,
+              0.4,
+              3.0
+            ],
+            "actual": [
+              4.0,
+              0.4,
+              3.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "expected_gate_outcome",
+            "passed": true,
+            "expected": true,
+            "actual": true,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "20_volume_m3",
+            "passed": true,
+            "expected": 3.0,
+            "actual": 2.9999999999999996,
+            "tolerance": 0.016,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "20_surface_area_m2",
+            "passed": true,
+            "expected": 25.4,
+            "actual": 25.4,
+            "tolerance": 0.128,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          }
+        ]
+      },
+      {
+        "id": "curved_cylinder",
+        "purpose": "Radius 1 m, height 2 m cylinder: volume 2*pi, area 6*pi",
+        "fixture": "golden/curved_cylinder.ifc",
+        "fixture_sha256": "703f39e03dc082e9109886a4463d01f39e5c798299c47352d4d4a0b613b32d47",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "schema",
+            "passed": true,
+            "expected": "IFC4",
+            "actual": "IFC4",
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "unit_scale",
+            "passed": true,
+            "expected": 1.0,
+            "actual": 1.0,
+            "tolerance": 1e-12,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "generated_shapes",
+            "passed": true,
+            "expected": 1,
+            "actual": 1,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "minimum_bounds",
+            "passed": true,
+            "expected": [
+              4.0,
+              6.0,
+              3.0
+            ],
+            "actual": [
+              4.0,
+              6.0,
+              3.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "maximum_bounds",
+            "passed": true,
+            "expected": [
+              6.0,
+              8.0,
+              5.0
+            ],
+            "actual": [
+              6.0,
+              8.0,
+              5.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "expected_gate_outcome",
+            "passed": true,
+            "expected": true,
+            "actual": true,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "18_volume_m3",
+            "passed": true,
+            "expected": 6.283185307179586,
+            "actual": 6.279051952931337,
+            "tolerance": 0.032415926535897935,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "18_surface_area_m2",
+            "passed": true,
+            "expected": 18.84955592153876,
+            "actual": 18.843355584182657,
+            "tolerance": 0.0952477796076938,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          }
+        ]
+      },
+      {
+        "id": "mapped_instances",
+        "purpose": "Same mapped 2 x 1 x 1 m box in distinct placements, one rotated 90 degrees",
+        "fixture": "golden/mapped_instances.ifc",
+        "fixture_sha256": "4f41997e98fc28201a2342064c17856e99b97e8f9429c1f739fd539dba350025",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "schema",
+            "passed": true,
+            "expected": "IFC4",
+            "actual": "IFC4",
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "unit_scale",
+            "passed": true,
+            "expected": 1.0,
+            "actual": 1.0,
+            "tolerance": 1e-12,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "generated_shapes",
+            "passed": true,
+            "expected": 2,
+            "actual": 2,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "minimum_bounds",
+            "passed": true,
+            "expected": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "actual": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "maximum_bounds",
+            "passed": true,
+            "expected": [
+              5.0,
+              5.0,
+              1.0
+            ],
+            "actual": [
+              5.0,
+              5.0,
+              1.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "expected_gate_outcome",
+            "passed": true,
+            "expected": true,
+            "actual": true,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "27_minimum",
+            "passed": true,
+            "expected": [
+              0,
+              0,
+              0
+            ],
+            "actual": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "27_maximum",
+            "passed": true,
+            "expected": [
+              2,
+              1,
+              1
+            ],
+            "actual": [
+              2.0,
+              1.0,
+              1.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "37_minimum",
+            "passed": true,
+            "expected": [
+              4,
+              3,
+              0
+            ],
+            "actual": [
+              4.0,
+              3.0,
+              0.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "37_maximum",
+            "passed": true,
+            "expected": [
+              5,
+              5,
+              1
+            ],
+            "actual": [
+              5.0,
+              5.0,
+              1.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "27_volume_m3",
+            "passed": true,
+            "expected": 2.0,
+            "actual": 2.0,
+            "tolerance": 0.011,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "27_surface_area_m2",
+            "passed": true,
+            "expected": 10.0,
+            "actual": 10.0,
+            "tolerance": 0.051000000000000004,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "37_volume_m3",
+            "passed": true,
+            "expected": 2.0,
+            "actual": 2.0,
+            "tolerance": 0.011,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "37_surface_area_m2",
+            "passed": true,
+            "expected": 10.0,
+            "actual": 10.0,
+            "tolerance": 0.051000000000000004,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          }
+        ]
+      },
+      {
+        "id": "complex_placement",
+        "purpose": "Three nested placements with two rotations; world box [7,21,4] to [9,22,5]",
+        "fixture": "golden/complex_placement.ifc",
+        "fixture_sha256": "9a9a4128ff108143966247eb21145bab07ee9df79179095b1820e8cf36723e25",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "schema",
+            "passed": true,
+            "expected": "IFC4",
+            "actual": "IFC4",
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "unit_scale",
+            "passed": true,
+            "expected": 1.0,
+            "actual": 1.0,
+            "tolerance": 1e-12,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "generated_shapes",
+            "passed": true,
+            "expected": 1,
+            "actual": 1,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "minimum_bounds",
+            "passed": true,
+            "expected": [
+              7.0,
+              21.0,
+              4.0
+            ],
+            "actual": [
+              7.0,
+              21.0,
+              4.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "maximum_bounds",
+            "passed": true,
+            "expected": [
+              9.0,
+              22.0,
+              5.0
+            ],
+            "actual": [
+              9.0,
+              22.0,
+              5.0
+            ],
+            "tolerance": 0.001,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "expected_gate_outcome",
+            "passed": true,
+            "expected": true,
+            "actual": true,
+            "tolerance": null,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "28_volume_m3",
+            "passed": true,
+            "expected": 2.0,
+            "actual": 2.0,
+            "tolerance": 0.011,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          },
+          {
+            "name": "28_surface_area_m2",
+            "passed": true,
+            "expected": 10.0,
+            "actual": 10.0,
+            "tolerance": 0.051000000000000004,
+            "source": "Original analytic fixture specification; demo profile, not an industry threshold."
+          }
+        ]
+      }
+    ]
+  },
+  "cross_engine_cases": [
+    {
+      "id": "ifc4_metre_cube",
+      "expected": "pass",
+      "passed": true,
+      "comparison": {
+        "status": "pass",
+        "position_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_delta_metres": {
+            "40": 0.0
+          }
+        },
+        "shape_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_deltas": {
+            "40": {
+              "volume_m3": {
+                "delta": 1.1102230246251565e-16,
+                "allowed": 0.006,
+                "passed": true
+              },
+              "surface_area_m2": {
+                "delta": 0.0,
+                "allowed": 0.031,
+                "passed": true
+              }
+            }
+          },
+          "relative_tolerance": 0.005,
+          "absolute_tolerances": {
+            "volume_m3": 0.001,
+            "surface_area_m2": 0.001
+          },
+          "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+        },
+        "tolerance_authority": "demo_profile",
+        "tolerance_metres": 0.001,
+        "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+        "missing_in_browser": [],
+        "extra_in_browser": [],
+        "missing_extent_ids": [],
+        "compared_elements": 1,
+        "maximum_extent_delta_metres": 0.0,
+        "element_extent_delta_metres": {
+          "40": 0.0
+        },
+        "browser_origin_mode": "model-centred",
+        "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+        "expected_browser_omissions": []
+      }
+    },
+    {
+      "id": "ifc4_millimetre_cube",
+      "expected": "pass",
+      "passed": true,
+      "comparison": {
+        "status": "pass",
+        "position_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_delta_metres": {
+            "40": 0.0
+          }
+        },
+        "shape_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_deltas": {
+            "40": {
+              "volume_m3": {
+                "delta": 1.1102230246251565e-16,
+                "allowed": 0.006,
+                "passed": true
+              },
+              "surface_area_m2": {
+                "delta": 0.0,
+                "allowed": 0.031,
+                "passed": true
+              }
+            }
+          },
+          "relative_tolerance": 0.005,
+          "absolute_tolerances": {
+            "volume_m3": 0.001,
+            "surface_area_m2": 0.001
+          },
+          "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+        },
+        "tolerance_authority": "demo_profile",
+        "tolerance_metres": 0.001,
+        "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+        "missing_in_browser": [],
+        "extra_in_browser": [],
+        "missing_extent_ids": [],
+        "compared_elements": 1,
+        "maximum_extent_delta_metres": 0.0,
+        "element_extent_delta_metres": {
+          "40": 0.0
+        },
+        "browser_origin_mode": "model-centred",
+        "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+        "expected_browser_omissions": []
+      }
+    },
+    {
+      "id": "nested_rotated_placement",
+      "expected": "pass",
+      "passed": true,
+      "comparison": {
+        "status": "pass",
+        "position_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_delta_metres": {
+            "40": 0.0
+          }
+        },
+        "shape_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_deltas": {
+            "40": {
+              "volume_m3": {
+                "delta": 2.220446049250313e-16,
+                "allowed": 0.011,
+                "passed": true
+              },
+              "surface_area_m2": {
+                "delta": 0.0,
+                "allowed": 0.051000000000000004,
+                "passed": true
+              }
+            }
+          },
+          "relative_tolerance": 0.005,
+          "absolute_tolerances": {
+            "volume_m3": 0.001,
+            "surface_area_m2": 0.001
+          },
+          "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+        },
+        "tolerance_authority": "demo_profile",
+        "tolerance_metres": 0.001,
+        "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+        "missing_in_browser": [],
+        "extra_in_browser": [],
+        "missing_extent_ids": [],
+        "compared_elements": 1,
+        "maximum_extent_delta_metres": 0.0,
+        "element_extent_delta_metres": {
+          "40": 0.0
+        },
+        "browser_origin_mode": "model-centred",
+        "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+        "expected_browser_omissions": []
+      }
+    },
+    {
+      "id": "ifc2x3_metre_cube",
+      "expected": "pass",
+      "passed": true,
+      "comparison": {
+        "status": "pass",
+        "position_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_delta_metres": {
+            "40": 0.0
+          }
+        },
+        "shape_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_deltas": {
+            "40": {
+              "volume_m3": {
+                "delta": 1.1102230246251565e-16,
+                "allowed": 0.006,
+                "passed": true
+              },
+              "surface_area_m2": {
+                "delta": 0.0,
+                "allowed": 0.031,
+                "passed": true
+              }
+            }
+          },
+          "relative_tolerance": 0.005,
+          "absolute_tolerances": {
+            "volume_m3": 0.001,
+            "surface_area_m2": 0.001
+          },
+          "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+        },
+        "tolerance_authority": "demo_profile",
+        "tolerance_metres": 0.001,
+        "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+        "missing_in_browser": [],
+        "extra_in_browser": [],
+        "missing_extent_ids": [],
+        "compared_elements": 1,
+        "maximum_extent_delta_metres": 0.0,
+        "element_extent_delta_metres": {
+          "40": 0.0
+        },
+        "browser_origin_mode": "model-centred",
+        "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+        "expected_browser_omissions": []
+      }
+    },
+    {
+      "id": "large_world_coordinates",
+      "expected": "pass",
+      "passed": true,
+      "comparison": {
+        "status": "pass",
+        "position_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_delta_metres": {
+            "40": 0.0
+          }
+        },
+        "shape_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_deltas": {
+            "40": {
+              "volume_m3": {
+                "delta": 1.1102230246251565e-16,
+                "allowed": 0.006,
+                "passed": true
+              },
+              "surface_area_m2": {
+                "delta": 0.0,
+                "allowed": 0.031,
+                "passed": true
+              }
+            }
+          },
+          "relative_tolerance": 0.005,
+          "absolute_tolerances": {
+            "volume_m3": 0.001,
+            "surface_area_m2": 0.001
+          },
+          "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+        },
+        "tolerance_authority": "demo_profile",
+        "tolerance_metres": 0.001,
+        "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+        "missing_in_browser": [],
+        "extra_in_browser": [],
+        "missing_extent_ids": [],
+        "compared_elements": 1,
+        "maximum_extent_delta_metres": 0.0,
+        "element_extent_delta_metres": {
+          "40": 0.0
+        },
+        "browser_origin_mode": "model-centred",
+        "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+        "expected_browser_omissions": []
+      }
+    },
+    {
+      "id": "missing_representation_rejection",
+      "expected": "rejected",
+      "passed": true,
+      "comparison": "not_applicable"
+    },
+    {
+      "id": "opening_cutout",
+      "expected": "pass",
+      "passed": true,
+      "comparison": {
+        "status": "pass",
+        "position_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_delta_metres": {
+            "20": 5.960464510845753e-09
+          }
+        },
+        "shape_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_deltas": {
+            "20": {
+              "volume_m3": {
+                "delta": 1.1920928999487046e-07,
+                "allowed": 0.015999999999999997,
+                "passed": true
+              },
+              "surface_area_m2": {
+                "delta": 2.1457672261249172e-07,
+                "allowed": 0.128,
+                "passed": true
+              }
+            }
+          },
+          "relative_tolerance": 0.005,
+          "absolute_tolerances": {
+            "volume_m3": 0.001,
+            "surface_area_m2": 0.001
+          },
+          "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+        },
+        "tolerance_authority": "demo_profile",
+        "tolerance_metres": 0.001,
+        "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+        "missing_in_browser": [],
+        "extra_in_browser": [],
+        "missing_extent_ids": [],
+        "compared_elements": 1,
+        "maximum_extent_delta_metres": 1.2e-08,
+        "element_extent_delta_metres": {
+          "20": 1.2e-08
+        },
+        "browser_origin_mode": "model-centred",
+        "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+        "expected_browser_omissions": [
+          {
+            "step_id": 32,
+            "type": "IfcOpeningElement",
+            "name": "1 m wide by 2 m high cutout",
+            "reason": "Subtractive void features are not expected as separate visible solids."
+          }
+        ]
+      }
+    },
+    {
+      "id": "curved_cylinder",
+      "expected": "pass",
+      "passed": true,
+      "comparison": {
+        "status": "pass",
+        "position_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_delta_metres": {
+            "18": 0.00030591689195169636
+          }
+        },
+        "shape_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_deltas": {
+            "18": {
+              "volume_m3": {
+                "delta": 0.0015704658067123844,
+                "allowed": 0.03239525976465669,
+                "passed": true
+              },
+              "surface_area_m2": {
+                "delta": 0.002355881341156163,
+                "allowed": 0.09521677792091329,
+                "passed": true
+              }
+            }
+          },
+          "relative_tolerance": 0.005,
+          "absolute_tolerances": {
+            "volume_m3": 0.001,
+            "surface_area_m2": 0.001
+          },
+          "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+        },
+        "tolerance_authority": "demo_profile",
+        "tolerance_metres": 0.001,
+        "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+        "missing_in_browser": [],
+        "extra_in_browser": [],
+        "missing_extent_ids": [],
+        "compared_elements": 1,
+        "maximum_extent_delta_metres": 0.000305891,
+        "element_extent_delta_metres": {
+          "18": 0.000305891
+        },
+        "browser_origin_mode": "model-centred",
+        "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+        "expected_browser_omissions": []
+      }
+    },
+    {
+      "id": "mapped_instances",
+      "expected": "pass",
+      "passed": true,
+      "comparison": {
+        "status": "pass",
+        "position_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_delta_metres": {
+            "27": 0.0,
+            "37": 0.0
+          }
+        },
+        "shape_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_deltas": {
+            "27": {
+              "volume_m3": {
+                "delta": 2.220446049250313e-16,
+                "allowed": 0.011,
+                "passed": true
+              },
+              "surface_area_m2": {
+                "delta": 0.0,
+                "allowed": 0.051000000000000004,
+                "passed": true
+              }
+            },
+            "37": {
+              "volume_m3": {
+                "delta": 2.220446049250313e-16,
+                "allowed": 0.011,
+                "passed": true
+              },
+              "surface_area_m2": {
+                "delta": 0.0,
+                "allowed": 0.051000000000000004,
+                "passed": true
+              }
+            }
+          },
+          "relative_tolerance": 0.005,
+          "absolute_tolerances": {
+            "volume_m3": 0.001,
+            "surface_area_m2": 0.001
+          },
+          "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+        },
+        "tolerance_authority": "demo_profile",
+        "tolerance_metres": 0.001,
+        "message": "IfcOpenShell and web-ifc agree for 2 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+        "missing_in_browser": [],
+        "extra_in_browser": [],
+        "missing_extent_ids": [],
+        "compared_elements": 2,
+        "maximum_extent_delta_metres": 0.0,
+        "element_extent_delta_metres": {
+          "27": 0.0,
+          "37": 0.0
+        },
+        "browser_origin_mode": "model-centred",
+        "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+        "expected_browser_omissions": []
+      }
+    },
+    {
+      "id": "complex_placement",
+      "expected": "pass",
+      "passed": true,
+      "comparison": {
+        "status": "pass",
+        "position_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_delta_metres": {
+            "28": 0.0
+          }
+        },
+        "shape_comparison": {
+          "missing_ids": [],
+          "invalid_ids": [],
+          "outlier_ids": [],
+          "element_deltas": {
+            "28": {
+              "volume_m3": {
+                "delta": 2.220446049250313e-16,
+                "allowed": 0.011,
+                "passed": true
+              },
+              "surface_area_m2": {
+                "delta": 0.0,
+                "allowed": 0.051000000000000004,
+                "passed": true
+              }
+            }
+          },
+          "relative_tolerance": 0.005,
+          "absolute_tolerances": {
+            "volume_m3": 0.001,
+            "surface_area_m2": 0.001
+          },
+          "scope": "Triangulated surface area and signed-volume diagnostics; not complete shape equivalence."
+        },
+        "tolerance_authority": "demo_profile",
+        "tolerance_metres": 0.001,
+        "message": "IfcOpenShell and web-ifc agree for 1 element(s) for world bounds within 1 mm and triangulated shape metrics within the demo profile.",
+        "missing_in_browser": [],
+        "extra_in_browser": [],
+        "missing_extent_ids": [],
+        "compared_elements": 1,
+        "maximum_extent_delta_metres": 0.0,
+        "element_extent_delta_metres": {
+          "28": 0.0
+        },
+        "browser_origin_mode": "model-centred",
+        "browser_axis_mapping": "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed",
+        "expected_browser_omissions": []
+      }
+    }
+  ]
+}

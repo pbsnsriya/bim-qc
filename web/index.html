@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenBIM QC Assistant</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="directOpenWarning" class="launch-warning hidden" role="alert">
+    This page needs the local server. Close it and double-click <strong>start_windows.bat</strong> in the extracted project folder.
+  </div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="OpenBIM QC home">
+      <span class="brand-mark">OQ</span>
+      <span><strong>OpenBIM QC</strong><small>Model quality assistant</small></span>
+    </a>
+    <div class="status"><span></span> Local analysis</div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">IFC QUALITY, MADE VISIBLE</p>
+        <h1>Find model issues before they become site issues.</h1>
+        <p>Inspect IFC structure, detect information gaps, and export a review-ready report—all without uploading project data to the cloud.</p>
+      </div>
+      <div id="dropzone" class="dropzone" tabindex="0" role="button">
+        <div class="upload-icon">⇧</div>
+        <strong id="uploadStatus">Drop an IFC model here</strong>
+        <span>or choose a file up to 100 MB</span>
+        <div class="actions">
+          <label class="button primary">Choose IFC<input id="fileInput" type="file" accept=".ifc"></label>
+          <button id="demoButton" class="button secondary">Load demo model</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="workspace" class="workspace hidden" aria-live="polite">
+      <div class="model-heading">
+        <div><p class="eyebrow">ACTIVE MODEL</p><h2 id="modelName">—</h2></div>
+        <div class="heading-actions">
+          <select id="profileSelect" aria-label="QC profile">
+            <option value="coordination">Coordination profile</option>
+            <option value="handover">Handover profile</option>
+            <option value="model_health">Model health profile</option>
+          </select>
+          <span id="schemaBadge" class="badge">—</span>
+          <span id="backendBadge" class="badge subtle" title="Semantic and IDS engines">Local engines</span>
+          <label class="button secondary">Validate IDS<input id="idsInput" type="file" accept=".ids,.xml,application/xml,text/xml"></label>
+          <button id="sampleIdsButton" class="button secondary" type="button">Try sample IDS</button>
+          <button id="bcfButton" class="button secondary" type="button">Export BCF</button>
+          <button id="jsonButton" class="button secondary">Export JSON</button>
+          <button id="exportButton" class="button secondary">Export CSV</button>
+        </div>
+      </div>
+
+      <div id="idsStatus" class="ids-status hidden" role="status"></div>
+
+      <article class="coordination-panel foundation-panel">
+        <div>
+          <p class="eyebrow">STAGE 1 · GEOMETRY FOUNDATION</p>
+          <h3>Validate IFC geometry pipeline</h3>
+          <p class="muted">Checks units, world coordinates, shape coverage, STEP-id mapping, finite bounds and extraction failures.</p>
+        </div>
+        <div class="foundation-actions">
+          <button id="geometryDiagnosticsButton" class="button primary" type="button" disabled>Verify extraction evidence</button>
+          <button id="gpuValidationButton" class="button secondary" type="button" disabled>Run browser/GPU check</button>
+          <button id="geometryCancelButton" class="button danger hidden" type="button">Cancel validation</button>
+          <button id="geometryEvidenceButton" class="button secondary" type="button" disabled>Export evidence JSON</button>
+        </div>
+      </article>
+      <p class="claim-boundary"><strong>Scope:</strong> This gate verifies geometry extraction consistency. It does not prove agreement with drawings, design intent, or site reality.</p>
+      <div id="geometryDiagnosticsStatus" class="ids-status diagnostics-status hidden" role="status"></div>
+      <div id="gpuValidationStatus" class="ids-status diagnostics-status hidden" role="status"></div>
+
+      <article class="coordination-panel foundation-panel">
+        <div>
+          <p class="eyebrow">STAGE 2 · EXACT DUPLICATES</p>
+          <h3>Validate exact duplicate candidates</h3>
+          <p class="muted">Finds same-class physical elements with identical world-space geometry. Duplicate subtraction voids are reviewed separately by highlighting their host elements.</p>
+        </div>
+        <button id="geometryCheckButton" class="button primary" type="button" disabled>Validate exact duplicates</button>
+      </article>
+      <p class="claim-boundary"><strong>Scope:</strong> A result is a review candidate, not permission to delete an element. Opening voids are separated from physical duplicates and linked to their hosts. Near duplicates and intentional-repeat rules belong to the next Stage 2 increment.</p>
+      <div id="geometryStatus" class="ids-status hidden" role="status"></div>
+      <div id="duplicateReviewSummary" class="duplicate-review-summary hidden" role="status"></div>
+
+      <div id="metrics" class="metrics"></div>
+
+      <div class="dashboard-grid">
+        <article class="panel model-panel">
+          <div class="panel-heading"><div><p class="eyebrow">MODEL VIEW</p><h3>Interactive IFC geometry</h3></div><div class="viewer-heading-actions"><span id="viewerStatus" class="muted">Drag to orbit · Scroll to zoom</span><select id="selectionModeSelect" class="selection-mode hidden" aria-label="Selected element visibility"><option value="xray">X-ray selected</option><option value="fade">Fade context</option><option value="isolate">Isolate selected</option></select><button id="clearSelectionButton" class="clear-selection hidden" type="button">Clear selection</button></div></div>
+          <div id="viewer" class="viewer"><div id="modelMap" class="model-map"></div></div>
+        </article>
+        <article class="panel type-panel">
+          <div class="panel-heading"><div><p class="eyebrow">COMPOSITION</p><h3>Top entity types</h3></div></div>
+          <div id="typeChart" class="type-chart"></div>
+        </article>
+      </div>
+
+      <article id="issuesPanel" class="panel issues-panel">
+        <div class="panel-heading issue-heading">
+          <div><p class="eyebrow">QUALITY REVIEW</p><h3>Detected issues</h3></div>
+          <div class="filters">
+            <select id="severityFilter" aria-label="Filter severity"><option value="all">All severities</option><option value="error">Errors</option><option value="warning">Warnings</option><option value="info">Information</option></select>
+            <select id="ruleFilter" aria-label="Filter rule"><option value="all">All rules</option></select>
+          </div>
+        </div>
+        <div id="issueList" class="issue-list"></div>
+      </article>
+    </section>
+
+    <section id="emptyState" class="empty-state">
+      <span>01</span><p>Load the demonstration model to see a known set of BIM quality issues, or upload your own IFC file.</p>
+      <span>02</span><p>Click a QC issue to highlight and frame its IFC element, or select an element directly in 3D.</p>
+      <span>03</span><p>Validate an IDS requirements file, then export all QC findings as JSON, CSV, or BCF 2.1 topics.</p>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script>
+    if (location.protocol === "file:") {
+      document.getElementById("directOpenWarning").classList.remove("hidden");
+      document.getElementById("uploadStatus").textContent = "Start the local server before uploading";
+    }
+  </script>
+  <script type="module" src="./viewer.js?v=062"></script>
+  <script type="module" src="./app.js?v=062"></script>
+</body>
+</html>

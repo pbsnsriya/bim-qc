@@ -1,0 +1,203 @@
+[
+  {
+    "step_id": 582910,
+    "type": "IfcSlab",
+    "placement": "#582909=IfcLocalPlacement(#582874,$)",
+    "attempts": [
+      {
+        "scope": "product",
+        "world": true,
+        "error": "Unexpected topology"
+      },
+      {
+        "scope": "product",
+        "world": false,
+        "error": "Unexpected topology"
+      },
+      {
+        "scope": "representation item",
+        "step_id": 582885,
+        "vertices": 8
+      },
+      {
+        "scope": "representation item",
+        "step_id": 582894,
+        "vertices": 8
+      },
+      {
+        "scope": "representation item",
+        "step_id": 582903,
+        "vertices": 8
+      }
+    ],
+    "diagnosis": {
+      "step_id": 582910,
+      "type": "IfcSlab",
+      "global_id": "0bQS_OnubCwgB6t5ES$8QY",
+      "name": "Basic Roof:KA-2:3067686",
+      "error": "Unexpected topology",
+      "representations": [
+        {
+          "step_id": 582907,
+          "identifier": "Body",
+          "representation_type": "SweptSolid",
+          "item_types": [
+            "IfcExtrudedAreaSolid",
+            "IfcExtrudedAreaSolid",
+            "IfcExtrudedAreaSolid"
+          ]
+        }
+      ],
+      "classification": "confirmed_model_defect",
+      "blocks_extraction_readiness": true,
+      "confirmed_model_defect": true,
+      "model_defect_evidence": {
+        "placement_step_id": 582909,
+        "required_attribute": "IfcLocalPlacement.RelativePlacement",
+        "measured_value": null,
+        "schema": "IFC4",
+        "source": "IFC declared schema: IfcLocalPlacement.RelativePlacement is not OPTIONAL"
+      },
+      "disposition": "Required local placement is unresolved in the loaded IFC; independently verify raw references before repair."
+    },
+    "raw_placement_line": "#582909=IFCLOCALPLACEMENT(#582874,#825120);",
+    "missing_reference": 825120,
+    "reference_definition_present": false,
+    "web_ifc_result": {
+      "expressID": 582910,
+      "mesh_groups": 3,
+      "vertices": 102,
+      "triangles": 36,
+      "engine_version": "0.0.78"
+    },
+    "classification": "confirmed_model_defect",
+    "scope": "Missing required placement reference in these exact bytes. Swept-solid items are supported. web-ifc renders via fallback; its position is untrusted. No original authoring model or independent desktop-viewer review was supplied.",
+    "standard_source": "https://standards.buildingsmart.org/IFC/RELEASE/IFC4/ADD2_TC1/HTML/schema/ifcgeometricconstraintresource/lexical/ifclocalplacement.htm"
+  },
+  {
+    "step_id": 73006,
+    "type": "IfcOpeningElement",
+    "placement": "#73005=IfcLocalPlacement(#112,$)",
+    "attempts": [
+      {
+        "scope": "product",
+        "world": true,
+        "error": "Unexpected topology"
+      },
+      {
+        "scope": "product",
+        "world": false,
+        "error": "Unexpected topology"
+      },
+      {
+        "scope": "representation item",
+        "step_id": 73002,
+        "vertices": 8
+      }
+    ],
+    "diagnosis": {
+      "step_id": 73006,
+      "type": "IfcOpeningElement",
+      "global_id": "3fQlH4$5W904PnIvVi2Eo1",
+      "name": "O-7:O-7.12x21:1382481:1",
+      "error": "Unexpected topology",
+      "representations": [
+        {
+          "step_id": 73003,
+          "identifier": "Body",
+          "representation_type": "SweptSolid",
+          "item_types": [
+            "IfcExtrudedAreaSolid"
+          ]
+        }
+      ],
+      "classification": "confirmed_model_defect",
+      "blocks_extraction_readiness": true,
+      "confirmed_model_defect": true,
+      "model_defect_evidence": {
+        "placement_step_id": 73005,
+        "required_attribute": "IfcLocalPlacement.RelativePlacement",
+        "measured_value": null,
+        "schema": "IFC4",
+        "source": "IFC declared schema: IfcLocalPlacement.RelativePlacement is not OPTIONAL"
+      },
+      "disposition": "Required local placement is unresolved in the loaded IFC; independently verify raw references before repair."
+    },
+    "raw_placement_line": "#73005=IFCLOCALPLACEMENT(#112,#825115);",
+    "missing_reference": 825115,
+    "reference_definition_present": false,
+    "web_ifc_result": {
+      "expressID": 73006,
+      "mesh_groups": 1,
+      "vertices": 34,
+      "triangles": 12,
+      "engine_version": "0.0.78"
+    },
+    "classification": "confirmed_model_defect",
+    "scope": "Missing required placement reference in these exact bytes. Swept-solid items are supported. web-ifc renders via fallback; its position is untrusted. No original authoring model or independent desktop-viewer review was supplied.",
+    "standard_source": "https://standards.buildingsmart.org/IFC/RELEASE/IFC4/ADD2_TC1/HTML/schema/ifcgeometricconstraintresource/lexical/ifclocalplacement.htm"
+  },
+  {
+    "step_id": 116644,
+    "type": "IfcOpeningElement",
+    "placement": "#116643=IfcLocalPlacement(#112,$)",
+    "attempts": [
+      {
+        "scope": "product",
+        "world": true,
+        "error": "Unexpected topology"
+      },
+      {
+        "scope": "product",
+        "world": false,
+        "error": "Unexpected topology"
+      },
+      {
+        "scope": "representation item",
+        "step_id": 116640,
+        "vertices": 8
+      }
+    ],
+    "diagnosis": {
+      "step_id": 116644,
+      "type": "IfcOpeningElement",
+      "global_id": "2On7ppglvk4nSxqqcu6laK",
+      "name": "UO-3:UO-3.12x21:1623922:1",
+      "error": "Unexpected topology",
+      "representations": [
+        {
+          "step_id": 116641,
+          "identifier": "Body",
+          "representation_type": "SweptSolid",
+          "item_types": [
+            "IfcExtrudedAreaSolid"
+          ]
+        }
+      ],
+      "classification": "confirmed_model_defect",
+      "blocks_extraction_readiness": true,
+      "confirmed_model_defect": true,
+      "model_defect_evidence": {
+        "placement_step_id": 116643,
+        "required_attribute": "IfcLocalPlacement.RelativePlacement",
+        "measured_value": null,
+        "schema": "IFC4",
+        "source": "IFC declared schema: IfcLocalPlacement.RelativePlacement is not OPTIONAL"
+      },
+      "disposition": "Required local placement is unresolved in the loaded IFC; independently verify raw references before repair."
+    },
+    "raw_placement_line": "#116643=IFCLOCALPLACEMENT(#112,#825119);",
+    "missing_reference": 825119,
+    "reference_definition_present": false,
+    "web_ifc_result": {
+      "expressID": 116644,
+      "mesh_groups": 1,
+      "vertices": 34,
+      "triangles": 12,
+      "engine_version": "0.0.78"
+    },
+    "classification": "confirmed_model_defect",
+    "scope": "Missing required placement reference in these exact bytes. Swept-solid items are supported. web-ifc renders via fallback; its position is untrusted. No original authoring model or independent desktop-viewer review was supplied.",
+    "standard_source": "https://standards.buildingsmart.org/IFC/RELEASE/IFC4/ADD2_TC1/HTML/schema/ifcgeometricconstraintresource/lexical/ifclocalplacement.htm"
+  }
+]
