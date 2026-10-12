@@ -687,6 +687,7 @@ function selectEntity(entityID, { fromViewer = false, selectionIDs = null, revea
   if (highlighted && revealViewer) $("viewer").scrollIntoView({ behavior: "smooth", block: "center" });
   if (!highlighted) toast(geometryFailureMessage(element, targetIDs));
   else if (unresolved) toast("This element has unresolved Stage 1 evidence. A visible fallback mesh does not validate its position.");
+  return highlighted;
 }
 
 function clearEntitySelection() {
@@ -875,6 +876,24 @@ $("selectionModeSelect").addEventListener("change", (event) => {
   }
 });
 $("issueList").addEventListener("click", (event) => {
+  const hostButton = event.target.closest(".comparison-highlight-hosts");
+  if (hostButton) {
+    const key = hostButton.closest(".pair-comparison").dataset.comparisonKey;
+    const hostIDs = state.pairComparisons.get(key)?.result?.host_entity_ids || [];
+    if (!hostIDs.length) return;
+    const targetIDs = [...new Set(hostIDs.flatMap(id => {
+      const host = state.result?.elements.find(item => item.step_id === id);
+      return host?.selection_ids?.length ? host.selection_ids : [id];
+    }))];
+    const highlighted = selectEntity(hostIDs[0], { selectionIDs: targetIDs, revealViewer: true });
+    const renderedIDs = globalThis.OpenBIMViewer?.getRenderingDiagnostics?.()?.selected_element_ids;
+    const missingIDs = Array.isArray(renderedIDs) ? targetIDs.filter(id => !renderedIDs.includes(id)) : [];
+    const unresolvedHosts = hostIDs.filter(id => state.geometryDiagnostics?.critical_unresolved_ids?.includes(id));
+    $("viewerStatus").textContent = highlighted
+      ? `Opening hosts ${hostIDs.map(id => `#${id}`).join(" ↔ ")}${missingIDs.length ? ` · Some geometry is unavailable (#${missingIDs.join(", #")})` : " · Highlighted"}${unresolvedHosts.length ? ` · Stage 1 geometry/placement unresolved for #${unresolvedHosts.join(", #")}; rendered position is unverified` : ""}`
+      : `Opening hosts ${hostIDs.map(id => `#${id}`).join(" ↔ ")} · Geometry is not currently selectable`;
+    return;
+  }
   const retry = event.target.closest(".comparison-retry");
   if (retry) {
     const key = retry.closest(".pair-comparison").dataset.comparisonKey;

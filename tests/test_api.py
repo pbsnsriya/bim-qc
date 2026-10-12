@@ -85,6 +85,18 @@ class ApiTests(unittest.TestCase):
         self.assertEqual([40, 41], [e["step_id"] for e in result["elements"]])
         self.assertEqual(0, result["physical_difference_count"])
 
+    def test_stored_opening_comparison_resolves_hosts(self):
+        uploaded = self.upload_model("golden/duplicate_exact_matrix.ifc")
+        request = Request(f"{self.base}/api/compare-elements", data=json.dumps({
+            "model_id": uploaded["model_id"], "element_ids": [44, 45],
+        }).encode(), headers={"Content-Type": "application/json"}, method="POST")
+        with urlopen(request) as response:
+            result = json.load(response)
+        self.assertEqual(uploaded["model_sha256"], result["source_sha256"])
+        self.assertEqual([48, 49], result["host_entity_ids"])
+        self.assertEqual("context", next(r for r in result["rows"] if r["key"] == "opening_hosts")["category"])
+        self.assertEqual(3, result["not_applicable_count"])
+
     def test_background_geometry_job_reports_progress_and_completes(self):
         uploaded = self.upload_model()
         backend = __import__("ifcqc.geometry_diagnostics", fromlist=["diagnose_geometry"])

@@ -39,13 +39,38 @@ def _equal(a, b, absolute=1e-9):
     return a == b
 
 
-def _row(key, label, a, b, *, identity=False, absolute=1e-9):
-    if a is None or b is None:
+def _row(key, label, a, b, *, identity=False, absolute=1e-9, applicable=(True, True)):
+    if not any(applicable):
+        status = "not_applicable"
+    elif not all(applicable):
+        status = "not_evaluated"
+    elif a is None or b is None:
         status = "not_evaluated" if a is None and b is None else "missing"
     else:
         status = "same" if _equal(a, b, absolute) else "different"
     return {"key": key, "label": label, "a": a, "b": b,
-            "status": status, "category": "identity" if identity else "physical"}
+            "status": status, "category": "identity" if identity else "physical",
+            "a_applicable": applicable[0], "b_applicable": applicable[1]}
+
+
+def _opening_hosts(element):
+    """Resolve explicit void relationships; never infer a host from a name or proximity."""
+    import ifcopenshell.util.element as util
+
+    if not element.is_a("IfcOpeningElement"):
+        return None
+    hosts = {}
+    for rel in getattr(element, "VoidsElements", ()):
+        host = rel.RelatingBuildingElement
+        if host is None:
+            continue
+        typ = util.get_type(host)
+        hosts[host.id()] = {
+            "step_id": host.id(), "class": host.is_a(), "name": host.Name,
+            "global_id": host.GlobalId, "tag": getattr(host, "Tag", None),
+            "type_name": typ.Name if typ else None,
+        }
+    return [hosts[key] for key in sorted(hosts)] or None
 
 
 def _element(model, element):
@@ -80,6 +105,8 @@ def _element(model, element):
         "assembly_parent": [f"{p.is_a()} #{p.id()} · {p.Name or 'Unnamed'}" for p in parents] or None,
         "properties": psets, "dimensions_mm": None, "position_metres": None,
         "geometry_status": "not_evaluated", "geometry_message": "No Body representation supplied.",
+        "is_opening": element.is_a("IfcOpeningElement"),
+        "opening_hosts": _opening_hosts(element),
     }
     # LoadBearing occurs in several common property sets, not just columns.
     load_values = [value for key, value in psets.items() if key.endswith(".LoadBearing")]
@@ -132,9 +159,17 @@ def compare_model_elements(model, ids: list[int]) -> dict:
         ("global_id", "GlobalId", True), ("tag", "Element Tag", True),
         ("type_id", "Type record ID", True), ("type_tag", "Type Tag", True),
     ]
+    void_fields = {"type_name", "type_id", "type_tag", "material", "load_bearing"}
     rows = [_row(key, label, a[key], b[key], identity=identity,
+                 applicable=tuple(not (e["is_opening"] and key in void_fields and e[key] is None)
+                                  for e in elements),
                  absolute=0.001 if key == "dimensions_mm" else 1e-6 if key == "position_metres" else 1e-9)
             for key, label, identity in definitions]
+    if a["is_opening"] or b["is_opening"]:
+        host_row = _row("opening_hosts", "Host element (IfcRelVoidsElement)", a["opening_hosts"], b["opening_hosts"],
+                        applicable=(a["is_opening"], b["is_opening"]))
+        host_row["category"] = "context"
+        rows.insert(2, host_row)
     keys = sorted(a["properties"].keys() | b["properties"].keys())
     property_rows = [_row(key, key, a["properties"].get(key), b["properties"].get(key)) for key in keys]
     physical = [row for row in rows if row["category"] == "physical"]
@@ -145,6 +180,8 @@ def compare_model_elements(model, ids: list[int]) -> dict:
         "physical_difference_count": sum(row["status"] == "different" for row in physical),
         "property_difference_count": sum(row["status"] == "different" for row in property_rows),
         "not_evaluated_count": sum(row["status"] in {"not_evaluated", "missing"} for row in physical),
+        "not_applicable_count": sum(row["status"] == "not_applicable" for row in physical),
+        "host_entity_ids": sorted({host["step_id"] for e in elements for host in e["opening_hosts"] or []}),
         "length_unit_scale_to_metres": _length_scale(model),
         "claim_boundary": "Matching properties or bounds do not prove full shape equality or author intent. Review decisions are unchanged.",
     }

@@ -133,7 +133,12 @@ select { background: white; border: 1px solid var(--line); border-radius: 8px; p
 .pair-table thead { background: #edf2e8; }
 .comparison-different { background: #fff0d6; }
 .comparison-missing, .comparison-not_evaluated { background: #f3f3f1; color: #626760; }
-.comparison-identity-different { background: #edf3fa; }
+.comparison-identity-different, .comparison-context-different { background: #edf3fa; }
+.comparison-not_applicable { background: #f8f9f7; color: var(--muted); }
+.pair-host-controls { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.pair-host-controls p { flex: 1; min-width: 200px; margin: 0; line-height: 1.5; }
+.comparison-highlight-hosts { cursor: pointer; padding: 8px 12px; }
+.comparison-highlight-hosts:disabled { cursor: default; opacity: .55; }
 .pair-properties { margin-top: 14px; }
 .pair-properties summary { cursor: pointer; padding: 8px 0; font-weight: 700; }
 .pair-measurement { color: var(--muted); line-height: 1.5; }

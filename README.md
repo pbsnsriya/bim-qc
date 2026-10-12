@@ -225,6 +225,28 @@ and the current dimension prototype only enforces a minimum geometric extent.
 Next Stage 2 increment: near-duplicate placement/rotation tolerance, expanded
 confidence scoring, and project-configurable intentional-repeat exclusions.
 
+## v0.7.12 opening hosts
+
+Opening pair comparisons now show each **Host element (IfcRelVoidsElement)**
+with its STEP ID, IFC class, name and assigned type name, when exported.
+Click **Highlight hosts** under the comparison table to select and frame the
+hosts using the existing X-ray, fade or isolate mode. **Clear selection** resets
+the viewer. The control reuses the cached comparison and does not change review
+decisions or notes.
+
+Missing relationships produce an explicit **Not evaluated** warning. The host
+button is disabled if neither opening has a known host. A shared host is selected
+once; distinct hosts are shown as contextual differences, excluded from the
+physical-difference count. Partial or unavailable viewer selection is reported.
+
+For opening voids, absent type, material and load-bearing fields are **Not
+applicable**; exported values remain visible. Phase/status and assembly information
+are still **Not evaluated** when absent. Physical elements retain the existing
+missing-information handling. No host is inferred from an element name or position.
+
+See `docs/Opening_Host_Comparison_v0.7.12.md` for the verified supplied-model
+relationships, automated checks and local acceptance steps.
+
 ## v0.7.11 pair comparison
 
 Click a duplicate issue to highlight its pair and open the **Compare #A ↔ #B**

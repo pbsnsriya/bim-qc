@@ -268,5 +268,84 @@ document.querySelector("#ruleFilter").value = "ids:wall-name";
 document.querySelector("#ruleFilter").dispatchEvent(new window.Event("change"));
 assert.ok(document.querySelector('[data-rule-id="ids:wall-name"]'), "IDS findings remain available after geometry checks");
 
+// Exercise the real opening fixture through upload, Stage 1, Stage 2 and comparison API.
+globalThis.fetch = fetchWithComparison;
+const openingText = await fs.readFile(new URL('../samples/golden/duplicate_exact_matrix.ifc', import.meta.url), 'utf8');
+const openingBackend = await (await fetch('/api/geometry-diagnostics', {
+  method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({content: openingText}),
+})).json();
+globalThis.OpenBIMViewer.getGeometryDiagnostics = () => ({
+  engine: 'web-ifc', origin_mode: 'model-centred', bounds_frame: 'IFC world Z-up metres', mesh_groups: 6,
+  element_bounds_metres: openingBackend.element_bounds_metres,
+  element_shape_metrics: openingBackend.element_shape_metrics,
+  element_ids: Object.keys(openingBackend.element_extents_metres).map(Number),
+  element_extents_metres: openingBackend.element_extents_metres,
+});
+const uploadInput = document.querySelector('#fileInput');
+Object.defineProperty(uploadInput, 'files', {configurable: true, value: [new File([openingText], 'duplicate_exact_matrix.ifc')]});
+uploadInput.dispatchEvent(new window.Event('change'));
+let hostDeadline = Date.now() + 10000;
+while (!document.querySelector('.model-node[data-entity-id="48"]') && Date.now() < hostDeadline) {
+  await new Promise(resolve => setTimeout(resolve, 25));
+}
+assert.ok(document.querySelector('.model-node[data-entity-id="48"]'), 'opening fixture is uploaded as a new source');
+document.querySelector('#geometryDiagnosticsButton').click();
+hostDeadline = Date.now() + 10000;
+while (document.querySelector('#geometryCheckButton').disabled && Date.now() < hostDeadline) {
+  await new Promise(resolve => setTimeout(resolve, 25));
+}
+assert.equal(document.querySelector('#geometryCheckButton').disabled, false, 'opening fixture passes its readiness prerequisites');
+document.querySelector('#geometryCheckButton').click();
+hostDeadline = Date.now() + 10000;
+while (!document.querySelector('[data-rule-id="duplicate_opening_candidate"]') && Date.now() < hostDeadline) {
+  await new Promise(resolve => setTimeout(resolve, 25));
+}
+const openingIssue = document.querySelector('[data-rule-id="duplicate_opening_candidate"]');
+assert.ok(openingIssue, 'Stage 2 returns the known coincident opening pair');
+openingIssue.click();
+const openingReview = openingIssue.closest('.duplicate-review-row');
+hostDeadline = Date.now() + 10000;
+while (!openingReview.querySelector('.comparison-highlight-hosts') && Date.now() < hostDeadline) {
+  await new Promise(resolve => setTimeout(resolve, 25));
+}
+const hostButton = openingReview.querySelector('.comparison-highlight-hosts');
+assert.ok(hostButton, 'opening comparison offers the host control');
+assert.equal(hostButton.tagName, 'BUTTON', 'host selection uses a native keyboard-accessible button');
+assert.equal(hostButton.disabled, false);
+assert.match(openingReview.querySelector('[data-field="opening_hosts"]').textContent, /#48.*Opening host A.*#49.*Opening host B.*Different hosts/s);
+assert.match(openingReview.querySelector('[data-field="material"]').textContent, /Not applicable/);
+assert.match(openingReview.querySelector('[data-field="phase_status"]').textContent, /Not evaluated/);
+const selectedBeforeHosts = calls.selected.length;
+hostButton.click();
+assert.deepEqual(calls.selected.slice(selectedBeforeHosts), [48, 49], 'host button selects the two host elements, not subtraction voids');
+assert.match(document.querySelector('#viewerStatus').textContent, /Opening hosts #48 ↔ #49.*Highlighted/);
+assert.equal(document.querySelector('.model-node[data-entity-id="48"]').classList.contains('selected'), true, 'primary host remains synchronized with the data map');
+assert.equal(openingReview.querySelector('.review-decision').value, 'unresolved', 'highlighting does not decide author intent');
+assert.equal(openingReview.querySelector('.review-note').value, '', 'highlighting does not invent reviewer evidence');
+globalThis.OpenBIMViewer.getRenderingDiagnostics = () => ({selected_element_ids: [48]});
+hostButton.click();
+assert.match(document.querySelector('#viewerStatus').textContent, /Some geometry is unavailable \(#49\)/, 'partial selection is disclosed');
+const selectHosts = globalThis.OpenBIMViewer.selectExpressIDs;
+globalThis.OpenBIMViewer.selectExpressIDs = () => false;
+hostButton.click();
+assert.match(document.querySelector('#viewerStatus').textContent, /Geometry is not currently selectable/, 'unavailable host geometry is not reported as highlighted');
+globalThis.OpenBIMViewer.selectExpressIDs = selectHosts;
+delete globalThis.OpenBIMViewer.getRenderingDiagnostics;
+document.querySelector('#clearSelectionButton').click();
+assert.equal(document.querySelectorAll('.model-node.selected').length, 0, 'clear resets host selection');
+
+// Missing explicit relationships must remain visible, with no enabled host action.
+const {renderPairComparison} = await import('../web/pair-comparison.js');
+const withoutHosts = openingText.replace(/^#(?:46|47)=.*\n/gm, '');
+const missingHostResult = await (await fetch('/api/compare-elements', {
+  method: 'POST', headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({content: withoutHosts, element_ids: [44, 45]}),
+})).json();
+const missingHostDom = document.createElement('div');
+missingHostDom.innerHTML = renderPairComparison(missingHostResult);
+assert.equal(missingHostDom.querySelector('.comparison-highlight-hosts').disabled, true);
+assert.match(missingHostDom.querySelector('[data-field="opening_hosts"]').textContent, /Not evaluated/);
+assert.equal(missingHostDom.querySelectorAll('.comparison-warning').length, 2, 'each opening without a host gets an explicit warning');
+
 serverProcess?.kill();
 console.log("frontend interaction tests passed");
