@@ -119,6 +119,13 @@ with identical world-space tessellated geometry. Selecting a finding highlights
 both members of the candidate pair. A match still requires human review before
 anything is deleted.
 
+The strict Stage 1 evidence result and Stage 2 capability gate are intentionally
+separate. Stage 1 may retain an extent-variance warning when IfcOpenShell and
+web-ifc tessellate a small number of elements differently. Exact duplicate
+analysis can still unlock when core extraction passes and every backend element
+has a browser STEP-id/extent mapping, because duplicate decisions are made only
+by IfcOpenShell and the viewer uses those stable IDs solely for highlighting.
+
 The clash matrix currently evaluates `IfcDistributionElement` objects against
 walls, slabs, beams, columns, footings, piles, roofs, ramps, and stairs. Exact
 coincident same-class geometry is labelled **exact duplicate candidate** for

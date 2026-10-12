@@ -13,6 +13,7 @@ class GeometryDiagnosticTests(unittest.TestCase):
         result = diagnose_geometry((ROOT / "samples/geometry_demo.ifc").read_text())
         self.assertTrue(result["core_ready"])
         self.assertFalse(result["ready"])
+        self.assertFalse(result["duplicate_prerequisites_ready"])
         self.assertEqual(1, result["stage"])
         self.assertEqual("IFC4", result["schema"])
         self.assertEqual(7, result["counts"]["represented_products"])
@@ -41,6 +42,7 @@ class GeometryDiagnosticTests(unittest.TestCase):
             (ROOT / "samples/geometry_demo.ifc").read_text(), browser,
         )
         self.assertTrue(result["ready"])
+        self.assertTrue(result["duplicate_prerequisites_ready"])
         self.assertEqual("pass", result["cross_engine"]["status"])
         self.assertEqual(7, result["cross_engine"]["compared_elements"])
 
@@ -54,6 +56,21 @@ class GeometryDiagnosticTests(unittest.TestCase):
         })
         self.assertFalse(result["ready"])
         self.assertEqual("fail", result["cross_engine"]["status"])
+        self.assertTrue(result["duplicate_prerequisites_ready"])
+
+    def test_missing_browser_id_blocks_duplicate_stage(self):
+        backend = diagnose_geometry((ROOT / "samples/geometry_demo.ifc").read_text())
+        element_ids = [int(key) for key in backend["element_extents_metres"]]
+        missing_id = element_ids.pop()
+        result = diagnose_geometry((ROOT / "samples/geometry_demo.ifc").read_text(), {
+            "element_ids": element_ids,
+            "element_extents_metres": {
+                key: value for key, value in backend["element_extents_metres"].items()
+                if int(key) != missing_id
+            },
+        })
+        self.assertFalse(result["duplicate_prerequisites_ready"])
+        self.assertIn(missing_id, result["cross_engine"]["missing_in_browser"])
 
     def test_model_without_representation_fails_cleanly(self):
         result = diagnose_geometry((ROOT / "samples/clean_demo.ifc").read_text())

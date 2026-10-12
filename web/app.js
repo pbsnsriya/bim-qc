@@ -244,6 +244,7 @@ async function runGeometryDiagnostics() {
 function finishGeometryDiagnostics(result, acceptance) {
   result.acceptance_matrix = acceptance;
   result.ready = result.ready && acceptance.passed;
+  result.stage2_ready = result.duplicate_prerequisites_ready && acceptance.passed;
   state.geometryDiagnostics = result;
   const status = $("geometryDiagnosticsStatus");
   const checkRows = result.checks.map((check) => {
@@ -254,6 +255,7 @@ function finishGeometryDiagnostics(result, acceptance) {
     ? `<details><summary>${result.failed_elements.length} failed element(s)</summary><ul>${result.failed_elements.map((item) => `<li>#${item.step_id} ${escapeHtml(item.type)} · ${escapeHtml(item.error)}</li>`).join("")}</ul></details>`
     : "";
   const warnings = result.warnings.length ? `<p><strong>Review:</strong> ${result.warnings.map(escapeHtml).join(" ")}</p>` : "";
+  const stage2Gate = `<p class="evidence-boundary"><strong>Stage 2 readiness: ${result.stage2_ready ? "PASS" : "FAIL"}.</strong> ${escapeHtml(result.duplicate_readiness_message)}</p>`;
   status.classList.toggle("diagnostics-pass", result.ready);
   status.classList.toggle("diagnostics-fail", !result.ready);
   const matrixRows = acceptance.cases.map((item) =>
@@ -264,12 +266,12 @@ function finishGeometryDiagnostics(result, acceptance) {
     `Bounds min [${vectorText(result.bounds_metres.minimum)}] m · max [${vectorText(result.bounds_metres.maximum)}] m` +
     `<ul class="diagnostic-checks">${checkRows}</ul>` +
     `<details open><summary><strong>Known-answer matrix: ${acceptance.passed_cases}/${acceptance.total_cases} cases passed</strong> · tolerance ${acceptance.tolerance_metres * 1000} mm</summary><ul class="diagnostic-checks">${matrixRows}</ul></details>` +
-    `<p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(result.claim_boundary)}</p>${warnings}${failures}`;
-  $("geometryCheckButton").disabled = !result.ready;
-  $("geometryCheckButton").textContent = result.ready ? "Validate exact duplicates" : "Stage 1 must pass first";
+    `<p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(result.claim_boundary)}</p>${stage2Gate}${warnings}${failures}`;
+  $("geometryCheckButton").disabled = !result.stage2_ready;
+  $("geometryCheckButton").textContent = result.stage2_ready ? "Validate exact duplicates" : "Stage 1 prerequisites must pass";
   $("geometryEvidenceButton").disabled = false;
-  $("geometryCheckButton").title = result.ready ? "Stage 1 passed; exact duplicate validation is available" : "Stage 1 extraction evidence must pass first";
-  toast(result.ready ? "Stage 1 extraction evidence passed" : "Stage 1 found extraction evidence problems");
+  $("geometryCheckButton").title = result.stage2_ready ? "Core extraction and STEP-id mapping passed; exact duplicate validation is available" : "Core extraction and browser STEP-id mapping must pass first";
+  toast(result.ready ? "Stage 1 extraction evidence passed" : result.stage2_ready ? "Extent variance retained; Stage 2 is available" : "Stage 1 found extraction evidence problems");
 }
 
 async function cancelGeometryDiagnostics() {

@@ -298,11 +298,25 @@ def _diagnose_model(
     checks = [*core_checks, cross_engine_check]
     core_ready = all(check["status"] == "pass" for check in core_checks)
     ready = core_ready and cross_engine["status"] == "pass"
+    duplicate_prerequisites_ready = (
+        core_ready
+        and cross_engine.get("compared_elements", 0) > 0
+        and not cross_engine.get("missing_in_browser", [])
+        and not cross_engine.get("missing_extent_ids", [])
+    )
+    duplicate_readiness_message = (
+        "Core extraction and browser STEP-id mapping passed. Exact duplicate "
+        "analysis may run even though extent differences remain under Stage 1 review."
+        if duplicate_prerequisites_ready
+        else "Exact duplicate analysis requires passing core extraction and complete browser STEP-id mapping."
+    )
 
     result = {
         "stage": 1,
         "ready": ready,
         "core_ready": core_ready,
+        "duplicate_prerequisites_ready": duplicate_prerequisites_ready,
+        "duplicate_readiness_message": duplicate_readiness_message,
         "claim": "geometry_extraction_consistency",
         "claim_boundary": (
             "A pass proves extraction consistency against known fixtures and two engines. "
