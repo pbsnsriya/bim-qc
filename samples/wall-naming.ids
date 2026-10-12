@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ids:ids xmlns:ids="http://standards.buildingsmart.org/IDS">
+  <ids:info>
+    <ids:title>OpenBIM QC wall naming check</ids:title>
+  </ids:info>
+  <ids:specifications>
+    <ids:specification name="Every wall must have a name" identifier="wall-name" ifcVersion="IFC2X3 IFC4">
+      <ids:applicability minOccurs="1" maxOccurs="unbounded">
+        <ids:entity>
+          <ids:name><ids:simpleValue>IFCWALL</ids:simpleValue></ids:name>
+        </ids:entity>
+      </ids:applicability>
+      <ids:requirements>
+        <ids:attribute cardinality="required">
+          <ids:name><ids:simpleValue>Name</ids:simpleValue></ids:name>
+        </ids:attribute>
+      </ids:requirements>
+    </ids:specification>
+  </ids:specifications>
+</ids:ids>
