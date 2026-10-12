@@ -125,6 +125,10 @@ web-ifc tessellate a small number of elements differently. Exact duplicate
 analysis can still unlock when core extraction passes and every backend element
 has a browser STEP-id/extent mapping, because duplicate decisions are made only
 by IfcOpenShell and the viewer uses those stable IDs solely for highlighting.
+After the check, Quality Review automatically filters to exact-duplicate
+candidates. Clicking a candidate highlights both elements and returns the page
+to the 3D viewer; exactly coincident elements may visually appear as one amber
+object because they occupy the same space.
 
 The clash matrix currently evaluates `IfcDistributionElement` objects against
 walls, slabs, beams, columns, footings, piles, roofs, ramps, and stairs. Exact

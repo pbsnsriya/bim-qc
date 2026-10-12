@@ -189,8 +189,13 @@ async function runGeometryChecks() {
     status.classList.toggle("diagnostics-fail", !matrix.passed);
     status.innerHTML = `<strong>${matrix.passed ? "Stage 2 exact-duplicate validation passed" : "Stage 2 exact-duplicate validation failed"}</strong> · ${validation.summary.geometric_products} geometric products · ${candidates} candidate pair(s)` +
       `<details open><summary><strong>Known-answer matrix: ${matrix.passed_cases}/${matrix.total_cases} assertions passed</strong> · tolerance ${matrix.tolerance_metres * 1000} mm</summary><ul class="diagnostic-checks">${matrixRows}</ul></details>` +
+      `<p class="evidence-boundary"><strong>Review:</strong> ${candidates} candidate pair(s) are filtered in Quality Review below. Click a finding to highlight both IFC elements.</p>` +
       `<p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(matrix.claim_boundary)}</p>`;
     status.classList.remove("hidden");
+    $("severityFilter").value = "all";
+    $("ruleFilter").value = "exact_duplicate_candidate";
+    renderIssues();
+    $("issuesPanel").scrollIntoView({ behavior: "smooth", block: "start" });
     toast(`Exact duplicate check found ${candidates} candidate pair(s)`);
   } finally {
     button.disabled = false;
@@ -459,7 +464,7 @@ function geometryFailureMessage(element, targetIDs) {
   return element?.geometry_message || "The geometry is not currently selectable in the viewer.";
 }
 
-function selectEntity(entityID, { fromViewer = false, selectionIDs = null } = {}) {
+function selectEntity(entityID, { fromViewer = false, selectionIDs = null, revealViewer = false } = {}) {
   const numericID = Number(entityID);
   if (!Number.isInteger(numericID)) return;
   const element = state.result?.elements.find((item) => item.step_id === numericID);
@@ -475,6 +480,7 @@ function selectEntity(entityID, { fromViewer = false, selectionIDs = null } = {}
   $("viewerStatus").textContent = `Selected ${shortType(element?.type || "IFC element")} #${numericID}${viaChildren}`;
   $("clearSelectionButton").classList.toggle("hidden", !highlighted);
   $("selectionModeSelect").classList.toggle("hidden", !highlighted);
+  if (highlighted && revealViewer) $("viewer").scrollIntoView({ behavior: "smooth", block: "center" });
   if (!highlighted) toast(geometryFailureMessage(element, targetIDs));
 }
 
@@ -609,7 +615,7 @@ $("selectionModeSelect").addEventListener("change", (event) => {
 });
 $("issueList").addEventListener("click", (event) => {
   const issue = event.target.closest("[data-entity-id]");
-  if (issue) selectEntity(issue.dataset.entityId, { selectionIDs: issue.dataset.selectionIds.split(",").filter(Boolean).map(Number) });
+  if (issue) selectEntity(issue.dataset.entityId, { selectionIDs: issue.dataset.selectionIds.split(",").filter(Boolean).map(Number), revealViewer: true });
 });
 $("modelMap").addEventListener("click", (event) => {
   const element = event.target.closest("[data-entity-id]");

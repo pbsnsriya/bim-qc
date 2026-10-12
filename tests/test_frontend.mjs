@@ -171,11 +171,15 @@ while (document.querySelector("#geometryStatus").classList.contains("hidden") &&
 assert.equal(document.querySelector("#geometryStatus").classList.contains("hidden"), false, "coordination check status becomes visible");
 assert.match(document.querySelector("#geometryStatus").textContent, /1 candidate pair/, "exact duplicate candidate count is visible");
 assert.match(document.querySelector("#geometryStatus").textContent, /4\/4 assertions passed/, "Stage 2 known-answer matrix is visible");
+assert.equal(document.querySelector("#ruleFilter").value, "exact_duplicate_candidate", "Stage 2 automatically filters Quality Review to duplicate candidates");
+assert.equal(document.querySelectorAll('.issue-action[data-rule-id="exact_duplicate_candidate"]').length, 1, "filtered duplicate findings are immediately visible");
 const duplicateIssue = document.querySelector('[data-rule-id="exact_duplicate_candidate"][data-entity-id="104"]');
 assert.ok(duplicateIssue, "exact duplicate wall pair is linked to geometry");
 duplicateIssue.click();
 assert.deepEqual(calls.selected.slice(-2), [104, 57], "duplicate issue highlights both elements in the pair");
-assert.ok(document.querySelector('[data-rule-id="ids:wall-name"]'), "IDS findings remain after geometry checks");
+document.querySelector("#ruleFilter").value = "ids:wall-name";
+document.querySelector("#ruleFilter").dispatchEvent(new window.Event("change"));
+assert.ok(document.querySelector('[data-rule-id="ids:wall-name"]'), "IDS findings remain available after geometry checks");
 
 serverProcess?.kill();
 console.log("frontend interaction tests passed");
