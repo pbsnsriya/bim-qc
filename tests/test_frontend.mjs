@@ -74,7 +74,7 @@ globalThis.OpenBIMViewer = {
       probe_frames: 120,
       average_fps: 60,
       geometry: { mesh_groups: 5, triangles: 1200 },
-      renderer: { webgl_version: "WebGL 2", renderer: "Test GPU" },
+      renderer: { webgl_version: "WebGL 2", renderer: "Test GPU", render_calls: 3, rendering: { render_batches: 2 }, selected_element_ids: [] },
       checks: [
         { id: "webgl_context", passed: true, message: "WebGL 2 context is active." },
         { id: "visible_meshes", passed: true, message: "5 mesh groups are loaded." },
@@ -151,6 +151,26 @@ while (!/Browser rendering and interactive performance passed/.test(document.que
 }
 assert.match(document.querySelector("#gpuValidationStatus").textContent, /Browser rendering and interactive performance passed/, "GPU evidence is visible");
 assert.match(document.querySelector("#gpuValidationStatus").textContent, /60 average FPS/, "GPU frame probe result is visible");
+assert.equal(document.querySelector("#gpuEvidenceButton").disabled, false, "standalone GPU export unlocks without waiting for Stage 1 extraction");
+assert.match(document.querySelector("#gpuValidationStatus").textContent, /2 render batches.*3 draw calls/, "batch and measured draw counts are visible");
+let exportedBlob;
+let exportedName;
+const createObjectURL = URL.createObjectURL;
+const anchorClick = window.HTMLAnchorElement.prototype.click;
+URL.createObjectURL = blob => { exportedBlob = blob; return createObjectURL(blob); };
+window.HTMLAnchorElement.prototype.click = function () { exportedName = this.download; };
+document.querySelector("#gpuEvidenceButton").click();
+const exportedGpu = JSON.parse(await exportedBlob.text());
+assert.match(exportedName, /-gpu-evidence\.json$/);
+assert.equal(exportedGpu.report_type, "OpenBIM QC browser/GPU evidence");
+assert.equal(exportedGpu.browser_gpu_validation.average_fps, 60);
+assert.match(exportedGpu.claim_boundary, /backend extraction.*not evaluated/);
+URL.createObjectURL = createObjectURL;
+window.HTMLAnchorElement.prototype.click = anchorClick;
+let framed = 0;
+globalThis.OpenBIMViewer.frameModel = () => { framed++; return true; };
+document.querySelector("#frameModelButton").click();
+assert.equal(framed, 1, "frame model returns to a full-model performance comparison view");
 
 assert.equal(document.querySelector("#geometryCheckButton").disabled, true, "experimental checks are gated before Stage 1 validation");
 const capabilityDeadline = Date.now() + 5000;

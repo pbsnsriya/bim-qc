@@ -178,6 +178,7 @@ function applyAnalysis(result) {
   $("geometryCheckButton").textContent = "Complete Stage 1 to unlock";
   $("geometryEvidenceButton").disabled = true;
   $("gpuValidationButton").disabled = true;
+  $("gpuEvidenceButton").disabled = true;
   $("geometryCheckButton").title = "Stage 1 geometry validation must pass first";
   clearEntitySelection();
   render();
@@ -448,7 +449,8 @@ async function renderGeometry(source) {
     state.viewerDiagnostics = globalThis.OpenBIMViewer?.getGeometryDiagnostics?.() || null;
     if (count > 0) {
       $("modelMap").classList.add("hidden");
-      setViewerStatus(`${count} mesh groups · Click an issue or model element`);
+      const batches = state.viewerDiagnostics?.rendering?.render_batches;
+      setViewerStatus(`${count} mesh groups${batches != null ? ` · ${batches} render batches` : ""} · Click an issue or model element`);
       $("gpuValidationButton").disabled = false;
     } else {
       $("modelMap").classList.remove("hidden");
@@ -477,6 +479,7 @@ async function runBrowserGpuValidation() {
   try {
     const result = await runGpuValidation(2000);
     state.gpuValidation = result;
+    $("gpuEvidenceButton").disabled = false;
     status.classList.toggle("diagnostics-pass", result.rendering_capability_passed && result.interactive_performance_passed);
     status.classList.toggle("diagnostics-fail", !result.rendering_capability_passed || !result.interactive_performance_passed);
     const checks = result.checks.map((check) =>
@@ -489,6 +492,7 @@ async function runBrowserGpuValidation() {
         : "Browser rendering passed · performance needs attention";
     status.innerHTML = `<strong>${verdict}</strong> · ${escapeHtml(result.renderer.webgl_version)} · ${escapeHtml(result.renderer.renderer || "renderer hidden by browser")}<br>` +
       `${result.probe_frames} frames in ${result.probe_duration_ms} ms · ${result.average_fps} average FPS · ${Number(result.geometry.mesh_groups || 0).toLocaleString()} mesh groups · ${Number(result.geometry.triangles || 0).toLocaleString()} loaded triangles` +
+      (result.renderer.rendering ? `<br>${Number(result.renderer.rendering.render_batches).toLocaleString()} render batches · ${Number(result.renderer.render_calls).toLocaleString()} draw calls in the latest frame · ${result.renderer.selected_element_ids?.length || 0} selected elements` : "") +
       `<ul class="diagnostic-checks">${checks}</ul><p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(result.claim_boundary)}</p>`;
     toast(verdict);
   } finally {
@@ -753,6 +757,17 @@ $("bcfButton").addEventListener("click", async () => { try { await exportBcf(); 
 $("sampleIdsButton").addEventListener("click", async () => { try { await loadSampleIds(); } catch (error) { toast(error.message); } });
 $("geometryDiagnosticsButton").addEventListener("click", async () => { try { await runGeometryDiagnostics(); } catch (error) { toast(error.message); } });
 $("gpuValidationButton").addEventListener("click", async () => { try { await runBrowserGpuValidation(); } catch (error) { toast(error.message); } });
+$("gpuEvidenceButton").addEventListener("click", () => {
+  if (!state.gpuValidation || !state.source) return;
+  downloadText(JSON.stringify({
+    report_type: "OpenBIM QC browser/GPU evidence",
+    generated_at: new Date().toISOString(),
+    model_filename: state.source.filename,
+    browser_gpu_validation: state.gpuValidation,
+    claim_boundary: "Viewer performance evidence only; backend extraction and project compliance are not evaluated by this report.",
+  }, null, 2), `${state.source.filename.replace(/\.ifc$/i, "")}-gpu-evidence.json`, "application/json");
+  toast("GPU evidence exported");
+});
 $("geometryCancelButton").addEventListener("click", async () => { try { await cancelGeometryDiagnostics(); } catch (error) { toast(error.message); } });
 $("geometryDiagnosticsStatus").addEventListener("click", (event) => {
   const control = event.target.closest('[data-entity-id]');
@@ -794,6 +809,10 @@ $("profileSelect").addEventListener("change", async () => {
 $("severityFilter").addEventListener("change", renderIssues);
 $("ruleFilter").addEventListener("change", renderIssues);
 $("clearSelectionButton").addEventListener("click", clearEntitySelection);
+$("frameModelButton").addEventListener("click", () => {
+  clearEntitySelection();
+  globalThis.OpenBIMViewer?.frameModel?.();
+});
 $("selectionModeSelect").addEventListener("change", (event) => {
   if (globalThis.OpenBIMViewer?.setSelectionMode?.(event.target.value)) {
     toast(`${event.target.options[event.target.selectedIndex].text} mode applied`);

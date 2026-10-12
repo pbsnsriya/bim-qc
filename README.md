@@ -225,6 +225,30 @@ and the current dimension prototype only enforces a minimum geometric extent.
 Next Stage 2 increment: near-duplicate placement/rotation tolerance, expanded
 confidence scoring, and project-configurable intentional-repeat exclusions.
 
+## v0.7.10 viewer optimization
+
+Opaque geometry with matching materials is now merged into spatial render
+batches. Transparent parts remain individually sortable. Materials and repeated
+source geometry are shared; IFC STEP IDs remain attached to triangle ranges for
+picking, while selected elements use separate amber overlays. X-ray, fade,
+isolate, pair highlighting and clear selection remain available. Geometry
+evidence is measured from the original web-ifc output before render batching.
+
+The viewer redraws on camera, resize, selection and context-restoration changes.
+The browser/GPU probe forces continuous rendering, so idle redraw suppression
+does not inflate measured FPS. Probe exports now record batching counts,
+selected IDs, selection mode and camera position/target.
+
+To compare performance: start this build, refresh the browser, load the same
+IFC, click **Frame model**, run **Run browser/GPU check**, and click **Export
+GPU evidence**. The standalone GPU export does not require backend geometry
+validation. Test issue selection, direct geometry picking, pair highlighting,
+isolate/fade and clear selection separately before approving the viewer change.
+
+See `docs/Viewer_Optimization_v0.7.10.md` for verification results and limits.
+This release does not resolve cross-engine geometry discrepancies or claim a
+verified FPS improvement on your hardware.
+
 ## v0.7.9 evidence and verification
 
 See `docs/Stage1_Verification_v0.7.9.md` and `docs/evidence/office-stage1.json`.

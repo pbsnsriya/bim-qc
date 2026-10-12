@@ -603,7 +603,7 @@ def diagnose_geometry_file(
     result["provenance"] = {
         "model_filename": source.name, "model_sha256": digest.hexdigest(),
         "model_size_bytes": source.stat().st_size, "generated_at": datetime.now(timezone.utc).isoformat(),
-        "app_version": "0.7.9", "python_version": sys.version.split()[0], "platform": platform.platform(),
+        "app_version": "0.7.10", "python_version": sys.version.split()[0], "platform": platform.platform(),
         "settings": {"use_world_coords": True, "batch_size": result["performance_profile"]["iterator_batch_size"], "threads": result["threads"]},
         "browser_engine_version": (browser_evidence or {}).get("engine_version"),
     }

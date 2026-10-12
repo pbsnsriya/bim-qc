@@ -3,6 +3,7 @@ import { OrbitControls } from "./vendor/three/examples/jsm/controls/OrbitControl
 import * as WebIFC from "./vendor/web-ifc/web-ifc-api.js";
 
 import { accumulateGeometryEvidence, finalizeGeometryEvidence } from "./geometry-evidence.js";
+import { buildRenderBatches, createSelectionGroup, expressIDForHit } from "./render-batches.js";
 
 let sceneState = null;
 
@@ -35,6 +36,10 @@ function disposePrevious() {
   if (!sceneState) return;
   clearSelection();
   cancelAnimationFrame(sceneState.frame);
+  if (sceneState.batches) {
+    sceneState.scene.remove(sceneState.modelGroup);
+    sceneState.batches.dispose();
+  }
   sceneState.scene.traverse((object) => {
     if (object.geometry) object.geometry.dispose();
     if (object.material) {
@@ -75,6 +80,7 @@ function createScene(container) {
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
+    current.dirty = true;
   });
   resize.observe(container);
 
@@ -99,19 +105,29 @@ function createScene(container) {
     startedAt: performance.now(),
     lastFrameAt: null,
     contextLost: false,
+    dirty: true,
+    probing: false,
+    batches: null,
+    selectionGroup: null,
+    selectedIDs: [],
   };
+  controls.addEventListener("change", () => { current.dirty = true; });
   renderer.domElement.addEventListener("webglcontextlost", (event) => {
     event.preventDefault();
     current.contextLost = true;
   });
   renderer.domElement.addEventListener("webglcontextrestored", () => {
     current.contextLost = false;
+    current.dirty = true;
   });
   const animate = () => {
     controls.update();
-    renderer.render(scene, camera);
-    current.frameCount += 1;
-    current.lastFrameAt = performance.now();
+    if (current.dirty || current.probing) {
+      current.dirty = false;
+      renderer.render(scene, camera);
+      current.frameCount += 1;
+      current.lastFrameAt = performance.now();
+    }
     current.frame = requestAnimationFrame(animate);
   };
   animate();
@@ -207,6 +223,11 @@ function restoreContextStates(current) {
 }
 
 function applyContextMode(current) {
+  if (current.batches) {
+    current.batches.setSelection(current.selectedIDs, current.selectionMode);
+    current.dirty = true;
+    return;
+  }
   restoreContextStates(current);
   if (!current.modelGroup || current.selectionMode === "xray") return;
   const selected = new Set(current.selectedMeshObjects);
@@ -254,6 +275,15 @@ export function clearSelection() {
   for (const original of sceneState.selectedMeshes) original.mesh.renderOrder = original.renderOrder;
   sceneState.selectedMeshes = [];
   sceneState.selectedMeshObjects = [];
+  sceneState.selectedIDs = [];
+  if (sceneState.selectionGroup) {
+    sceneState.scene.remove(sceneState.selectionGroup);
+    const materials = new Set(sceneState.selectionGroup.children.map(mesh => mesh.material));
+    for (const material of materials) material.dispose();
+    sceneState.selectionGroup = null;
+  }
+  sceneState.batches?.setSelection();
+  sceneState.dirty = true;
   if (sceneState.selectionHelper) {
     sceneState.scene.remove(sceneState.selectionHelper);
     sceneState.selectionHelper.geometry.dispose();
@@ -268,10 +298,17 @@ export function selectExpressID(expressID, focus = true) {
 
 export function selectExpressIDs(expressIDs, focus = true) {
   if (!sceneState) return false;
-  const meshes = [...new Set(expressIDs.map(Number))]
+  const sources = [...new Set(expressIDs.map(Number))]
     .flatMap((expressID) => sceneState.expressMeshes.get(expressID) || []);
-  if (!meshes?.length) return false;
+  if (!sources.length) return false;
   clearSelection();
+  // Only selected originals become separate draw objects. Clone their materials
+  // so the shared batch materials (and unrelated elements) never turn amber.
+  const selectionGroup = createSelectionGroup(sources);
+  const meshes = selectionGroup.children;
+  sceneState.selectionGroup = selectionGroup;
+  sceneState.selectedIDs = [...new Set(sources.map(source => source.userData.expressID))];
+  sceneState.scene.add(selectionGroup);
   const { states, meshStates, selectedBox } = applySelectionAppearance(meshes);
   sceneState.selectedMaterials = states;
   sceneState.selectedMeshes = meshStates;
@@ -294,8 +331,10 @@ function enableCanvasPicking(current) {
     pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
     pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
     raycaster.setFromCamera(pointer, current.camera);
-    const hit = raycaster.intersectObjects(current.modelGroup?.children || [], false)[0];
-    const expressID = hit?.object?.userData?.expressID;
+    // Raycaster does not skip invisible objects. Filter hidden context explicitly.
+    const pickable = [...(current.modelGroup?.children || []), ...(current.selectionGroup?.children || [])].filter(mesh => mesh.visible);
+    const hit = raycaster.intersectObjects(pickable, false)[0];
+    const expressID = expressIDForHit(hit);
     if (expressID == null) return;
     selectExpressID(expressID, false);
     globalThis.dispatchEvent(new CustomEvent("ifc-element-selected", { detail: { expressID } }));
@@ -312,6 +351,8 @@ export async function loadIfcGeometry(bytes, container) {
   await api.Init();
   const modelID = api.OpenModel(bytes, { COORDINATE_TO_ORIGIN: true, CIRCLE_SEGMENTS: 128 });
   const group = new THREE.Group();
+  const materials = new Map();
+  const geometriesByID = new Map();
   let meshCount = 0;
   let vertexCount = 0;
   let triangleCount = 0;
@@ -326,25 +367,35 @@ export async function loadIfcGeometry(bytes, container) {
       const vertexData = api.GetVertexArray(source.GetVertexData(), source.GetVertexDataSize());
       const indexData = api.GetIndexArray(source.GetIndexData(), source.GetIndexDataSize());
       accumulateGeometryEvidence(measuredGeometry, flatMesh.expressID, vertexData, indexData, placed.flatTransformation);
-      const positions = new Float32Array((vertexData.length / 6) * 3);
-      const normals = new Float32Array((vertexData.length / 6) * 3);
-      for (let sourceIndex = 0, targetIndex = 0; sourceIndex < vertexData.length; sourceIndex += 6, targetIndex += 3) {
-        positions.set(vertexData.subarray(sourceIndex, sourceIndex + 3), targetIndex);
-        normals.set(vertexData.subarray(sourceIndex + 3, sourceIndex + 6), targetIndex);
+      let geometry = geometriesByID.get(placed.geometryExpressID);
+      if (!geometry) {
+        const positions = new Float32Array((vertexData.length / 6) * 3);
+        const normals = new Float32Array((vertexData.length / 6) * 3);
+        for (let sourceIndex = 0, targetIndex = 0; sourceIndex < vertexData.length; sourceIndex += 6, targetIndex += 3) {
+          positions.set(vertexData.subarray(sourceIndex, sourceIndex + 3), targetIndex);
+          normals.set(vertexData.subarray(sourceIndex + 3, sourceIndex + 6), targetIndex);
+        }
+        geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+        geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(indexData), 1));
+        geometry.computeBoundingBox();
+        geometriesByID.set(placed.geometryExpressID, geometry);
       }
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-      geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-      geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(indexData), 1));
       const color = placed.color;
-      const material = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(color.x, color.y, color.z),
-        opacity: color.w,
-        transparent: color.w < 1,
-        roughness: 0.78,
-        metalness: 0.02,
-        side: THREE.DoubleSide,
-      });
+      const materialKey = [color.x, color.y, color.z, color.w].join(",");
+      let material = materials.get(materialKey);
+      if (!material) {
+        material = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(color.x, color.y, color.z),
+          opacity: color.w,
+          transparent: color.w < 1,
+          roughness: 0.78,
+          metalness: 0.02,
+          side: THREE.DoubleSide,
+        });
+        materials.set(materialKey, material);
+      }
       const mesh = new THREE.Mesh(geometry, material);
       mesh.userData.expressID = flatMesh.expressID;
       mesh.applyMatrix4(new THREE.Matrix4().fromArray(placed.flatTransformation));
@@ -359,7 +410,7 @@ export async function loadIfcGeometry(bytes, container) {
       elementMeshes.push(mesh);
       current.expressMeshes.set(flatMesh.expressID, elementMeshes);
       meshCount += 1;
-      vertexCount += positions.length / 3;
+      vertexCount += geometry.attributes.position.count;
       triangleCount += indexData.length / 3;
       source.delete();
     }
@@ -378,9 +429,12 @@ export async function loadIfcGeometry(bytes, container) {
   current.diagnostics.axis_mapping = "web-ifc Y-up normalized to IFC Z-up [x,-z,y], recentering reversed";
   current.diagnostics.element_extents_metres = Object.fromEntries(Object.entries(measuredEvidence.element_bounds_metres).map(([id, box]) => [id, box.maximum.map((v, i) => v - box.minimum[i])]));
   if (meshCount) {
-    current.modelGroup = group;
-    current.scene.add(group);
-    fitCamera(current.camera, current.controls, group);
+    current.batches = buildRenderBatches(group.children);
+    current.modelGroup = current.batches.group;
+    current.scene.add(current.modelGroup);
+    current.diagnostics.rendering = current.batches.stats;
+    current.dirty = true;
+    fitCamera(current.camera, current.controls, current.modelGroup);
     enableCanvasPicking(current);
   }
   return meshCount;
@@ -388,6 +442,13 @@ export async function loadIfcGeometry(bytes, container) {
 
 export function getGeometryDiagnostics() {
   return sceneState?.diagnostics ? structuredClone(sceneState.diagnostics) : null;
+}
+
+export function frameModel() {
+  if (!sceneState?.modelGroup) return false;
+  fitCamera(sceneState.camera, sceneState.controls, sceneState.modelGroup);
+  sceneState.dirty = true;
+  return true;
 }
 
 function getRendererEvidence(current) {
@@ -414,7 +475,17 @@ function getRendererEvidence(current) {
     gpu_geometries: rendererInfo.memory.geometries,
     gpu_textures: rendererInfo.memory.textures,
     frame_count: current.frameCount,
+    rendering: current.batches?.stats || null,
+    render_mode: "on-demand; continuous during GPU probe",
+    selection_mode: current.selectionMode,
+    selected_element_ids: [...current.selectedIDs],
+    camera_position: current.camera.position.toArray(),
+    camera_target: current.controls.target.toArray(),
   };
+}
+
+export function getRenderingDiagnostics() {
+  return sceneState ? getRendererEvidence(sceneState) : null;
 }
 
 export async function runGpuValidation(durationMs = 2000) {
@@ -422,7 +493,12 @@ export async function runGpuValidation(durationMs = 2000) {
   const current = sceneState;
   const startedAt = performance.now();
   const startingFrame = current.frameCount;
-  await new Promise((resolve) => setTimeout(resolve, Math.max(500, durationMs)));
+  current.probing = true;
+  try {
+    await new Promise((resolve) => setTimeout(resolve, Math.max(500, durationMs)));
+  } finally {
+    current.probing = false;
+  }
   if (sceneState !== current) throw new Error("The active model changed during the GPU check.");
   const elapsedMs = performance.now() - startedAt;
   const renderedFrames = current.frameCount - startingFrame;
@@ -443,6 +519,7 @@ export async function runGpuValidation(durationMs = 2000) {
   };
   const renderingPassed = capabilityChecks.every((check) => check.passed);
   return {
+    viewer_version: "0.7.10",
     passed: renderingPassed && performanceCheck.passed,
     rendering_capability_passed: renderingPassed,
     interactive_performance_passed: performanceCheck.passed,
@@ -466,6 +543,8 @@ globalThis.OpenBIMViewer = {
   setSelectionMode,
   getGeometryDiagnostics,
   runGpuValidation,
+  frameModel,
+  getRenderingDiagnostics,
   applySelectionAppearance,
   restoreMaterialStates,
   fitCameraToBox,

@@ -172,7 +172,7 @@ class GeometryJobManager:
             no_progress_seconds = no_progress_timeout_seconds(timeout_seconds)
             evidence_json = json.dumps(browser_evidence or {}, sort_keys=True, separators=(",", ":"))
             evidence_hash = sha256(evidence_json.encode("utf-8")).hexdigest()
-            cache_key = f"public-stage1-v1:0.7.9:{model.sha256}:{evidence_hash}"
+            cache_key = f"public-stage1-v1:0.7.10:{model.sha256}:{evidence_hash}"
             cached_result = self._cache.get(cache_key)
             if cached_result is not None:
                 result_path.write_text(json.dumps(cached_result), encoding="utf-8")

@@ -155,6 +155,7 @@ class ApiTests(unittest.TestCase):
     def test_viewer_modules_are_directly_available(self):
         for path in (
             "/viewer.js",
+            "/render-batches.js",
             "/vendor/three/three.module.js",
             "/vendor/three/three.core.js",
             "/vendor/three/examples/jsm/controls/OrbitControls.js",
