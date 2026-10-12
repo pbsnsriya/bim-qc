@@ -519,7 +519,7 @@ export async function runGpuValidation(durationMs = 2000) {
   };
   const renderingPassed = capabilityChecks.every((check) => check.passed);
   return {
-    viewer_version: "0.7.12",
+    viewer_version: "0.7.13",
     passed: renderingPassed && performanceCheck.passed,
     rendering_capability_passed: renderingPassed,
     interactive_performance_passed: performanceCheck.passed,

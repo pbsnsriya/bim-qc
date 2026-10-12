@@ -97,6 +97,23 @@ class ApiTests(unittest.TestCase):
         self.assertEqual("context", next(r for r in result["rows"] if r["key"] == "opening_hosts")["category"])
         self.assertEqual(3, result["not_applicable_count"])
 
+    def test_stored_near_duplicate_scan_uses_requested_tolerance(self):
+        uploaded = self.upload_model("golden/duplicate_near_matrix.ifc")
+        for tolerance, expected in [(5., 4), (1., 0)]:
+            request = Request(f"{self.base}/api/geometry-checks", data=json.dumps({
+                "model_id": uploaded["model_id"], "config": {
+                    "identifiers": False, "duplicates": True, "near_duplicates": True,
+                    "near_duplicate_tolerance_mm": tolerance, "hard_clashes": False,
+                    "clearance_clashes": False, "connectivity": False, "alignment": False,
+                    "dimensions": False,
+                },
+            }).encode(), headers={"Content-Type": "application/json"}, method="POST")
+            with urlopen(request) as response:
+                result = json.load(response)
+            self.assertEqual(expected, result["by_rule"].get("near_duplicate_candidate", 0))
+            self.assertEqual(tolerance, result["near_duplicate_scan"]["tolerance_mm"])
+            self.assertTrue(result["near_duplicate_acceptance_matrix"]["passed"])
+
     def test_background_geometry_job_reports_progress_and_completes(self):
         uploaded = self.upload_model()
         backend = __import__("ifcqc.geometry_diagnostics", fromlist=["diagnose_geometry"])

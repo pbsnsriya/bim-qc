@@ -59,7 +59,7 @@ async function loadPairComparison(issue, retry = false) {
 const dropzone = $("dropzone");
 const fileInput = $("fileInput");
 const ISSUE_RENDER_LIMIT = 250;
-const DUPLICATE_RULES = new Set(["exact_duplicate_candidate", "duplicate_opening_candidate"]);
+const DUPLICATE_RULES = new Set(["exact_duplicate_candidate", "duplicate_opening_candidate", "near_duplicate_candidate"]);
 
 export function duplicateReviewKey(issue) {
   const ids = [issue.entity_id, issue.related_entity_id].filter((value) => value != null).map(Number).sort((a, b) => a - b);
@@ -226,6 +226,7 @@ function applyAnalysis(result) {
   $("idsStatus").classList.add("hidden");
   $("geometryDiagnosticsStatus").classList.add("hidden");
   $("geometryStatus").classList.add("hidden");
+  $("duplicateSettingsHint").classList.add("hidden");
   $("duplicateReviewSummary").classList.add("hidden");
   $("gpuValidationStatus").classList.add("hidden");
   $("geometryCancelButton").classList.add("hidden");
@@ -300,8 +301,15 @@ async function runGeometryChecks() {
     throw new Error("Complete the Stage 2 readiness prerequisites first.");
   }
   const button = $("geometryCheckButton");
+  const nearEnabled = $("nearDuplicatesCheckbox").checked;
+  const tolerance = Number($("nearDuplicateTolerance").value);
+  if (nearEnabled && (!Number.isFinite(tolerance) || tolerance < 0.01 || tolerance > 100)) {
+    throw new Error("Placement tolerance must be between 0.01 and 100 mm.");
+  }
   button.disabled = true;
-  button.textContent = "Checking exact duplicates…";
+  $("nearDuplicatesCheckbox").disabled = true;
+  $("nearDuplicateTolerance").disabled = true;
+  button.textContent = "Checking duplicates…";
   try {
     const response = await fetch("/api/geometry-checks", {
       method: "POST",
@@ -311,6 +319,8 @@ async function runGeometryChecks() {
         config: {
           identifiers: false,
           duplicates: true,
+          near_duplicates: nearEnabled,
+          near_duplicate_tolerance_mm: nearEnabled ? tolerance : 5,
           hard_clashes: false,
           clearance_clashes: false,
           connectivity: false,
@@ -330,15 +340,21 @@ async function runGeometryChecks() {
     ).join("");
     const candidates = validation.by_rule.exact_duplicate_candidate || 0;
     const openingCandidates = validation.by_rule.duplicate_opening_candidate || 0;
-    const totalCandidates = candidates + openingCandidates;
+    const nearCandidates = validation.by_rule.near_duplicate_candidate || 0;
+    const nearMatrix = validation.near_duplicate_acceptance_matrix;
+    const scan = validation.near_duplicate_scan;
+    const referencePassed = matrix.passed && (!nearMatrix || nearMatrix.passed);
+    const totalCandidates = candidates + openingCandidates + nearCandidates;
+    const nearEvidence = scan ? `<details open class="near-scan-evidence"><summary><strong>Near-duplicate reference matrix: ${nearMatrix.passed_cases}/${nearMatrix.total_cases} assertions passed</strong> · placement limit ${scan.tolerance_mm} mm · shape tolerance ${scan.shape_tolerance_mm} mm</summary><ul class="diagnostic-checks">${nearMatrix.assertions.map(item => `<li class="diagnostic-${item.passed ? "pass" : "fail"}"><strong>${item.passed ? "PASS" : "FAIL"}</strong> ${escapeHtml(humanize(item.name))}</li>`).join("")}</ul><p>Scan ${scan.complete ? "complete for eligible geometry" : `INCOMPLETE: ${escapeHtml(scan.limit_reason)}`} · ${scan.eligible_products} eligible elements · ${scan.compared_pairs} nearby comparisons · ${nearCandidates} candidate pairs.</p>${scan.unavailable_product_ids.length ? `<p class="comparison-warning">Geometry not evaluated for ${scan.unavailable_product_ids.length} represented element(s). See the JSON evidence for their IDs.</p>` : ""}<p>${escapeHtml(scan.claim_boundary)}</p></details>` : `<p>Near-duplicate scan disabled; exact and opening checks only.</p>`;
     const status = $("geometryStatus");
-    status.classList.toggle("diagnostics-pass", matrix.passed);
-    status.classList.toggle("diagnostics-fail", !matrix.passed);
-    status.innerHTML = `<strong>${matrix.passed ? "Stage 2 duplicate validation passed" : "Stage 2 duplicate validation failed"}</strong> · ${validation.summary.geometric_products} geometric products · ${totalCandidates} candidate pair(s)` +
+    status.classList.toggle("diagnostics-pass", referencePassed && (!scan || (scan.complete && !scan.unavailable_product_ids.length)));
+    status.classList.toggle("diagnostics-fail", !referencePassed || Boolean(scan && (!scan.complete || scan.unavailable_product_ids.length)));
+    status.innerHTML = `<strong>${referencePassed ? "Stage 2 reference tests passed" : "Stage 2 reference tests failed"}</strong> · ${validation.summary.geometric_products} geometric products · ${totalCandidates} candidate pair(s)` +
       `<details open><summary><strong>Known-answer matrix: ${matrix.passed_cases}/${matrix.total_cases} assertions passed</strong> · tolerance ${matrix.tolerance_metres * 1000} mm</summary><ul class="diagnostic-checks">${matrixRows}</ul></details>` +
-      `<p class="evidence-boundary"><strong>Review:</strong> ${candidates} physical pair(s) and ${openingCandidates} opening-void pair(s) are filtered below. Physical pairs highlight both elements; opening pairs highlight their host wall, slab, or other building element.</p>` +
+      nearEvidence + `<p class="evidence-boundary"><strong>Review:</strong> ${candidates} exact physical · ${nearCandidates} near physical · ${openingCandidates} opening-void pair(s). Physical pairs highlight both elements; opening pairs highlight their hosts.</p>` +
       `<p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(matrix.claim_boundary)}</p>`;
     status.classList.remove("hidden");
+    $("duplicateSettingsHint").classList.add("hidden");
     $("severityFilter").value = "all";
     $("ruleFilter").value = "duplicate_review";
     renderIssues();
@@ -346,7 +362,9 @@ async function runGeometryChecks() {
     toast(`Duplicate review found ${totalCandidates} candidate pair(s)`);
   } finally {
     button.disabled = false;
-    button.textContent = "Validate exact duplicates";
+    button.textContent = "Validate duplicates";
+    $("nearDuplicatesCheckbox").disabled = false;
+    $("nearDuplicateTolerance").disabled = !$("nearDuplicatesCheckbox").checked;
   }
 }
 
@@ -466,9 +484,9 @@ function finishGeometryDiagnostics(result, acceptance) {
     `<details open><summary><strong>Known-answer matrix: ${acceptance.passed_cases}/${acceptance.total_cases} cases passed</strong> · tolerance ${acceptance.tolerance_metres * 1000} mm</summary><ul class="diagnostic-checks">${matrixRows}</ul></details>` +
     `${critical}${discrepancies}${rules}${profileDetails}<p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(result.claim_boundary)}</p>${stage2Gate}${warnings}${failures}`;
   $("geometryCheckButton").disabled = !result.stage2_ready;
-  $("geometryCheckButton").textContent = result.stage2_ready ? "Validate exact duplicates" : "Stage 1 prerequisites must pass";
+  $("geometryCheckButton").textContent = result.stage2_ready ? "Validate duplicates" : "Stage 1 prerequisites must pass";
   $("geometryEvidenceButton").disabled = false;
-  $("geometryCheckButton").title = result.stage2_ready ? "Core extraction and STEP-id mapping passed; exact duplicate validation is available" : "Core extraction and browser STEP-id mapping must pass first";
+  $("geometryCheckButton").title = result.stage2_ready ? "Core extraction and STEP-id mapping passed; duplicate review is available" : "Core extraction and browser STEP-id mapping must pass first";
   toast(result.ready ? "Stage 1 extraction evidence passed" : result.stage2_ready ? "Extent variance retained; Stage 2 is available" : "Stage 1 found extraction evidence problems");
 }
 
@@ -615,7 +633,7 @@ function renderTypes() {
 
 function configureRuleFilter() {
   const rules = [...new Set(state.result.issues.map((issue) => issue.rule_id))].sort();
-  const duplicateReview = rules.some((rule) => ["exact_duplicate_candidate", "duplicate_opening_candidate"].includes(rule))
+  const duplicateReview = rules.some((rule) => DUPLICATE_RULES.has(rule))
     ? `<option value="duplicate_review">Duplicate review</option>`
     : "";
   $("ruleFilter").innerHTML = `<option value="all">All rules</option>${duplicateReview}` + rules.map((rule) => `<option value="${rule}">${humanize(rule)}</option>`).join("");
@@ -639,6 +657,7 @@ function renderIssues() {
     let card = `<${tag} class="issue ${selectable ? "issue-action" : ""}" ${attributes}><span class="severity ${issue.severity}">${issue.severity}</span><div><strong>${escapeHtml(issue.title)}</strong><p>${escapeHtml(issue.message)}</p></div><span class="entity-ref">${escapeHtml(issue.entity_type || "MODEL")} ${issue.entity_id ? `#${issue.entity_id}` : ""}</span></${tag}>`;
     if (!DUPLICATE_RULES.has(issue.rule_id)) return card;
     const reviewKey = duplicateReviewKey(issue);
+    if (issue.rule_id === "near_duplicate_candidate") card += `<p class="near-pair-evidence">Centre offset ΔX / ΔY / ΔZ: ${escapeHtml((issue.translation_mm || []).map(n => Number(n).toPrecision(6)).join(" / "))} mm · distance ${Number(issue.placement_offset_mm).toPrecision(6)} mm · configured limit ${issue.tolerance_mm} mm · surface residual ${Number(issue.shape_residual_mm).toPrecision(4)} mm (limit ${issue.shape_tolerance_mm} mm).</p>`;
     card += `<details class="pair-comparison" data-comparison-key="${escapeHtml(reviewKey)}"${state.openComparisons.has(reviewKey) ? " open" : ""}><summary>Compare #${issue.related_entity_id} ↔ #${issue.entity_id}</summary><div class="pair-comparison-content" role="status" aria-live="polite" aria-busy="${Boolean(state.pairComparisons.get(reviewKey)?.loading)}">${pairComparisonContent(reviewKey)}</div></details>`;
     const status = issue.review_status || "unresolved";
     const option = (value, label) => `<option value="${value}"${status === value ? " selected" : ""}>${label}</option>`;
@@ -707,7 +726,7 @@ function updateSelectionUi() {
 
 function exportCsv() {
   if (!state.result) return;
-  const header = ["severity", "rule_id", "title", "entity_id", "related_entity_id", "entity_type", "global_id", "name", "message", "review_status", "review_note", "reviewed_at"];
+  const header = ["severity", "rule_id", "title", "entity_id", "related_entity_id", "entity_type", "global_id", "name", "message", "review_status", "review_note", "reviewed_at", "tolerance_mm", "placement_offset_mm", "translation_mm", "shape_residual_mm", "shape_tolerance_mm"];
   const quote = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
   const csv = [header.join(","), ...state.result.issues.map((issue) => header.map((key) => quote(issue[key])).join(","))].join("\n");
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -725,7 +744,7 @@ export function buildDuplicateTruthMatrix(issues, filename, exportedAt = new Dat
     exported_at: exportedAt,
     pair_key: duplicateReviewKey(issue),
     rule_id: issue.rule_id,
-    candidate_type: issue.rule_id === "duplicate_opening_candidate" ? "opening_void" : "physical_element",
+    candidate_type: issue.rule_id === "duplicate_opening_candidate" ? "opening_void" : issue.rule_id === "near_duplicate_candidate" ? "near_physical_element" : "physical_element",
     entity_id: issue.entity_id,
     related_entity_id: issue.related_entity_id,
     opening_ids: issue.opening_ids || [],
@@ -737,6 +756,10 @@ export function buildDuplicateTruthMatrix(issues, filename, exportedAt = new Dat
     confidence: issue.confidence || "",
     tolerance_mm: issue.tolerance_mm ?? "",
     detection_basis: issue.detection_basis || "",
+    placement_offset_mm: issue.placement_offset_mm ?? "",
+    translation_mm: issue.translation_mm || [],
+    shape_residual_mm: issue.shape_residual_mm ?? "",
+    shape_tolerance_mm: issue.shape_tolerance_mm ?? "",
   }));
 }
 
@@ -748,6 +771,7 @@ function exportTruthMatrixCsv() {
     "entity_id", "related_entity_id", "opening_ids", "host_entity_ids",
     "selection_ids", "review_status", "review_note", "reviewed_at", "confidence",
     "tolerance_mm", "detection_basis",
+    "placement_offset_mm", "translation_mm", "shape_residual_mm", "shape_tolerance_mm",
   ];
   const quote = (value) => `"${String(Array.isArray(value) ? value.join("|") : value ?? "").replaceAll('"', '""')}"`;
   const rows = buildDuplicateTruthMatrix(duplicateIssues(), state.result.filename, exportedAt);
@@ -759,7 +783,7 @@ function exportTruthMatrixCsv() {
 function exportJson() {
   if (!state.result) return;
   downloadText(
-    JSON.stringify(state.result, null, 2),
+    JSON.stringify({...state.result, model_sha256: state.source?.sha256, geometry_validation: state.geometryValidation}, null, 2),
     `${state.result.filename.replace(/\.ifc$/i, "")}-qc-report.json`,
     "application/json",
   );
@@ -832,6 +856,12 @@ $("geometryDiagnosticsStatus").addEventListener("click", (event) => {
 });
 $("geometryEvidenceButton").addEventListener("click", exportGeometryEvidence);
 $("geometryCheckButton").addEventListener("click", async () => { try { await runGeometryChecks(); } catch (error) { toast(error.message); } });
+for (const id of ["nearDuplicatesCheckbox", "nearDuplicateTolerance"]) {
+  $(id).addEventListener("change", () => {
+    $("nearDuplicateTolerance").disabled = !$("nearDuplicatesCheckbox").checked;
+    $("duplicateSettingsHint").classList.toggle("hidden", !state.geometryValidation);
+  });
+}
 $("idsInput").addEventListener("change", async (event) => {
   const file = event.target.files[0];
   if (!file) return;

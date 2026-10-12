@@ -124,6 +124,7 @@ select { background: white; border: 1px solid var(--line); border-radius: 8px; p
 .pair-comparison > summary:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 .pair-comparison-content { padding: 0 14px 14px; font-size: 12px; }
 .pair-summary { margin: 4px 0 12px; }
+.near-pair-evidence { padding: 0 20px 12px; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .pair-names { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; overflow-wrap: anywhere; }
 .pair-table-scroll { overflow-x: auto; }
 .pair-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; min-width: 620px; }

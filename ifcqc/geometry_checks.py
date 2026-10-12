@@ -27,6 +27,8 @@ class GeometryConfig:
     hard_clashes: bool = True
     clearance_clashes: bool = True
     duplicates: bool = True
+    near_duplicates: bool = False
+    near_duplicate_tolerance_mm: float = 5.0
     connectivity: bool = True
     alignment: bool = True
     dimensions: bool = True
@@ -38,6 +40,10 @@ class GeometryConfig:
     @classmethod
     def from_dict(cls, raw: dict | None) -> "GeometryConfig":
         raw = raw or {}
+        if type(raw.get("near_duplicates", False)) is not bool:
+            raise ValueError("near_duplicates must be true or false.")
+        if type(raw.get("near_duplicate_tolerance_mm", 5.0)) is bool:
+            raise ValueError("near_duplicate_tolerance_mm must be a number.")
 
         def number(name: str, default: float, low: float, high: float) -> float:
             try:
@@ -53,6 +59,8 @@ class GeometryConfig:
             hard_clashes=bool(raw.get("hard_clashes", True)),
             clearance_clashes=bool(raw.get("clearance_clashes", True)),
             duplicates=bool(raw.get("duplicates", True)),
+            near_duplicates=raw.get("near_duplicates", False),
+            near_duplicate_tolerance_mm=number("near_duplicate_tolerance_mm", 5.0, 0.01, 100.0),
             connectivity=bool(raw.get("connectivity", True)),
             alignment=bool(raw.get("alignment", True)),
             dimensions=bool(raw.get("dimensions", True)),
@@ -85,7 +93,7 @@ def _physical_products(model) -> list:
     ]
 
 
-def _shape_data(model):
+def _shape_data(model, triangle_faces: dict | None = None):
     import ifcopenshell.geom
     import numpy as np
 
@@ -103,6 +111,9 @@ def _shape_data(model):
             shapes[shape.id] = shape
             verts = np.asarray(shape.geometry.verts, dtype=float).reshape((-1, 3))
             vertices[shape.id] = verts
+            if triangle_faces is not None:
+                # Iterator-owned mesh handles expire; retain numeric data only.
+                triangle_faces[shape.id] = np.asarray(shape.geometry.faces, dtype=np.int64).copy()
             tree.add_element(shape)
             if not iterator.next():
                 break
@@ -393,11 +404,22 @@ def run_geometry_checks(ifc_text: str, raw_config: dict | None = None) -> dict:
         raise ValueError(f"IfcOpenShell could not open this IFC model: {exc}") from exc
 
     products = _physical_products(model)
-    shapes, vertices, tree = _shape_data(model)
+    triangle_faces = {} if config.near_duplicates else None
+    shapes, vertices, tree = _shape_data(model, triangle_faces)
     issues = _identifier_issues(products) if config.identifiers else []
     if config.duplicates:
         issues.extend(_exact_duplicate_geometry_issues(products, vertices))
         issues.extend(_duplicate_opening_geometry_issues(model, products, vertices))
+    near_scan = None
+    if config.near_duplicates:
+        from .near_duplicates import near_duplicate_issues
+
+        exact_pairs = {tuple(sorted((i["entity_id"], i["related_entity_id"])))
+                       for i in issues if i["rule_id"] == "exact_duplicate_candidate"}
+        near_issues, near_scan = near_duplicate_issues(
+            products, triangle_faces, vertices, config.near_duplicate_tolerance_mm, exact_pairs=exact_pairs,
+        )
+        issues.extend(near_issues)
     issues.extend(_clash_issues(model, set(shapes), tree, config))
     unverifiable = 0
     if config.connectivity:
@@ -430,7 +452,14 @@ def run_geometry_checks(ifc_text: str, raw_config: dict | None = None) -> dict:
         "by_rule": dict(sorted(by_rule.items())),
         "issues": issues,
     }
-    if config.duplicates:
+    if near_scan is not None:
+        result["near_duplicate_scan"] = near_scan
+        from .near_duplicates import run_near_duplicate_acceptance_matrix
+
+        result["near_duplicate_acceptance_matrix"] = run_near_duplicate_acceptance_matrix(
+            config.near_duplicate_tolerance_mm,
+        )
+    if config.duplicates or config.near_duplicates:
         from .duplicate_acceptance import run_duplicate_acceptance_matrix
 
         result["duplicate_acceptance_matrix"] = run_duplicate_acceptance_matrix()

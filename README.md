@@ -215,15 +215,46 @@ snapshot yet.
 Stage 1 must be verified per exact model SHA-256. The supplied office model remains
 **needs attention**; the current evidence must not be called a project sign-off. Stage 2 currently covers exact physical duplicate
 candidates, separately reviewed exact opening-void candidates, and a persistent
-accept/reject truth-matrix workflow. Near-duplicate detection and
-project-configurable intentional-repeat rules remain the next increment.
+accept/reject truth-matrix workflow, plus translation-only near-duplicate
+candidates with a configurable 0.01–100 mm placement limit.
+Project-configurable intentional-repeat rules remain a later increment.
 Hard/clearance clashes, connectivity, alignment, and dimensions remain
 experimental rule prototypes and have **not** completed their individual stages.
 Alignment results are advisory because diagonal elements may be intentional,
 and the current dimension prototype only enforces a minimum geometric extent.
 
-Next Stage 2 increment: near-duplicate placement/rotation tolerance, expanded
-confidence scoring, and project-configurable intentional-repeat exclusions.
+Next Stage 2 increment: local acceptance of translation-only near candidates,
+then rotation tolerance and project-configurable intentional-repeat exclusions.
+
+## v0.7.13 near-duplicate candidates
+
+Under Stage 2, enable **Include near-duplicates** and choose **Placement tolerance
+(mm)**, initially 5 mm. Click **Validate duplicates** after Stage 1 readiness
+passes. Exact, near physical and opening candidates share pair selection,
+comparison, decisions and reviewer notes. Changing settings shows a rerun hint;
+old results retain their recorded tolerance. Reviews survive reruns and tolerance
+changes for the same exact IFC fingerprint.
+
+Near detection measures Euclidean world bounds centre distance and verifies
+translation-normalised triangular surfaces, including triangle connectivity.
+Matching bounds alone cannot qualify. Each candidate records ΔX/ΔY/ΔZ, distance,
+placement limit, surface residual and a separate 0.001 mm numerical shape limit.
+The placement setting is a review threshold, not a construction standard.
+
+The search uses adjacent spatial cells and is bounded at 250,000 nearby pair
+comparisons and 5,000 results; reaching either limit is explicitly INCOMPLETE.
+Represented geometry that cannot be evaluated is disclosed separately. Different
+triangulations can be missed, and rotational alignment is not attempted.
+Opening voids are excluded from near physical matches; exact opening review stays
+unchanged. Candidates never automatically delete elements or decide intent.
+
+Test with `samples/golden/duplicate_near_matrix.ifc`: at 5 mm, expect **4 near
+pairs and 1 exact pair**. At 1 mm, expect **0 near pairs and 1 exact pair**.
+The near reference matrix reports **12/12** assertions when it passes.
+JSON includes scan completeness and reference evidence; QC/truth-matrix CSV
+exports include the measured near-pair fields.
+
+See `docs/Near_Duplicate_Validation_v0.7.13.md` for acceptance steps and boundaries.
 
 ## v0.7.12 opening hosts
 

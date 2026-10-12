@@ -15,7 +15,7 @@
       <span class="brand-mark">OQ</span>
       <span><strong>OpenBIM QC</strong><small>Model quality assistant</small></span>
     </a>
-    <div class="status"><span></span> Local analysis · v0.7.12</div>
+    <div class="status"><span></span> Local analysis · v0.7.13</div>
   </header>
 
   <main>
@@ -77,13 +77,18 @@
 
       <article class="coordination-panel foundation-panel">
         <div>
-          <p class="eyebrow">STAGE 2 · EXACT DUPLICATES</p>
-          <h3>Validate exact duplicate candidates</h3>
-          <p class="muted">Finds same-class physical elements with identical world-space geometry. Open a candidate's Compare row to review both elements' information side by side. Duplicate subtraction voids are reviewed separately by highlighting their host elements.</p>
+          <p class="eyebrow">STAGE 2 · DUPLICATE REVIEW</p>
+          <h3>Validate exact and near-duplicate candidates</h3>
+          <p class="muted">Finds exact matches and nearby same-class physical elements with matching geometry after removing translation. Open Compare to review their measurements and properties. Opening voids are reviewed through their hosts.</p>
         </div>
-        <button id="geometryCheckButton" class="button primary" type="button" disabled>Validate exact duplicates</button>
+        <div class="coordination-options">
+          <label><input id="nearDuplicatesCheckbox" type="checkbox" checked> Include near-duplicates</label>
+          <label for="nearDuplicateTolerance">Placement tolerance (mm)<input id="nearDuplicateTolerance" type="number" min="0.01" max="100" step="any" value="5" required aria-describedby="duplicateToleranceHelp"></label>
+          <button id="geometryCheckButton" class="button primary" type="button" disabled>Validate duplicates</button>
+        </div>
       </article>
-      <p class="claim-boundary"><strong>Scope:</strong> A result is a review candidate, not permission to delete an element. Opening voids are separated from physical duplicates and linked to their hosts. Near duplicates and intentional-repeat rules belong to the next Stage 2 increment.</p>
+      <p id="duplicateToleranceHelp" class="claim-boundary"><strong>Scope:</strong> Tolerance is a review setting, initially 5 mm. Near matches use world bounds centre distance and translation-normalised triangular surfaces; rotational matching is not evaluated. Every result needs an intentional-overlap review before changing elements.</p>
+      <p id="duplicateSettingsHint" class="comparison-warning hidden">Settings changed. Run Validate duplicates to apply them; existing results retain their original tolerance.</p>
       <div id="geometryStatus" class="ids-status hidden" role="status"></div>
       <div id="duplicateReviewSummary" class="duplicate-review-summary hidden" role="status"></div>
 

@@ -263,6 +263,7 @@ assert.deepEqual(truthRows[0], {
   opening_ids: [], host_entity_ids: [], selection_ids: [104, 57],
   review_status: "confirmed_duplicate", review_note: "Confirmed overlap", reviewed_at: "",
   confidence: "", tolerance_mm: "", detection_basis: "",
+  placement_offset_mm: "", translation_mm: [], shape_residual_mm: "", shape_tolerance_mm: "",
 }, "truth-matrix export preserves the reviewed decision and evidence");
 document.querySelector("#ruleFilter").value = "ids:wall-name";
 document.querySelector("#ruleFilter").dispatchEvent(new window.Event("change"));
@@ -346,6 +347,105 @@ missingHostDom.innerHTML = renderPairComparison(missingHostResult);
 assert.equal(missingHostDom.querySelector('.comparison-highlight-hosts').disabled, true);
 assert.match(missingHostDom.querySelector('[data-field="opening_hosts"]').textContent, /Not evaluated/);
 assert.equal(missingHostDom.querySelectorAll('.comparison-warning').length, 2, 'each opening without a host gets an explicit warning');
+
+// Run the supplied near-duplicate matrix end to end using real backend geometry.
+const nearText = await fs.readFile(new URL('../samples/golden/duplicate_near_matrix.ifc', import.meta.url), 'utf8');
+const nearBackend = await (await fetch('/api/geometry-diagnostics', {
+  method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({content: nearText}),
+})).json();
+globalThis.OpenBIMViewer.getGeometryDiagnostics = () => ({
+  engine: 'web-ifc', origin_mode: 'model-centred', bounds_frame: 'IFC world Z-up metres', mesh_groups: 21,
+  element_bounds_metres: nearBackend.element_bounds_metres,
+  element_shape_metrics: nearBackend.element_shape_metrics,
+  element_ids: Object.keys(nearBackend.element_extents_metres).map(Number),
+  element_extents_metres: nearBackend.element_extents_metres,
+});
+Object.defineProperty(uploadInput, 'files', {configurable: true, value: [new File([nearText], 'duplicate_near_matrix.ifc')]});
+uploadInput.dispatchEvent(new window.Event('change'));
+let nearDeadline = Date.now() + 10000;
+while (document.querySelector('#modelName').textContent !== 'duplicate_near_matrix.ifc' && Date.now() < nearDeadline) {
+  await new Promise(resolve => setTimeout(resolve, 25));
+}
+assert.equal(document.querySelector('#modelName').textContent, 'duplicate_near_matrix.ifc');
+document.querySelector('#geometryDiagnosticsButton').click();
+nearDeadline = Date.now() + 10000;
+while (document.querySelector('#geometryCheckButton').disabled && Date.now() < nearDeadline) {
+  await new Promise(resolve => setTimeout(resolve, 25));
+}
+assert.equal(document.querySelector('#nearDuplicateTolerance').value, '5', 'review tolerance starts at 5 mm');
+document.querySelector('#geometryCheckButton').click();
+nearDeadline = Date.now() + 10000;
+while (!document.querySelector('[data-rule-id="near_duplicate_candidate"]') && Date.now() < nearDeadline) {
+  await new Promise(resolve => setTimeout(resolve, 25));
+}
+assert.equal(document.querySelectorAll('[data-rule-id="near_duplicate_candidate"]').length, 4, '5 mm fixture produces four known near pairs');
+assert.match(document.querySelector('#geometryStatus').textContent, /Near-duplicate reference matrix: 12\/12 assertions passed/);
+const nearIssue = document.querySelector('[data-rule-id="near_duplicate_candidate"]');
+const nearIDs = nearIssue.dataset.selectionIds.split(',').map(Number);
+const beforeNear = calls.selected.length;
+nearIssue.click();
+assert.deepEqual(calls.selected.slice(beforeNear), nearIDs, 'near pair highlights both elements');
+let nearReview = nearIssue.closest('.duplicate-review-row');
+assert.match(nearReview.querySelector('.near-pair-evidence').textContent, /Centre offset.*configured limit 5 mm.*surface residual/s);
+nearDeadline = Date.now() + 10000;
+while (!nearReview.querySelector('.pair-table') && Date.now() < nearDeadline) {
+  await new Promise(resolve => setTimeout(resolve, 25));
+}
+assert.ok(nearReview.querySelector('.pair-comparison').open);
+assert.match(nearReview.querySelector('[data-field="dimensions_mm"]').textContent, /Same/);
+assert.match(nearReview.querySelector('[data-field="position_metres"]').textContent, /Different/);
+assert.equal(nearReview.querySelector('.review-decision').value, 'unresolved');
+const nearKey = nearReview.querySelector('[data-review-key]').dataset.reviewKey;
+nearReview.querySelector('.review-note').value = 'Intentional placement retained for test review';
+nearReview.querySelector('.review-decision').value = 'intentional_not_duplicate';
+nearReview.querySelector('.review-decision').dispatchEvent(new window.Event('change', {bubbles: true}));
+assert.equal(document.querySelector(`[data-review-key="${nearKey}"] .review-decision`).value, 'intentional_not_duplicate');
+const ledgerKey = Object.keys(localStorage).find(key => key.startsWith('openbim-qc:duplicate-reviews:v1:') && JSON.parse(localStorage.getItem(key))[nearKey]);
+assert.equal(JSON.parse(localStorage.getItem(ledgerKey))[nearKey].review_note, 'Intentional placement retained for test review');
+
+URL.createObjectURL = blob => { exportedBlob = blob; return createObjectURL(blob); };
+window.HTMLAnchorElement.prototype.click = function () { exportedName = this.download; };
+document.querySelector('#truthMatrixButton').click();
+const nearCsv = await exportedBlob.text();
+assert.match(nearCsv, /placement_offset_mm.*translation_mm.*shape_residual_mm.*shape_tolerance_mm/);
+assert.match(nearCsv, /near_physical_element/);
+assert.match(nearCsv, /Intentional placement retained for test review/);
+document.querySelector('#jsonButton').click();
+const nearJson = JSON.parse(await exportedBlob.text());
+assert.equal(nearJson.geometry_validation.near_duplicate_scan.tolerance_mm, 5);
+assert.equal(nearJson.geometry_validation.near_duplicate_acceptance_matrix.passed_cases, 12);
+assert.equal(nearJson.model_sha256.length, 64);
+URL.createObjectURL = createObjectURL;
+window.HTMLAnchorElement.prototype.click = anchorClick;
+
+document.querySelector('#nearDuplicateTolerance').value = '1';
+document.querySelector('#nearDuplicateTolerance').dispatchEvent(new window.Event('change'));
+assert.equal(document.querySelector('#duplicateSettingsHint').classList.contains('hidden'), false);
+document.querySelector('#geometryCheckButton').click();
+nearDeadline = Date.now() + 10000;
+while ((document.querySelector('#geometryCheckButton').disabled || !/placement limit 1 mm/.test(document.querySelector('#geometryStatus').textContent)) && Date.now() < nearDeadline) {
+  await new Promise(resolve => setTimeout(resolve, 25));
+}
+assert.equal(document.querySelectorAll('[data-rule-id="near_duplicate_candidate"]').length, 0, '1 mm excludes all shifted fixture pairs');
+assert.equal(document.querySelector('#duplicateSettingsHint').classList.contains('hidden'), true);
+document.querySelector('#nearDuplicateTolerance').value = '5';
+document.querySelector('#nearDuplicateTolerance').dispatchEvent(new window.Event('change'));
+document.querySelector('#geometryCheckButton').click();
+nearDeadline = Date.now() + 10000;
+while (!document.querySelector(`[data-review-key="${nearKey}"]`) && Date.now() < nearDeadline) {
+  await new Promise(resolve => setTimeout(resolve, 25));
+}
+assert.equal(document.querySelector(`[data-review-key="${nearKey}"] .review-decision`).value, 'intentional_not_duplicate', 'review survives tolerance changes and reruns');
+document.querySelector('#nearDuplicatesCheckbox').checked = false;
+document.querySelector('#nearDuplicatesCheckbox').dispatchEvent(new window.Event('change'));
+assert.equal(document.querySelector('#nearDuplicateTolerance').disabled, true);
+document.querySelector('#geometryCheckButton').click();
+nearDeadline = Date.now() + 10000;
+while (!/Near-duplicate scan disabled/.test(document.querySelector('#geometryStatus').textContent) && Date.now() < nearDeadline) {
+  await new Promise(resolve => setTimeout(resolve, 25));
+}
+assert.equal(document.querySelectorAll('[data-rule-id="near_duplicate_candidate"]').length, 0);
+assert.equal(document.querySelectorAll('[data-rule-id="exact_duplicate_candidate"]').length, 1, 'disabling near checks retains exact detection');
 
 serverProcess?.kill();
 console.log("frontend interaction tests passed");
