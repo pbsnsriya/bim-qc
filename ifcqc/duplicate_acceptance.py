@@ -7,6 +7,7 @@ from time import perf_counter
 
 from .geometry_checks import (
     EXACT_DUPLICATE_TOLERANCE_METRES,
+    _duplicate_opening_geometry_issues,
     _exact_duplicate_geometry_issues,
     _physical_products,
     _shape_data,
@@ -26,6 +27,7 @@ def run_duplicate_acceptance_matrix(fixture: Path = DEFAULT_FIXTURE) -> dict:
     products = _physical_products(model)
     _, vertices, _ = _shape_data(model)
     issues = _exact_duplicate_geometry_issues(products, vertices)
+    opening_issues = _duplicate_opening_geometry_issues(model, products, vertices)
     pairs = sorted((item["entity_id"], item["related_entity_id"]) for item in issues)
     expected_pairs = [(41, 40)]
     assertions = [
@@ -53,12 +55,32 @@ def run_duplicate_acceptance_matrix(fixture: Path = DEFAULT_FIXTURE) -> dict:
             "expected": [41, 40],
             "actual": issues[0].get("selection_ids") if issues else None,
         },
+        {
+            "name": "subtraction_features_excluded_from_physical_duplicates",
+            "passed": all(44 not in pair and 45 not in pair for pair in pairs),
+            "expected": "IfcOpeningElement records excluded from physical duplicates",
+            "actual": pairs,
+        },
+        {
+            "name": "duplicate_opening_maps_to_hosts",
+            "passed": (
+                len(opening_issues) == 1
+                and opening_issues[0].get("opening_ids") == [45, 44]
+                and opening_issues[0].get("selection_ids") == [49, 48]
+            ),
+            "expected": {"opening_ids": [45, 44], "selection_ids": [49, 48]},
+            "actual": ({
+                "opening_ids": opening_issues[0].get("opening_ids"),
+                "selection_ids": opening_issues[0].get("selection_ids"),
+            } if opening_issues else None),
+        },
     ]
     return {
         "name": "Stage 2 exact-duplicate known-answer matrix",
         "source_of_truth": (
             "Original synthetic IFC fixture containing one known exact same-class pair, "
-            "one shifted same-class element, and one coincident different-class element."
+            "one shifted same-class element, one coincident different-class element, and "
+            "one duplicate opening pair related to two selectable hosts."
         ),
         "fixture": str(fixture.relative_to(Path(__file__).resolve().parents[1])),
         "tolerance_metres": EXACT_DUPLICATE_TOLERANCE_METRES,
@@ -70,6 +92,7 @@ def run_duplicate_acceptance_matrix(fixture: Path = DEFAULT_FIXTURE) -> dict:
         "claim_boundary": (
             "A pass proves deterministic detection for exact tessellated geometry in this "
             "fixture. It does not prove that a candidate is an authoring mistake or detect "
-            "near duplicates, mirrored elements, or intended repeated components."
+            "near duplicates, mirrored elements, or intended repeated components. Opening "
+            "candidates are separated and mapped to their host elements for review."
         ),
     }

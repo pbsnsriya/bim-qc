@@ -154,6 +154,10 @@ def _exact_duplicate_geometry_issues(products: list, vertices: dict[int, object]
 
     signatures: dict[tuple, list] = defaultdict(list)
     for element in products:
+        # Opening/recess geometry is a subtraction operand, not an independently
+        # visible building element. It is reviewed separately through its host.
+        if element.is_a("IfcFeatureElementSubtraction"):
+            continue
         verts = vertices.get(element.id())
         if verts is None or not len(verts):
             continue
@@ -177,6 +181,60 @@ def _exact_duplicate_geometry_issues(products: list, vertices: dict[int, object]
                 tolerance_mm=EXACT_DUPLICATE_TOLERANCE_METRES * 1000,
                 selection_ids=[duplicate.id(), original.id()],
                 detection_basis="same IFC class and canonical world-space vertex multiset",
+            ))
+    return issues
+
+
+def _duplicate_opening_geometry_issues(model, products: list, vertices: dict[int, object]) -> list[dict]:
+    """Return coincident subtraction features with selectable host metadata."""
+    import numpy as np
+
+    hosts_by_opening: dict[int, list] = defaultdict(list)
+    for relation in model.by_type("IfcRelVoidsElement"):
+        opening = getattr(relation, "RelatedOpeningElement", None)
+        host = getattr(relation, "RelatingBuildingElement", None)
+        if opening is not None and host is not None:
+            hosts_by_opening[opening.id()].append(host)
+
+    signatures: dict[tuple, list] = defaultdict(list)
+    for element in products:
+        if not element.is_a("IfcFeatureElementSubtraction"):
+            continue
+        verts = vertices.get(element.id())
+        if verts is None or not len(verts):
+            continue
+        quantised = np.rint(verts / EXACT_DUPLICATE_TOLERANCE_METRES).astype(np.int64)
+        ordered = np.asarray(sorted(map(tuple, quantised)), dtype=np.int64)
+        signature = (element.is_a(), ordered.shape, ordered.tobytes())
+        signatures[signature].append(element)
+
+    issues: list[dict] = []
+    for grouped in signatures.values():
+        if len(grouped) < 2:
+            continue
+        original = grouped[0]
+        for duplicate in grouped[1:]:
+            duplicate_hosts = hosts_by_opening.get(duplicate.id(), [])
+            original_hosts = hosts_by_opening.get(original.id(), [])
+            host_ids = list(dict.fromkeys(
+                host.id() for host in [*duplicate_hosts, *original_hosts]
+            ))
+            host_description = ", ".join(
+                f"{host.is_a()} #{host.id()}"
+                for host in [*duplicate_hosts, *original_hosts]
+            ) or "no exported host"
+            issues.append(_pair_issue(
+                "duplicate_opening_candidate", "warning", "Duplicate opening void candidate",
+                f"{duplicate.is_a()} #{duplicate.id()} has the same subtraction geometry as "
+                f"#{original.id()} within 0.001 mm. The viewer highlights host element(s): "
+                f"{host_description}. Review the openings and hosts before changing either.",
+                duplicate, original,
+                confidence="exact_subtraction_geometry_match",
+                tolerance_mm=EXACT_DUPLICATE_TOLERANCE_METRES * 1000,
+                selection_ids=host_ids,
+                opening_ids=[duplicate.id(), original.id()],
+                host_entity_ids=host_ids,
+                detection_basis="same subtraction-feature class and canonical world-space vertex multiset",
             ))
     return issues
 
@@ -339,6 +397,7 @@ def run_geometry_checks(ifc_text: str, raw_config: dict | None = None) -> dict:
     issues = _identifier_issues(products) if config.identifiers else []
     if config.duplicates:
         issues.extend(_exact_duplicate_geometry_issues(products, vertices))
+        issues.extend(_duplicate_opening_geometry_issues(model, products, vertices))
     issues.extend(_clash_issues(model, set(shapes), tree, config))
     unverifiable = 0
     if config.connectivity:

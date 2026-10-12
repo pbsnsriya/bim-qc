@@ -184,19 +184,21 @@ async function runGeometryChecks() {
       `<li class="diagnostic-${item.passed ? "pass" : "fail"}"><strong>${item.passed ? "PASS" : "FAIL"}</strong> ${escapeHtml(humanize(item.name))}</li>`
     ).join("");
     const candidates = validation.by_rule.exact_duplicate_candidate || 0;
+    const openingCandidates = validation.by_rule.duplicate_opening_candidate || 0;
+    const totalCandidates = candidates + openingCandidates;
     const status = $("geometryStatus");
     status.classList.toggle("diagnostics-pass", matrix.passed);
     status.classList.toggle("diagnostics-fail", !matrix.passed);
-    status.innerHTML = `<strong>${matrix.passed ? "Stage 2 exact-duplicate validation passed" : "Stage 2 exact-duplicate validation failed"}</strong> · ${validation.summary.geometric_products} geometric products · ${candidates} candidate pair(s)` +
+    status.innerHTML = `<strong>${matrix.passed ? "Stage 2 duplicate validation passed" : "Stage 2 duplicate validation failed"}</strong> · ${validation.summary.geometric_products} geometric products · ${totalCandidates} candidate pair(s)` +
       `<details open><summary><strong>Known-answer matrix: ${matrix.passed_cases}/${matrix.total_cases} assertions passed</strong> · tolerance ${matrix.tolerance_metres * 1000} mm</summary><ul class="diagnostic-checks">${matrixRows}</ul></details>` +
-      `<p class="evidence-boundary"><strong>Review:</strong> ${candidates} candidate pair(s) are filtered in Quality Review below. Click a finding to highlight both IFC elements.</p>` +
+      `<p class="evidence-boundary"><strong>Review:</strong> ${candidates} physical pair(s) and ${openingCandidates} opening-void pair(s) are filtered below. Physical pairs highlight both elements; opening pairs highlight their host wall, slab, or other building element.</p>` +
       `<p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(matrix.claim_boundary)}</p>`;
     status.classList.remove("hidden");
     $("severityFilter").value = "all";
-    $("ruleFilter").value = "exact_duplicate_candidate";
+    $("ruleFilter").value = "duplicate_review";
     renderIssues();
     $("issuesPanel").scrollIntoView({ behavior: "smooth", block: "start" });
-    toast(`Exact duplicate check found ${candidates} candidate pair(s)`);
+    toast(`Duplicate review found ${totalCandidates} candidate pair(s)`);
   } finally {
     button.disabled = false;
     button.textContent = "Validate exact duplicates";
@@ -424,14 +426,21 @@ function renderTypes() {
 
 function configureRuleFilter() {
   const rules = [...new Set(state.result.issues.map((issue) => issue.rule_id))].sort();
-  $("ruleFilter").innerHTML = `<option value="all">All rules</option>` + rules.map((rule) => `<option value="${rule}">${humanize(rule)}</option>`).join("");
+  const duplicateReview = rules.some((rule) => ["exact_duplicate_candidate", "duplicate_opening_candidate"].includes(rule))
+    ? `<option value="duplicate_review">Duplicate review</option>`
+    : "";
+  $("ruleFilter").innerHTML = `<option value="all">All rules</option>${duplicateReview}` + rules.map((rule) => `<option value="${rule}">${humanize(rule)}</option>`).join("");
 }
 
 function renderIssues() {
   if (!state.result) return;
   const severity = $("severityFilter").value;
   const rule = $("ruleFilter").value;
-  const issues = state.result.issues.filter((issue) => (severity === "all" || issue.severity === severity) && (rule === "all" || issue.rule_id === rule));
+  const duplicateRules = new Set(["exact_duplicate_candidate", "duplicate_opening_candidate"]);
+  const issues = state.result.issues.filter((issue) => {
+    const ruleMatches = rule === "all" || issue.rule_id === rule || (rule === "duplicate_review" && duplicateRules.has(issue.rule_id));
+    return (severity === "all" || issue.severity === severity) && ruleMatches;
+  });
   const visibleIssues = issues.slice(0, ISSUE_RENDER_LIMIT);
   $("issueList").innerHTML = issues.length ? visibleIssues.map((issue) => {
     const element = state.result.elements.find((item) => item.step_id === issue.entity_id);

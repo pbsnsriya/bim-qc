@@ -78,11 +78,11 @@
         <div>
           <p class="eyebrow">STAGE 2 · EXACT DUPLICATES</p>
           <h3>Validate exact duplicate candidates</h3>
-          <p class="muted">Finds same-class elements with identical world-space tessellated geometry. Both elements are highlighted together for human review.</p>
+          <p class="muted">Finds same-class physical elements with identical world-space geometry. Duplicate subtraction voids are reviewed separately by highlighting their host elements.</p>
         </div>
         <button id="geometryCheckButton" class="button primary" type="button" disabled>Validate exact duplicates</button>
       </article>
-      <p class="claim-boundary"><strong>Scope:</strong> A result is a review candidate, not permission to delete an element. Near duplicates and intentional-repeat rules belong to the next Stage 2 increment.</p>
+      <p class="claim-boundary"><strong>Scope:</strong> A result is a review candidate, not permission to delete an element. Opening voids are separated from physical duplicates and linked to their hosts. Near duplicates and intentional-repeat rules belong to the next Stage 2 increment.</p>
       <div id="geometryStatus" class="ids-status hidden" role="status"></div>
 
       <div id="metrics" class="metrics"></div>

@@ -170,8 +170,8 @@ while (document.querySelector("#geometryStatus").classList.contains("hidden") &&
 }
 assert.equal(document.querySelector("#geometryStatus").classList.contains("hidden"), false, "coordination check status becomes visible");
 assert.match(document.querySelector("#geometryStatus").textContent, /1 candidate pair/, "exact duplicate candidate count is visible");
-assert.match(document.querySelector("#geometryStatus").textContent, /4\/4 assertions passed/, "Stage 2 known-answer matrix is visible");
-assert.equal(document.querySelector("#ruleFilter").value, "exact_duplicate_candidate", "Stage 2 automatically filters Quality Review to duplicate candidates");
+assert.match(document.querySelector("#geometryStatus").textContent, /6\/6 assertions passed/, "Stage 2 known-answer matrix is visible");
+assert.equal(document.querySelector("#ruleFilter").value, "duplicate_review", "Stage 2 automatically filters Quality Review to all duplicate candidate types");
 assert.equal(document.querySelectorAll('.issue-action[data-rule-id="exact_duplicate_candidate"]').length, 1, "filtered duplicate findings are immediately visible");
 const duplicateIssue = document.querySelector('[data-rule-id="exact_duplicate_candidate"][data-entity-id="104"]');
 assert.ok(duplicateIssue, "exact duplicate wall pair is linked to geometry");

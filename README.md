@@ -114,10 +114,13 @@ intent, schedules, survey data, or the built asset; those require a selected
 external reference in a later comparison milestone.
 
 After Stage 1 passes, choose **Validate exact duplicates**. The application first
-checks its original synthetic truth fixture, then reports same-class elements
-with identical world-space tessellated geometry. Selecting a finding highlights
-both members of the candidate pair. A match still requires human review before
-anything is deleted.
+checks its original synthetic truth fixture, then reports same-class physical
+elements with identical world-space tessellated geometry. Selecting a physical
+finding highlights both members of the candidate pair. Subtraction features such
+as `IfcOpeningElement` are excluded from the physical rule and reported under
+**duplicate opening candidate** instead; selecting one highlights the related
+host wall, slab, or other building element. A match still requires human review
+before anything is changed or deleted.
 
 The strict Stage 1 evidence result and Stage 2 capability gate are intentionally
 separate. Stage 1 may retain an extent-variance warning when IfcOpenShell and
@@ -125,10 +128,11 @@ web-ifc tessellate a small number of elements differently. Exact duplicate
 analysis can still unlock when core extraction passes and every backend element
 has a browser STEP-id/extent mapping, because duplicate decisions are made only
 by IfcOpenShell and the viewer uses those stable IDs solely for highlighting.
-After the check, Quality Review automatically filters to exact-duplicate
-candidates. Clicking a candidate highlights both elements and returns the page
-to the 3D viewer; exactly coincident elements may visually appear as one amber
-object because they occupy the same space.
+After the check, Quality Review automatically filters to both physical and
+opening-void duplicate candidates. Clicking a candidate returns the page to the
+3D viewer. Exactly coincident physical elements may visually appear as one amber
+object because they occupy the same space; opening findings highlight their
+selectable hosts because subtraction voids are not standalone rendered meshes.
 
 The clash matrix currently evaluates `IfcDistributionElement` objects against
 walls, slabs, beams, columns, footings, piles, roofs, ramps, and stairs. Exact
@@ -175,7 +179,8 @@ classification, part-of, and advanced restriction facets need a full IfcTester
 adapter. BCF export contains topics and component viewpoints, but no camera or
 snapshot yet.
 
-Stage 1 is signed off. Stage 2 currently covers exact duplicate candidates only.
+Stage 1 is signed off. Stage 2 currently covers exact physical duplicate
+candidates and separately reviewed exact opening-void candidates only.
 Hard/clearance clashes, connectivity, alignment, and dimensions remain
 experimental rule prototypes and have **not** completed their individual stages.
 Alignment results are advisory because diagonal elements may be intentional,
