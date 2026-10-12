@@ -1,0 +1,459 @@
+{
+  "schema": "IFC4",
+  "engine": "ifcopenshell",
+  "elements": [
+    {
+      "step_id": 66076,
+      "name": "Basic Wall:KS-2:1347201",
+      "class": "IfcOpeningElement",
+      "global_id": "3COUaGZV2gSkWY4jjEguRq",
+      "tag": "3673532",
+      "type_name": null,
+      "type_id": null,
+      "type_tag": null,
+      "material": null,
+      "storey": {
+        "name": "Basement",
+        "global_id": "0PmAO1xAj1UgYlhync0oRA"
+      },
+      "load_bearing": null,
+      "phase_status": null,
+      "assembly_parent": null,
+      "properties": {
+        "Occurrence \u00b7 Qto_OpeningElementBaseQuantities.Depth": 260.00000000000153,
+        "Occurrence \u00b7 Qto_OpeningElementBaseQuantities.Height": 700.0000000000055,
+        "Occurrence \u00b7 Qto_OpeningElementBaseQuantities.Width": 700.0000000000011,
+        "Occurrence \u00b7 Pset_EnvironmentalImpactIndicators.Reference": "VAR-2.PPP",
+        "Occurrence \u00b7 Pset_OpeningElementCommon.Reference": "VAR-2.PPP"
+      },
+      "dimensions_mm": [
+        700.000000000017,
+        260.0000000000016,
+        700.00000000001
+      ],
+      "position_metres": [
+        14.5272689076385,
+        42.10376054693633,
+        52.55
+      ],
+      "geometry_status": "measured",
+      "geometry_message": "Fresh targeted tessellation; dimensions are bounds along occurrence axes, not nominal sizes.",
+      "is_opening": true,
+      "opening_hosts": [
+        {
+          "step_id": 65997,
+          "class": "IfcWall",
+          "name": "Basic Wall:KS-2:1347201",
+          "global_id": "0oX1x9uObCz8vZNB4_N9ql",
+          "tag": "1347201",
+          "type_name": "KS-2"
+        }
+      ]
+    },
+    {
+      "step_id": 108748,
+      "name": "Basic Wall:KS-1:1493966",
+      "class": "IfcOpeningElement",
+      "global_id": "2m$Umx6JOq6sl8usFj07qO",
+      "tag": "3673532",
+      "type_name": null,
+      "type_id": null,
+      "type_tag": null,
+      "material": null,
+      "storey": {
+        "name": "Basement",
+        "global_id": "0PmAO1xAj1UgYlhync0oRA"
+      },
+      "load_bearing": null,
+      "phase_status": null,
+      "assembly_parent": null,
+      "properties": {
+        "Occurrence \u00b7 Qto_OpeningElementBaseQuantities.Depth": 260.00000000000153,
+        "Occurrence \u00b7 Qto_OpeningElementBaseQuantities.Height": 700.0000000000055,
+        "Occurrence \u00b7 Qto_OpeningElementBaseQuantities.Width": 700.0000000000011,
+        "Occurrence \u00b7 Pset_EnvironmentalImpactIndicators.Reference": "VAR-2.PPP",
+        "Occurrence \u00b7 Pset_OpeningElementCommon.Reference": "VAR-2.PPP"
+      },
+      "dimensions_mm": [
+        700.0000000000028,
+        259.999999999998,
+        700.00000000001
+      ],
+      "position_metres": [
+        14.527268907638557,
+        42.10376054693664,
+        52.55
+      ],
+      "geometry_status": "measured",
+      "geometry_message": "Fresh targeted tessellation; dimensions are bounds along occurrence axes, not nominal sizes.",
+      "is_opening": true,
+      "opening_hosts": [
+        {
+          "step_id": 108613,
+          "class": "IfcWall",
+          "name": "Basic Wall:KS-1:1493966",
+          "global_id": "2Xe6rbtYzAqhfyXbKpPStm",
+          "tag": "1493966",
+          "type_name": "KS-1"
+        }
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "key": "class",
+      "label": "IFC class",
+      "a": "IfcOpeningElement",
+      "b": "IfcOpeningElement",
+      "status": "same",
+      "category": "physical",
+      "a_applicable": true,
+      "b_applicable": true
+    },
+    {
+      "key": "type_name",
+      "label": "Assigned type name",
+      "a": null,
+      "b": null,
+      "status": "not_applicable",
+      "category": "physical",
+      "a_applicable": false,
+      "b_applicable": false
+    },
+    {
+      "key": "opening_hosts",
+      "label": "Host element (IfcRelVoidsElement)",
+      "a": [
+        {
+          "step_id": 65997,
+          "class": "IfcWall",
+          "name": "Basic Wall:KS-2:1347201",
+          "global_id": "0oX1x9uObCz8vZNB4_N9ql",
+          "tag": "1347201",
+          "type_name": "KS-2"
+        }
+      ],
+      "b": [
+        {
+          "step_id": 108613,
+          "class": "IfcWall",
+          "name": "Basic Wall:KS-1:1493966",
+          "global_id": "2Xe6rbtYzAqhfyXbKpPStm",
+          "tag": "1493966",
+          "type_name": "KS-1"
+        }
+      ],
+      "status": "different",
+      "category": "context",
+      "a_applicable": true,
+      "b_applicable": true
+    },
+    {
+      "key": "material",
+      "label": "Material names",
+      "a": null,
+      "b": null,
+      "status": "not_applicable",
+      "category": "physical",
+      "a_applicable": false,
+      "b_applicable": false
+    },
+    {
+      "key": "storey",
+      "label": "Containing storey",
+      "a": {
+        "name": "Basement",
+        "global_id": "0PmAO1xAj1UgYlhync0oRA"
+      },
+      "b": {
+        "name": "Basement",
+        "global_id": "0PmAO1xAj1UgYlhync0oRA"
+      },
+      "status": "same",
+      "category": "physical",
+      "a_applicable": true,
+      "b_applicable": true
+    },
+    {
+      "key": "load_bearing",
+      "label": "Load-bearing",
+      "a": null,
+      "b": null,
+      "status": "not_applicable",
+      "category": "physical",
+      "a_applicable": false,
+      "b_applicable": false
+    },
+    {
+      "key": "dimensions_mm",
+      "label": "Dimensions X / Y / Z (mm, occurrence axes)",
+      "a": [
+        700.000000000017,
+        260.0000000000016,
+        700.00000000001
+      ],
+      "b": [
+        700.0000000000028,
+        259.999999999998,
+        700.00000000001
+      ],
+      "status": "same",
+      "category": "physical",
+      "a_applicable": true,
+      "b_applicable": true
+    },
+    {
+      "key": "position_metres",
+      "label": "World bounds centre X / Y / Z (m)",
+      "a": [
+        14.5272689076385,
+        42.10376054693633,
+        52.55
+      ],
+      "b": [
+        14.527268907638557,
+        42.10376054693664,
+        52.55
+      ],
+      "status": "same",
+      "category": "physical",
+      "a_applicable": true,
+      "b_applicable": true
+    },
+    {
+      "key": "phase_status",
+      "label": "Exported phase / status",
+      "a": null,
+      "b": null,
+      "status": "not_evaluated",
+      "category": "physical",
+      "a_applicable": true,
+      "b_applicable": true
+    },
+    {
+      "key": "assembly_parent",
+      "label": "Assembly / nested parent",
+      "a": null,
+      "b": null,
+      "status": "not_evaluated",
+      "category": "physical",
+      "a_applicable": true,
+      "b_applicable": true
+    },
+    {
+      "key": "global_id",
+      "label": "GlobalId",
+      "a": "3COUaGZV2gSkWY4jjEguRq",
+      "b": "2m$Umx6JOq6sl8usFj07qO",
+      "status": "different",
+      "category": "identity",
+      "a_applicable": true,
+      "b_applicable": true
+    },
+    {
+      "key": "tag",
+      "label": "Element Tag",
+      "a": "3673532",
+      "b": "3673532",
+      "status": "same",
+      "category": "identity",
+      "a_applicable": true,
+      "b_applicable": true
+    },
+    {
+      "key": "type_id",
+      "label": "Type record ID",
+      "a": null,
+      "b": null,
+      "status": "not_applicable",
+      "category": "identity",
+      "a_applicable": false,
+      "b_applicable": false
+    },
+    {
+      "key": "type_tag",
+      "label": "Type Tag",
+      "a": null,
+      "b": null,
+      "status": "not_applicable",
+      "category": "identity",
+      "a_applicable": false,
+      "b_applicable": false
+    }
+  ],
+  "property_rows": [
+    {
+      "key": "Occurrence \u00b7 Pset_EnvironmentalImpactIndicators.Reference",
+      "label": "Occurrence \u00b7 Pset_EnvironmentalImpactIndicators.Reference",
+      "a": "VAR-2.PPP",
+      "b": "VAR-2.PPP",
+      "status": "same",
+      "category": "physical",
+      "a_applicable": true,
+      "b_applicable": true
+    },
+    {
+      "key": "Occurrence \u00b7 Pset_OpeningElementCommon.Reference",
+      "label": "Occurrence \u00b7 Pset_OpeningElementCommon.Reference",
+      "a": "VAR-2.PPP",
+      "b": "VAR-2.PPP",
+      "status": "same",
+      "category": "physical",
+      "a_applicable": true,
+      "b_applicable": true
+    },
+    {
+      "key": "Occurrence \u00b7 Qto_OpeningElementBaseQuantities.Depth",
+      "label": "Occurrence \u00b7 Qto_OpeningElementBaseQuantities.Depth",
+      "a": 260.00000000000153,
+      "b": 260.00000000000153,
+      "status": "same",
+      "category": "physical",
+      "a_applicable": true,
+      "b_applicable": true
+    },
+    {
+      "key": "Occurrence \u00b7 Qto_OpeningElementBaseQuantities.Height",
+      "label": "Occurrence \u00b7 Qto_OpeningElementBaseQuantities.Height",
+      "a": 700.0000000000055,
+      "b": 700.0000000000055,
+      "status": "same",
+      "category": "physical",
+      "a_applicable": true,
+      "b_applicable": true
+    },
+    {
+      "key": "Occurrence \u00b7 Qto_OpeningElementBaseQuantities.Width",
+      "label": "Occurrence \u00b7 Qto_OpeningElementBaseQuantities.Width",
+      "a": 700.0000000000011,
+      "b": 700.0000000000011,
+      "status": "same",
+      "category": "physical",
+      "a_applicable": true,
+      "b_applicable": true
+    }
+  ],
+  "property_rows_total": 5,
+  "property_rows_truncated": false,
+  "physical_difference_count": 0,
+  "property_difference_count": 0,
+  "not_evaluated_count": 2,
+  "not_applicable_count": 3,
+  "host_entity_ids": [
+    65997,
+    108613
+  ],
+  "opening_host_checks": {
+    "rule_id": "opening_host_bounds_consistency",
+    "evidence_version": 1,
+    "engine": "ifcopenshell",
+    "engine_version": "0.8.5",
+    "bounds_frame": "IFC world Z-up metres",
+    "tolerance_mm": 1.0,
+    "numeric_slack_mm": 1e-06,
+    "rule_source": "Explicit IfcRelVoidsElement + necessary contact condition for measured Body bounds.",
+    "expected": "Opening and assigned host body can contact or overlap; measured bounds gap should not exceed the screening threshold.",
+    "threshold_source": "Application screening default; not an industry or project acceptance standard. Independent of near-duplicate placement tolerance.",
+    "measurement": "Euclidean separation between world-axis Body bounding boxes; a lower bound on geometry distance, not the exact surface distance.",
+    "settings": {
+      "use_world_coords": true,
+      "disable_opening_subtractions": true,
+      "representation_identifier": "Body"
+    },
+    "claim_boundary": "IFC opening subtractions are disabled for this measurement. Holes already embedded in exported Body geometry remain. Overlapping bounds are Unresolved, never a valid-cut PASS. Missing or failed Body geometry is Not evaluated. Review decisions are unchanged.",
+    "results": [
+      {
+        "opening_id": 66076,
+        "host_id": 65997,
+        "relationship_ids": [
+          66082
+        ],
+        "status": "separated",
+        "reason": "Measured opening and assigned host Body bounds are separated beyond the screening threshold. Investigate the exported geometry and relationship; this does not decide duplication or author intent.",
+        "opening_bounds_metres": {
+          "minimum": [
+            14.176319161024576,
+            41.778141294606286,
+            52.199999999999996
+          ],
+          "maximum": [
+            14.878218654252423,
+            42.429379799266364,
+            52.900000000000006
+          ]
+        },
+        "host_bounds_metres": {
+          "minimum": [
+            59.56941715003015,
+            80.50678890719188,
+            51.7
+          ],
+          "maximum": [
+            64.14992147152508,
+            84.69954526635092,
+            54.80000000000001
+          ]
+        },
+        "opening_geometry_status": "measured",
+        "host_geometry_status": "measured",
+        "axis_gaps_mm": [
+          44691.198495777724,
+          38077.40910792551,
+          0.0
+        ],
+        "bounds_distance_lower_bound_mm": 58712.79509068985,
+        "tolerance_mm": 1.0
+      },
+      {
+        "opening_id": 108748,
+        "host_id": 108613,
+        "relationship_ids": [
+          108754
+        ],
+        "status": "bounds_overlap",
+        "reason": "Bounds overlap or touch. Actual body intersection, a valid cut and author intent remain unresolved.",
+        "opening_bounds_metres": {
+          "minimum": [
+            14.176319161024633,
+            41.778141294606606,
+            52.199999999999996
+          ],
+          "maximum": [
+            14.87821865425248,
+            42.429379799266684,
+            52.900000000000006
+          ]
+        },
+        "host_bounds_metres": {
+          "minimum": [
+            13.406603987698531,
+            41.54668032564658,
+            51.7
+          ],
+          "maximum": [
+            59.79593367407829,
+            80.90701146371462,
+            55.150000000000006
+          ]
+        },
+        "opening_geometry_status": "measured",
+        "host_geometry_status": "measured",
+        "axis_gaps_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bounds_distance_lower_bound_mm": 0.0,
+        "tolerance_mm": 1.0
+      }
+    ],
+    "separated_count": 1,
+    "unresolved_count": 1,
+    "not_evaluated_count": 0
+  },
+  "length_unit_scale_to_metres": 0.001,
+  "claim_boundary": "Matching properties or bounds do not prove full shape equality or author intent. Review decisions are unchanged.",
+  "source_sha256": "f99b62ccadd9d625c64c4b68f89eda544ea8cac5986970d0a21473d9fcb3fd76",
+  "source_size_bytes": 81357305,
+  "duration_seconds": 13.135617391999858
+}

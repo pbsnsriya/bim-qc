@@ -16,6 +16,9 @@ information-quality issues, and exporting a review report.
 - Coordination, handover, and model-health QC profiles
 - Severity and rule filtering
 - Element-level issue details
+- Opening–host consistency evidence: measured bounds separation, explicit
+  unresolved/missing states, and a cyan opening bounds marker when the void has
+  no selectable viewer mesh
 - JSON, CSV, and BCF 2.1 issue export
 - IDS validation with issue-to-model highlighting
 - IfcOpenShell geometry processing and semantic inspection
@@ -225,6 +228,34 @@ and the current dimension prototype only enforces a minimum geometric extent.
 
 Next Stage 2 increment: local acceptance of translation-only near candidates,
 then rotation tolerance and project-configurable intentional-repeat exclusions.
+
+## v0.7.14 opening–host geometry screening
+
+Open an opening candidate's **Compare #A ↔ #B** panel and find
+**Opening–host consistency** below the host controls. Each explicit relationship
+shows the bounds distance lower bound, X/Y/Z gaps, the 1 mm screening threshold,
+world bounds, and source relationship IDs. Measured separation is flagged;
+overlapping bounds remain **Unresolved**, and unavailable evidence is
+**Not evaluated**. This is not a solid-intersection or valid-cut certification.
+
+**Highlight opening + host** requests the actual opening and its assigned host.
+If the viewer has no opening mesh, it displays a cyan measured bounds marker
+and labels it as diagnostic bounds, not opening geometry. Use **Isolate selected**
+to remove surrounding geometry, and **Clear selection** to remove the marker
+and restore the model. Existing review decisions and notes are retained.
+
+**Export JSON** now preserves the successful comparisons opened for this model,
+including their source fingerprints and numerical evidence. Unopened or failed
+comparisons are explicitly outside that export's evaluated scope.
+
+The supplied office opening #66076 has a measured bounds gap of at least
+58.712795 m to its assigned host #65997. Opening #108748/host #108613 have
+overlapping bounds and remain unresolved. These results concern the exact IFC
+revision identified in the evidence, not every revision of the same filename.
+
+See `docs/Opening_Host_Geometry_v0.7.14.md` for the test IFC, acceptance steps,
+numerical rule and measurement limits. The existing stage milestones remain
+separate; this targeted comparison does not rerun whole-model tessellation.
 
 ## v0.7.13 near-duplicate candidates
 

@@ -96,6 +96,25 @@ class ApiTests(unittest.TestCase):
         self.assertEqual([48, 49], result["host_entity_ids"])
         self.assertEqual("context", next(r for r in result["rows"] if r["key"] == "opening_hosts")["category"])
         self.assertEqual(3, result["not_applicable_count"])
+        self.assertEqual(2, result["opening_host_checks"]["unresolved_count"])
+        self.assertEqual(0, result["opening_host_checks"]["separated_count"])
+
+    def test_stored_opening_host_gap_evidence_uses_body_geometry(self):
+        uploaded = self.upload_model("golden/opening_host_matrix.ifc")
+        request = Request(f"{self.base}/api/compare-elements", data=json.dumps({
+            "model_id": uploaded["model_id"], "element_ids": [32, 57],
+        }).encode(), headers={"Content-Type": "application/json"}, method="POST")
+        with urlopen(request) as response:
+            result = json.load(response)
+        self.assertEqual(uploaded["model_sha256"], result["source_sha256"])
+        checks = result["opening_host_checks"]
+        self.assertEqual(1, checks["separated_count"])
+        self.assertEqual(1, checks["unresolved_count"])
+        separated = next(item for item in checks["results"] if item["status"] == "separated")
+        self.assertEqual([8000, 0, 0], separated["axis_gaps_mm"])
+        self.assertEqual(8000, separated["bounds_distance_lower_bound_mm"])
+        self.assertEqual(1, separated["tolerance_mm"])
+        self.assertTrue(checks["settings"]["disable_opening_subtractions"])
 
     def test_stored_near_duplicate_scan_uses_requested_tolerance(self):
         uploaded = self.upload_model("golden/duplicate_near_matrix.ifc")

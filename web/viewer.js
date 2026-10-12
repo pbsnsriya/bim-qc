@@ -99,6 +99,7 @@ function createScene(container) {
     selectedMeshObjects: [],
     selectionMode: "xray",
     selectionHelper: null,
+    openingBoundsMarker: null,
     modelGroup: null,
     diagnostics: null,
     frameCount: 0,
@@ -284,6 +285,12 @@ export function clearSelection() {
   }
   sceneState.batches?.setSelection();
   sceneState.dirty = true;
+  if (sceneState.openingBoundsMarker) {
+    sceneState.scene.remove(sceneState.openingBoundsMarker);
+    sceneState.openingBoundsMarker.geometry.dispose();
+    sceneState.openingBoundsMarker.material.dispose();
+    sceneState.openingBoundsMarker = null;
+  }
   if (sceneState.selectionHelper) {
     sceneState.scene.remove(sceneState.selectionHelper);
     sceneState.selectionHelper.geometry.dispose();
@@ -294,6 +301,42 @@ export function clearSelection() {
 
 export function selectExpressID(expressID, focus = true) {
   return selectExpressIDs([expressID], focus);
+}
+
+export function ifcBoundsToViewerBox(bounds, coordinationMatrix) {
+  if (!bounds || !Array.isArray(coordinationMatrix) || coordinationMatrix.length !== 16 ||
+      !coordinationMatrix.every(Number.isFinite) ||
+      ![bounds.minimum, bounds.maximum].every(v => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite)) ||
+      bounds.minimum.some((value, axis) => value > bounds.maximum[axis])) return null;
+  const transform = new THREE.Matrix4().fromArray(coordinationMatrix);
+  const box = new THREE.Box3();
+  for (let mask = 0; mask < 8; mask++) {
+    const [x, y, z] = bounds.minimum.map((value, axis) => (mask & (1 << axis)) ? bounds.maximum[axis] : value);
+    box.expandByPoint(new THREE.Vector3(x, z, -y).applyMatrix4(transform));
+  }
+  return box;
+}
+
+export function showOpeningBoundsMarker(bounds) {
+  if (!sceneState) return false;
+  const box = ifcBoundsToViewerBox(bounds, sceneState.diagnostics?.coordination_matrix);
+  if (!box || box.isEmpty()) return false;
+  if (sceneState.openingBoundsMarker) {
+    sceneState.scene.remove(sceneState.openingBoundsMarker);
+    sceneState.openingBoundsMarker.geometry.dispose();
+    sceneState.openingBoundsMarker.material.dispose();
+  }
+  const marker = new THREE.Box3Helper(box, 0x008fa8);
+  marker.material.depthTest = false;
+  marker.material.depthWrite = false;
+  marker.renderOrder = 10_001;
+  sceneState.openingBoundsMarker = marker;
+  sceneState.scene.add(marker);
+  const framedBox = box.clone();
+  if (sceneState.selectionGroup) framedBox.union(new THREE.Box3().setFromObject(sceneState.selectionGroup));
+  fitCameraToBox(sceneState.camera, sceneState.controls, framedBox, { preferSide: true });
+  sceneState.dirty = true;
+  return true;
 }
 
 export function selectExpressIDs(expressIDs, focus = true) {
@@ -479,6 +522,7 @@ function getRendererEvidence(current) {
     render_mode: "on-demand; continuous during GPU probe",
     selection_mode: current.selectionMode,
     selected_element_ids: [...current.selectedIDs],
+    opening_bounds_marker_visible: Boolean(current.openingBoundsMarker),
     camera_position: current.camera.position.toArray(),
     camera_target: current.controls.target.toArray(),
   };
@@ -545,6 +589,7 @@ globalThis.OpenBIMViewer = {
   runGpuValidation,
   frameModel,
   getRenderingDiagnostics,
+  showOpeningBoundsMarker,
   applySelectionAppearance,
   restoreMaterialStates,
   fitCameraToBox,

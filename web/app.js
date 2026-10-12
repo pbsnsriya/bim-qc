@@ -783,7 +783,9 @@ function exportTruthMatrixCsv() {
 function exportJson() {
   if (!state.result) return;
   downloadText(
-    JSON.stringify({...state.result, model_sha256: state.source?.sha256, geometry_validation: state.geometryValidation}, null, 2),
+    JSON.stringify({...state.result, model_sha256: state.source?.sha256, geometry_validation: state.geometryValidation,
+      pair_comparisons: Object.fromEntries([...state.pairComparisons].filter(([, entry]) => entry.result).map(([key, entry]) => [key, entry.result])),
+      pair_comparison_export_scope: "Only comparisons opened and successfully measured for this model are included; unopened or failed comparisons are not evaluated."}, null, 2),
     `${state.result.filename.replace(/\.ifc$/i, "")}-qc-report.json`,
     "application/json",
   );
@@ -906,6 +908,29 @@ $("selectionModeSelect").addEventListener("change", (event) => {
   }
 });
 $("issueList").addEventListener("click", (event) => {
+  const openingHostButton = event.target.closest(".comparison-highlight-opening-host");
+  if (openingHostButton) {
+    const key = openingHostButton.closest(".pair-comparison").dataset.comparisonKey;
+    const item = state.pairComparisons.get(key)?.result?.opening_host_checks?.results?.[Number(openingHostButton.dataset.checkIndex)];
+    if (item?.host_id == null) return;
+    // Request the opening itself, never silently substitute another host for it.
+    const host = state.result?.elements.find(element => element.step_id === item.host_id);
+    const targetIDs = [...new Set([item.opening_id, ...(host?.selection_ids?.length ? host.selection_ids : [item.host_id])])];
+    globalThis.OpenBIMViewer?.clearSelection?.();
+    const highlighted = selectEntity(item.opening_id, { selectionIDs: targetIDs, revealViewer: true });
+    const renderedIDs = globalThis.OpenBIMViewer?.getRenderingDiagnostics?.()?.selected_element_ids;
+    const missingIDs = Array.isArray(renderedIDs) ? targetIDs.filter(id => !renderedIDs.includes(id)) : [];
+    const unresolved = [item.opening_id, item.host_id].filter(id => state.geometryDiagnostics?.critical_unresolved_ids?.includes(id));
+    const marker = (!Array.isArray(renderedIDs) || !renderedIDs.includes(item.opening_id)) &&
+      globalThis.OpenBIMViewer?.showOpeningBoundsMarker?.(item.opening_bounds_metres);
+    $("viewerStatus").textContent = `Opening #${item.opening_id} + host #${item.host_id} · ${!highlighted ? "Geometry is not currently selectable" : missingIDs.length ? `Partial highlight; geometry unavailable for #${missingIDs.join(", #")}` : Array.isArray(renderedIDs) ? "Highlighted" : "Selection requested; rendered IDs not verified"}${marker ? " · Cyan opening bounds marker; not opening geometry" : ""}${unresolved.length ? ` · Stage 1 geometry/placement unresolved for #${unresolved.join(", #")}; rendered position is unverified` : ""}`;
+    if (marker) {
+      $("clearSelectionButton").classList.remove("hidden");
+      $("selectionModeSelect").classList.remove("hidden");
+      $("viewer").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    return;
+  }
   const hostButton = event.target.closest(".comparison-highlight-hosts");
   if (hostButton) {
     const key = hostButton.closest(".pair-comparison").dataset.comparisonKey;

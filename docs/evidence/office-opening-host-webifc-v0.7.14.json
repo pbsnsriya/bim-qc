@@ -1,0 +1,222 @@
+{
+  "source_sha256": "f99b62ccadd9d625c64c4b68f89eda544ea8cac5986970d0a21473d9fcb3fd76",
+  "source_size_bytes": 81357305,
+  "engine": "web-ifc",
+  "engine_version": "0.0.78",
+  "runtime": "Node.js WASM; no browser/GPU certification",
+  "settings": {
+    "coordinate_to_origin": true,
+    "circle_segments": 128
+  },
+  "evidence_version": 2,
+  "bounds_frame": "IFC world Z-up metres",
+  "element_bounds_metres": {
+    "65997": {
+      "minimum": [
+        59.56941715003009,
+        80.50678890719182,
+        51.7
+      ],
+      "maximum": [
+        64.14992147152518,
+        84.699545266351,
+        54.80000000000002
+      ]
+    },
+    "66076": {
+      "minimum": [
+        14.176319161024598,
+        41.7781412946063,
+        52.2
+      ],
+      "maximum": [
+        14.878218654252445,
+        42.42937979926638,
+        52.9
+      ]
+    },
+    "108613": {
+      "minimum": [
+        13.406603987698478,
+        41.54668032564672,
+        51.7
+      ],
+      "maximum": [
+        59.79593367407817,
+        80.90701146371465,
+        55.150000000000006
+      ]
+    },
+    "108748": {
+      "minimum": [
+        14.176319161024626,
+        41.778141294606584,
+        52.2
+      ],
+      "maximum": [
+        14.878218654252473,
+        42.42937979926666,
+        52.9
+      ]
+    }
+  },
+  "element_shape_metrics": {
+    "65997": {
+      "surface_area_m2": 75.06822399999994,
+      "volume_m3": 8.123863579999938
+    },
+    "66076": {
+      "surface_area_m2": 1.708,
+      "volume_m3": 0.12739999999999996
+    },
+    "108613": {
+      "surface_area_m2": 837.5729000000003,
+      "volume_m3": 68.59673583333358
+    },
+    "108748": {
+      "surface_area_m2": 1.708,
+      "volume_m3": 0.12739999999999996
+    }
+  },
+  "coordination_matrix": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    -14.34458857888902,
+    -52.900000000000006,
+    41.7781412946063,
+    1
+  ],
+  "measurement_scope": "World bounds and triangulated surface/volume diagnostics; not complete shape equivalence or manifold certification.",
+  "tolerance_mm": 1,
+  "duration_ms": 2243.914836,
+  "comparisons": [
+    {
+      "element_id": 66076,
+      "measured_bounds_metres": {
+        "minimum": [
+          14.176319161024598,
+          41.7781412946063,
+          52.2
+        ],
+        "maximum": [
+          14.878218654252445,
+          42.42937979926638,
+          52.9
+        ]
+      },
+      "expected_ifcopenshell_bounds_metres": {
+        "minimum": [
+          14.176319161024576,
+          41.778141294606286,
+          52.199999999999996
+        ],
+        "maximum": [
+          14.878218654252423,
+          42.429379799266364,
+          52.900000000000006
+        ]
+      },
+      "maximum_coordinate_difference_mm": 2.1316282072803006e-11,
+      "passed_bounds_comparison": true
+    },
+    {
+      "element_id": 65997,
+      "measured_bounds_metres": {
+        "minimum": [
+          59.56941715003009,
+          80.50678890719182,
+          51.7
+        ],
+        "maximum": [
+          64.14992147152518,
+          84.699545266351,
+          54.80000000000002
+        ]
+      },
+      "expected_ifcopenshell_bounds_metres": {
+        "minimum": [
+          59.56941715003015,
+          80.50678890719188,
+          51.7
+        ],
+        "maximum": [
+          64.14992147152508,
+          84.69954526635092,
+          54.80000000000001
+        ]
+      },
+      "maximum_coordinate_difference_mm": 9.947598300641403e-11,
+      "passed_bounds_comparison": true
+    },
+    {
+      "element_id": 108748,
+      "measured_bounds_metres": {
+        "minimum": [
+          14.176319161024626,
+          41.778141294606584,
+          52.2
+        ],
+        "maximum": [
+          14.878218654252473,
+          42.42937979926666,
+          52.9
+        ]
+      },
+      "expected_ifcopenshell_bounds_metres": {
+        "minimum": [
+          14.176319161024633,
+          41.778141294606606,
+          52.199999999999996
+        ],
+        "maximum": [
+          14.87821865425248,
+          42.429379799266684,
+          52.900000000000006
+        ]
+      },
+      "maximum_coordinate_difference_mm": 2.1316282072803006e-11,
+      "passed_bounds_comparison": true
+    },
+    {
+      "element_id": 108613,
+      "measured_bounds_metres": {
+        "minimum": [
+          13.406603987698478,
+          41.54668032564672,
+          51.7
+        ],
+        "maximum": [
+          59.79593367407817,
+          80.90701146371465,
+          55.150000000000006
+        ]
+      },
+      "expected_ifcopenshell_bounds_metres": {
+        "minimum": [
+          13.406603987698531,
+          41.54668032564658,
+          51.7
+        ],
+        "maximum": [
+          59.79593367407829,
+          80.90701146371462,
+          55.150000000000006
+        ]
+      },
+      "maximum_coordinate_difference_mm": 1.4210854715202004e-10,
+      "passed_bounds_comparison": true
+    }
+  ],
+  "passed_all_requested_bounds": true,
+  "claim_boundary": "Only requested opening/host world bounds compared. Default web-ifc opening handling may differ from uncut IfcOpenShell Body extraction. Matching bounds do not prove shape equality, actual contact, valid cuts or author intent. No whole-model or GPU verdict."
+}

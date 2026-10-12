@@ -44,6 +44,7 @@ const testBackend = await (await fetch('/api/geometry-diagnostics', {
   body: JSON.stringify({content: await fs.readFile(new URL('../samples/geometry_demo.ifc', import.meta.url), 'utf8')}),
 })).json();
 const calls = { selected: [], cleared: 0, modes: [] };
+calls.markers = [];
 globalThis.OpenBIMViewer = {
   async loadIfcGeometry() { return 5; },
   getGeometryDiagnostics() {
@@ -64,6 +65,7 @@ globalThis.OpenBIMViewer = {
   selectExpressIDs(ids) { calls.selected.push(...ids); return true; },
   selectExpressID(id) { calls.selected.push(id); return true; },
   clearSelection() { calls.cleared += 1; },
+  showOpeningBoundsMarker(bounds) { if (!bounds) return false; calls.markers.push(bounds); return true; },
   setSelectionMode(mode) { calls.modes.push(mode); return true; },
   async runGpuValidation() {
     return {
@@ -323,6 +325,36 @@ assert.match(document.querySelector('#viewerStatus').textContent, /Opening hosts
 assert.equal(document.querySelector('.model-node[data-entity-id="48"]').classList.contains('selected'), true, 'primary host remains synchronized with the data map');
 assert.equal(openingReview.querySelector('.review-decision').value, 'unresolved', 'highlighting does not decide author intent');
 assert.equal(openingReview.querySelector('.review-note').value, '', 'highlighting does not invent reviewer evidence');
+const openingHostButton = openingReview.querySelector('.comparison-highlight-opening-host');
+assert.ok(openingHostButton, 'each measured opening-host relationship has a native selection button');
+assert.equal(openingHostButton.tagName, 'BUTTON');
+assert.match(openingReview.querySelector('.opening-host-evidence').textContent, /Unresolved — bounds overlap or touch/);
+assert.match(openingReview.querySelector('.opening-host-evidence').textContent, /not an industry or project acceptance standard/);
+assert.match(openingReview.querySelector('.opening-host-evidence').textContent, /Independent of near-duplicate placement tolerance/);
+const selectedBeforeOpeningHost = calls.selected.length;
+globalThis.OpenBIMViewer.getRenderingDiagnostics = () => ({selected_element_ids: [48]});
+openingHostButton.click();
+assert.deepEqual(calls.selected.slice(selectedBeforeOpeningHost), [44, 48], 'request the opening itself and its explicit host, not the two candidate hosts');
+assert.match(document.querySelector('#viewerStatus').textContent, /Opening #44 \+ host #48.*Partial highlight; geometry unavailable for #44.*Cyan opening bounds marker; not opening geometry/);
+assert.ok(calls.markers.at(-1), 'unrendered opening receives a measured bounds marker');
+assert.equal(openingReview.querySelector('.review-decision').value, 'unresolved', 'screening and locating must not decide duplication');
+globalThis.OpenBIMViewer.getRenderingDiagnostics = () => ({selected_element_ids: [44, 48]});
+const markersBefore = calls.markers.length;
+openingHostButton.click();
+assert.match(document.querySelector('#viewerStatus').textContent, /Opening #44 \+ host #48 · Highlighted/);
+assert.equal(calls.markers.length, markersBefore, 'a rendered opening does not need a fallback marker');
+// Successfully opened comparisons, including source fingerprint and numerical
+// evidence, are preserved in JSON; unopened cards are not silently certified.
+URL.createObjectURL = blob => { exportedBlob = blob; return createObjectURL(blob); };
+window.HTMLAnchorElement.prototype.click = () => {};
+document.querySelector('#jsonButton').click();
+const openingJson = JSON.parse(await exportedBlob.text());
+const exportedComparison = openingJson.pair_comparisons[openingReview.querySelector('.pair-comparison').dataset.comparisonKey];
+assert.ok(exportedComparison?.opening_host_checks, 'JSON includes measured opening-host evidence');
+assert.equal(exportedComparison.source_sha256, openingJson.model_sha256);
+assert.match(openingJson.pair_comparison_export_scope, /unopened or failed comparisons are not evaluated/);
+URL.createObjectURL = createObjectURL;
+window.HTMLAnchorElement.prototype.click = anchorClick;
 globalThis.OpenBIMViewer.getRenderingDiagnostics = () => ({selected_element_ids: [48]});
 hostButton.click();
 assert.match(document.querySelector('#viewerStatus').textContent, /Some geometry is unavailable \(#49\)/, 'partial selection is disclosed');
@@ -344,6 +376,18 @@ const missingHostResult = await (await fetch('/api/compare-elements', {
 })).json();
 const missingHostDom = document.createElement('div');
 missingHostDom.innerHTML = renderPairComparison(missingHostResult);
+assert.equal(missingHostDom.querySelectorAll('.host-check-not_evaluated').length, 2);
+assert.equal(missingHostDom.querySelector('.comparison-highlight-opening-host').disabled, true);
+const separatedText = await fs.readFile(new URL('../samples/golden/opening_host_matrix.ifc', import.meta.url), 'utf8');
+const separatedResult = await (await fetch('/api/compare-elements', {
+  method: 'POST', headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({content: separatedText, element_ids: [32, 57]}),
+})).json();
+const separatedDom = document.createElement('div');
+separatedDom.innerHTML = renderPairComparison(separatedResult);
+assert.match(separatedDom.querySelector('.host-check-separated').textContent, /Opening #57.*Host #45.*Measured separation.*8000 mm/s);
+assert.match(separatedDom.querySelector('.host-check-method').textContent, /Overlapping bounds are Unresolved, never a valid-cut PASS/);
+assert.equal(separatedDom.querySelectorAll('.host-check-bounds_overlap').length, 1);
 assert.equal(missingHostDom.querySelector('.comparison-highlight-hosts').disabled, true);
 assert.match(missingHostDom.querySelector('[data-field="opening_hosts"]').textContent, /Not evaluated/);
 assert.equal(missingHostDom.querySelectorAll('.comparison-warning').length, 2, 'each opening without a host gets an explicit warning');

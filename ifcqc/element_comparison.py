@@ -173,6 +173,7 @@ def compare_model_elements(model, ids: list[int]) -> dict:
     keys = sorted(a["properties"].keys() | b["properties"].keys())
     property_rows = [_row(key, key, a["properties"].get(key), b["properties"].get(key)) for key in keys]
     physical = [row for row in rows if row["category"] == "physical"]
+    from .opening_host_geometry import screen_opening_hosts
     return {
         "schema": model.schema, "engine": "ifcopenshell", "elements": elements,
         "rows": rows, "property_rows": property_rows[:500],
@@ -182,6 +183,7 @@ def compare_model_elements(model, ids: list[int]) -> dict:
         "not_evaluated_count": sum(row["status"] in {"not_evaluated", "missing"} for row in physical),
         "not_applicable_count": sum(row["status"] == "not_applicable" for row in physical),
         "host_entity_ids": sorted({host["step_id"] for e in elements for host in e["opening_hosts"] or []}),
+        "opening_host_checks": screen_opening_hosts(model, elements),
         "length_unit_scale_to_metres": _length_scale(model),
         "claim_boundary": "Matching properties or bounds do not prove full shape equality or author intent. Review decisions are unchanged.",
     }

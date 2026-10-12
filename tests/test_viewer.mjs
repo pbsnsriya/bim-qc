@@ -5,6 +5,7 @@ import {
   fitCameraToBox,
   restoreMaterialStates,
   summarizeGeometryEvidence,
+  ifcBoundsToViewerBox,
 } from "../web/viewer.js";
 
 const material = new THREE.MeshStandardMaterial({
@@ -74,3 +75,16 @@ assert.ok(Math.abs(measured.element_shape_metrics['90'].surface_area_m2 - 1) < 1
 const shifted = new Map([[91, {minimum:[0,0,0], maximum:[1,1,1],volume_m3:1,surface_area_m2:6}]]);
 const restored = finalizeGeometryEvidence(shifted, new THREE.Matrix4().makeTranslation(-12,-4,20).toArray());
 assert.deepEqual(restored.element_bounds_metres['91'], {minimum:[12,19,4], maximum:[13,20,5]}, 'inverse recentering and signed axis conversion restore IFC world bounds');
+
+// The diagnostic marker must use the exact inverse axis/origin convention.
+const viewerBox = ifcBoundsToViewerBox(restored.element_bounds_metres['91'], new THREE.Matrix4().makeTranslation(-12,-4,20).toArray());
+assert.deepEqual(viewerBox.min.toArray(), [0,0,0]);
+assert.deepEqual(viewerBox.max.toArray(), [1,1,1]);
+const officeBox = ifcBoundsToViewerBox({minimum:[14,42,52],maximum:[15,43,53]}, new THREE.Matrix4().makeTranslation(-61.44746630414893,-53.3,82.27184895393557).toArray());
+assert.ok(Math.abs(officeBox.min.x - (14-61.44746630414893)) < 1e-10);
+assert.ok(Math.abs(officeBox.min.y - (52-53.3)) < 1e-10);
+assert.ok(Math.abs(officeBox.min.z - (-43+82.27184895393557)) < 1e-10);
+assert.equal(ifcBoundsToViewerBox({minimum:[0,0,0],maximum:[1,1,1]}, null), null);
+assert.equal(ifcBoundsToViewerBox({minimum:[0,0,0],maximum:[NaN,1,1]}, new THREE.Matrix4().toArray()), null);
+assert.equal(ifcBoundsToViewerBox({minimum:[2,0,0],maximum:[1,1,1]}, new THREE.Matrix4().toArray()), null);
+console.log('opening bounds marker coordinate tests passed');
