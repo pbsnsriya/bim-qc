@@ -22,7 +22,9 @@ information-quality issues, and exporting a review report.
 - Stage 1 geometry-extraction evidence with six analytically known IFC fixtures,
   IfcOpenShell/web-ifc element comparison, explicit 1 mm tolerance, units,
   world coordinates, STEP-id mapping, failures, and timing
-- Duplicate-element and duplicate-tag detection
+- Stage 2 exact-duplicate candidate detection with a four-assertion known-answer
+  IFC matrix, 0.001 mm numerical tolerance, explicit exclusions, and paired
+  3D highlighting
 - MEP-to-structure hard and configurable clearance clash checks
 - IFC-port connectivity checks with explicit unverifiable-data reporting
 - Orthogonal-alignment and minimum-dimension review rules
@@ -108,13 +110,16 @@ model. It does not prove that the IFC agrees with approved drawings, design
 intent, schedules, survey data, or the built asset; those require a selected
 external reference in a later comparison milestone.
 
-After Stage 1 passes, configure the clearance/alignment/dimension tolerances and
-choose **Run experimental checks**. Results join the normal issue list and remain
-selectable in the 3D viewer and exportable to BCF, JSON, or CSV.
+After Stage 1 passes, choose **Validate exact duplicates**. The application first
+checks its original synthetic truth fixture, then reports same-class elements
+with identical world-space tessellated geometry. Selecting a finding highlights
+both members of the candidate pair. A match still requires human review before
+anything is deleted.
 
 The clash matrix currently evaluates `IfcDistributionElement` objects against
 walls, slabs, beams, columns, footings, piles, roofs, ramps, and stairs. Exact
-coincident geometry is labelled **probable duplicate** for human confirmation.
+coincident same-class geometry is labelled **exact duplicate candidate** for
+human confirmation.
 Connectivity uses exported `IfcDistributionPort` relationships; models without
 ports are reported as unverifiable instead of being incorrectly failed.
 
@@ -156,14 +161,14 @@ classification, part-of, and advanced restriction facets need a full IfcTester
 adapter. BCF export contains topics and component viewpoints, but no camera or
 snapshot yet.
 
-Stage 1 is the currently refined milestone. Duplicate geometry, hard/clearance
-clashes, connectivity, alignment, and dimensions remain experimental rule
-prototypes and have **not** yet completed their individual refinement stages.
+Stage 1 is signed off. Stage 2 currently covers exact duplicate candidates only.
+Hard/clearance clashes, connectivity, alignment, and dimensions remain
+experimental rule prototypes and have **not** completed their individual stages.
 Alignment results are advisory because diagonal elements may be intentional,
 and the current dimension prototype only enforces a minimum geometric extent.
 
-Next milestone: refine Stage 2 duplicate-element detection, including tolerance,
-confidence, intentional-duplicate exclusions, and a focused validation fixture.
+Next Stage 2 increment: near-duplicate tolerance, confidence scoring, and
+project-configurable intentional-repeat exclusions.
 
 ## Licence
 

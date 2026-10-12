@@ -155,9 +155,12 @@ while (document.querySelector("#geometryStatus").classList.contains("hidden") &&
   await new Promise((resolve) => setTimeout(resolve, 25));
 }
 assert.equal(document.querySelector("#geometryStatus").classList.contains("hidden"), false, "coordination check status becomes visible");
-assert.match(document.querySelector("#geometryStatus").textContent, /4 finding/, "geometry result count is visible");
-assert.ok(document.querySelector('[data-rule-id="probable_duplicate_element"][data-entity-id="104"]'), "duplicate wall is linked to its geometry");
-assert.equal(document.querySelectorAll('[data-rule-id="hard_clash"]').length, 2, "two pipe-to-wall clashes join the issue list");
+assert.match(document.querySelector("#geometryStatus").textContent, /1 candidate pair/, "exact duplicate candidate count is visible");
+assert.match(document.querySelector("#geometryStatus").textContent, /4\/4 assertions passed/, "Stage 2 known-answer matrix is visible");
+const duplicateIssue = document.querySelector('[data-rule-id="exact_duplicate_candidate"][data-entity-id="104"]');
+assert.ok(duplicateIssue, "exact duplicate wall pair is linked to geometry");
+duplicateIssue.click();
+assert.deepEqual(calls.selected.slice(-2), [104, 57], "duplicate issue highlights both elements in the pair");
 assert.ok(document.querySelector('[data-rule-id="ids:wall-name"]'), "IDS findings remain after geometry checks");
 
 serverProcess?.kill();

@@ -230,7 +230,8 @@ class ApiTests(unittest.TestCase):
             result = json.load(response)
         self.assertEqual("ifcopenshell", result["engine"])
         self.assertEqual(2, result["by_rule"]["hard_clash"])
-        self.assertEqual(1, result["by_rule"]["probable_duplicate_element"])
+        self.assertEqual(1, result["by_rule"]["exact_duplicate_candidate"])
+        self.assertTrue(result["duplicate_acceptance_matrix"]["passed"])
 
     def test_geometry_diagnostics_pass_demo(self):
         from ifcqc.geometry_diagnostics import diagnose_geometry

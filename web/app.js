@@ -150,7 +150,7 @@ async function runGeometryChecks() {
   if (!state.geometryDiagnostics?.ready) throw new Error("Validate the Stage 1 geometry foundation first.");
   const button = $("geometryCheckButton");
   button.disabled = true;
-  button.textContent = "Checking geometry…";
+  button.textContent = "Checking exact duplicates…";
   try {
     const response = await fetch("/api/geometry-checks", {
       method: "POST",
@@ -158,12 +158,13 @@ async function runGeometryChecks() {
       body: JSON.stringify({
         model_id: state.source.modelId,
         config: {
-          hard_clashes: $("hardClashCheck").checked,
-          hard_tolerance_mm: Number($("hardToleranceInput").value),
-          clearance_clashes: $("clearanceCheck").checked,
-          clearance_mm: Number($("clearanceInput").value),
-          alignment_tolerance_degrees: Number($("alignmentInput").value),
-          minimum_dimension_mm: Number($("dimensionInput").value),
+          identifiers: false,
+          duplicates: true,
+          hard_clashes: false,
+          clearance_clashes: false,
+          connectivity: false,
+          alignment: false,
+          dimensions: false,
         },
       }),
     });
@@ -171,18 +172,22 @@ async function runGeometryChecks() {
     state.geometryValidation = validation;
     rebuildIssues();
     render();
-    const rules = Object.entries(validation.by_rule)
-      .map(([rule, count]) => `${humanize(rule)}: ${count}`)
-      .join(" · ");
+    const matrix = validation.duplicate_acceptance_matrix;
+    const matrixRows = matrix.assertions.map((item) =>
+      `<li class="diagnostic-${item.passed ? "pass" : "fail"}"><strong>${item.passed ? "PASS" : "FAIL"}</strong> ${escapeHtml(humanize(item.name))}</li>`
+    ).join("");
+    const candidates = validation.by_rule.exact_duplicate_candidate || 0;
     const status = $("geometryStatus");
-    status.innerHTML = `<strong>Coordination checks complete</strong> · ${validation.summary.geometric_products} geometric products · ${validation.summary.issues} finding(s)` +
-      (rules ? `<br>${escapeHtml(rules)}` : " · No coordination findings") +
-      (validation.summary.connectivity_unverifiable ? `<br>${validation.summary.connectivity_unverifiable} MEP element(s) had no IFC ports, so connectivity is partial.` : "");
+    status.classList.toggle("diagnostics-pass", matrix.passed);
+    status.classList.toggle("diagnostics-fail", !matrix.passed);
+    status.innerHTML = `<strong>${matrix.passed ? "Stage 2 exact-duplicate validation passed" : "Stage 2 exact-duplicate validation failed"}</strong> · ${validation.summary.geometric_products} geometric products · ${candidates} candidate pair(s)` +
+      `<details open><summary><strong>Known-answer matrix: ${matrix.passed_cases}/${matrix.total_cases} assertions passed</strong> · tolerance ${matrix.tolerance_metres * 1000} mm</summary><ul class="diagnostic-checks">${matrixRows}</ul></details>` +
+      `<p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(matrix.claim_boundary)}</p>`;
     status.classList.remove("hidden");
-    toast(`Coordination checks found ${validation.summary.issues} issue(s)`);
+    toast(`Exact duplicate check found ${candidates} candidate pair(s)`);
   } finally {
     button.disabled = false;
-    button.textContent = "Run experimental checks";
+    button.textContent = "Validate exact duplicates";
   }
 }
 
@@ -261,7 +266,7 @@ function finishGeometryDiagnostics(result, acceptance) {
     `<p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(result.claim_boundary)}</p>${warnings}${failures}`;
   $("geometryCheckButton").disabled = !result.ready;
   $("geometryEvidenceButton").disabled = false;
-  $("geometryCheckButton").title = result.ready ? "Stage 1 extraction evidence passed; experimental rule prototypes are available" : "Stage 1 extraction evidence must pass first";
+  $("geometryCheckButton").title = result.ready ? "Stage 1 passed; exact duplicate validation is available" : "Stage 1 extraction evidence must pass first";
   toast(result.ready ? "Stage 1 extraction evidence passed" : "Stage 1 found extraction evidence problems");
 }
 

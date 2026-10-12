@@ -15,14 +15,17 @@ class GeometryCheckTests(unittest.TestCase):
     def test_demo_detects_duplicate_and_mep_structure_clashes(self):
         result = run_geometry_checks(self.content)
         self.assertEqual("ifcopenshell", result["engine"])
-        self.assertEqual(1, result["by_rule"]["probable_duplicate_element"])
+        self.assertEqual(1, result["by_rule"]["exact_duplicate_candidate"])
         self.assertEqual(2, result["by_rule"]["hard_clash"])
         duplicate = next(
             issue for issue in result["issues"]
-            if issue["rule_id"] == "probable_duplicate_element"
+            if issue["rule_id"] == "exact_duplicate_candidate"
         )
         self.assertEqual(104, duplicate["entity_id"])
         self.assertEqual(57, duplicate["related_entity_id"])
+        self.assertEqual([104, 57], duplicate["selection_ids"])
+        self.assertEqual("exact_geometry_match", duplicate["confidence"])
+        self.assertTrue(result["duplicate_acceptance_matrix"]["passed"])
         clash_entities = {
             (issue["entity_id"], issue["related_entity_id"])
             for issue in result["issues"] if issue["rule_id"] == "hard_clash"

@@ -18,10 +18,12 @@ ALIGNMENT_CLASSES = (
     "IfcWall", "IfcBeam", "IfcColumn", "IfcMember", "IfcPipeSegment",
     "IfcDuctSegment", "IfcCableCarrierSegment",
 )
+EXACT_DUPLICATE_TOLERANCE_METRES = 0.000001
 
 
 @dataclass(frozen=True)
 class GeometryConfig:
+    identifiers: bool = True
     hard_clashes: bool = True
     clearance_clashes: bool = True
     duplicates: bool = True
@@ -47,6 +49,7 @@ class GeometryConfig:
             return value
 
         return cls(
+            identifiers=bool(raw.get("identifiers", True)),
             hard_clashes=bool(raw.get("hard_clashes", True)),
             clearance_clashes=bool(raw.get("clearance_clashes", True)),
             duplicates=bool(raw.get("duplicates", True)),
@@ -140,7 +143,13 @@ def _identifier_issues(products: list) -> list[dict]:
     return issues
 
 
-def _duplicate_geometry_issues(products: list, vertices: dict[int, object]) -> list[dict]:
+def _exact_duplicate_geometry_issues(products: list, vertices: dict[int, object]) -> list[dict]:
+    """Return same-class elements with identical tessellated world vertices.
+
+    Coordinates are quantised to one micrometre to absorb floating-point noise.
+    A match is deliberately a review candidate, not a claim that one element
+    should be deleted: coincident same-class elements can be intentional.
+    """
     import numpy as np
 
     signatures: dict[tuple, list] = defaultdict(list)
@@ -148,7 +157,8 @@ def _duplicate_geometry_issues(products: list, vertices: dict[int, object]) -> l
         verts = vertices.get(element.id())
         if verts is None or not len(verts):
             continue
-        ordered = np.asarray(sorted(map(tuple, np.round(verts, 4))), dtype=float)
+        quantised = np.rint(verts / EXACT_DUPLICATE_TOLERANCE_METRES).astype(np.int64)
+        ordered = np.asarray(sorted(map(tuple, quantised)), dtype=np.int64)
         signature = (element.is_a(), ordered.shape, ordered.tobytes())
         signatures[signature].append(element)
     issues: list[dict] = []
@@ -158,10 +168,15 @@ def _duplicate_geometry_issues(products: list, vertices: dict[int, object]) -> l
         original = grouped[0]
         for duplicate in grouped[1:]:
             issues.append(_pair_issue(
-                "probable_duplicate_element", "warning", "Probable duplicate element",
-                f"{duplicate.is_a()} #{duplicate.id()} occupies the same geometry as "
-                f"#{original.id()}; confirm whether both are intentional.",
-                duplicate, original, confidence="high",
+                "exact_duplicate_candidate", "warning", "Exact duplicate candidate",
+                f"{duplicate.is_a()} #{duplicate.id()} has the same class and world-space "
+                f"tessellated geometry as #{original.id()} within 0.001 mm; review both "
+                "before deleting either element.",
+                duplicate, original,
+                confidence="exact_geometry_match",
+                tolerance_mm=EXACT_DUPLICATE_TOLERANCE_METRES * 1000,
+                selection_ids=[duplicate.id(), original.id()],
+                detection_basis="same IFC class and canonical world-space vertex multiset",
             ))
     return issues
 
@@ -321,9 +336,9 @@ def run_geometry_checks(ifc_text: str, raw_config: dict | None = None) -> dict:
 
     products = _physical_products(model)
     shapes, vertices, tree = _shape_data(model)
-    issues = _identifier_issues(products)
+    issues = _identifier_issues(products) if config.identifiers else []
     if config.duplicates:
-        issues.extend(_duplicate_geometry_issues(products, vertices))
+        issues.extend(_exact_duplicate_geometry_issues(products, vertices))
     issues.extend(_clash_issues(model, set(shapes), tree, config))
     unverifiable = 0
     if config.connectivity:
@@ -342,7 +357,7 @@ def run_geometry_checks(ifc_text: str, raw_config: dict | None = None) -> dict:
     by_rule: dict[str, int] = defaultdict(int)
     for issue in issues:
         by_rule[issue["rule_id"]] += 1
-    return {
+    result = {
         "engine": "ifcopenshell",
         "schema": model.schema,
         "config": config.__dict__,
@@ -356,3 +371,8 @@ def run_geometry_checks(ifc_text: str, raw_config: dict | None = None) -> dict:
         "by_rule": dict(sorted(by_rule.items())),
         "issues": issues,
     }
+    if config.duplicates:
+        from .duplicate_acceptance import run_duplicate_acceptance_matrix
+
+        result["duplicate_acceptance_matrix"] = run_duplicate_acceptance_matrix()
+    return result

@@ -74,22 +74,15 @@
       <div id="geometryDiagnosticsStatus" class="ids-status diagnostics-status hidden" role="status"></div>
       <div id="gpuValidationStatus" class="ids-status diagnostics-status hidden" role="status"></div>
 
-      <article class="coordination-panel experimental-panel">
+      <article class="coordination-panel foundation-panel">
         <div>
-          <p class="eyebrow">EXPERIMENTAL · STAGES 2–5</p>
-          <h3>Coordination rule prototypes</h3>
-          <p class="muted">Unlocked only after Stage 1 passes. Duplicate, clash, connection, alignment and dimension rules still need separate refinement.</p>
+          <p class="eyebrow">STAGE 2 · EXACT DUPLICATES</p>
+          <h3>Validate exact duplicate candidates</h3>
+          <p class="muted">Finds same-class elements with identical world-space tessellated geometry. Both elements are highlighted together for human review.</p>
         </div>
-        <div class="coordination-options">
-          <label><input id="hardClashCheck" type="checkbox" checked> Hard clashes</label>
-          <label>Hard tolerance <input id="hardToleranceInput" type="number" min="0" max="1000" step="1" value="2"> mm</label>
-          <label><input id="clearanceCheck" type="checkbox" checked> Clearance</label>
-          <label>Clearance <input id="clearanceInput" type="number" min="0" max="10000" step="5" value="50"> mm</label>
-          <label>Alignment <input id="alignmentInput" type="number" min="0" max="45" step="0.5" value="1">°</label>
-          <label>Min dimension <input id="dimensionInput" type="number" min="0" max="10000" step="1" value="5"> mm</label>
-          <button id="geometryCheckButton" class="button primary" type="button" disabled>Run experimental checks</button>
-        </div>
+        <button id="geometryCheckButton" class="button primary" type="button" disabled>Validate exact duplicates</button>
       </article>
+      <p class="claim-boundary"><strong>Scope:</strong> A result is a review candidate, not permission to delete an element. Near duplicates and intentional-repeat rules belong to the next Stage 2 increment.</p>
       <div id="geometryStatus" class="ids-status hidden" role="status"></div>
 
       <div id="metrics" class="metrics"></div>
