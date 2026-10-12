@@ -5,10 +5,194 @@
     "name": "pbsnsriya",
     "email": "137526270+pbsnsriya@users.noreply.github.com"
   },
-  "earliest_recovered_version": "0.7.9",
+  "earliest_recovered_version": "0.4.0",
   "latest_application_version": "0.7.16",
-  "earlier_history": "Original MVP through v0.7.8 source snapshots are unavailable. The surviving old MVP-named ZIP is truncated and contains later release documents. No earlier code or development timestamps have been invented.",
+  "earlier_history": "On 2026-10-12 the user supplied a complete ZIP containing 13 additional distinct QC snapshots from v0.4.0 through v0.7.8. Folder labels were checked against pyproject.toml; duplicate aliases were identified. No supplied snapshot declares v0.7.7, and no source before v0.4.0 is present. Missing versions are not invented.",
   "releases": [
+    {
+      "version": "0.4.0",
+      "archive_filename": "openbim-qc version upto 0.78.zip",
+      "archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+      "source_prefixes": [
+        "openbim-qc version upto 0.78/openbim-qc-mvp/"
+      ],
+      "source_tree_sha256": "99795cf72cfcf8af5ef5980016fd355a5a37870771404f902faf88279818967a",
+      "git_tree_sha": "5d49bc6cc6f171776b3fef1f55e41c1e103f77ef",
+      "file_count": 38,
+      "import_commit": "0043fa79378dd901d88f62baf8277f88c90d41e4",
+      "history_branch": "archive/recovered-releases",
+      "summary": "Recovered user-supplied IFC QC source snapshot; declared version verified"
+    },
+    {
+      "version": "0.5.1",
+      "archive_filename": "openbim-qc version upto 0.78.zip",
+      "archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+      "source_prefixes": [
+        "openbim-qc version upto 0.78/openbim-qc-mvpv0.5/openbim-qc/"
+      ],
+      "source_tree_sha256": "4462b5bd006973257db56b67fc98a0a90dd32305fecd5cc55f82b8a6b0deb173",
+      "git_tree_sha": "7579a749ebf7760a56698ffc3173c58a39df23d8",
+      "file_count": 42,
+      "import_commit": "5bae4cb90c1c9cd7f63ec0725e59339f37396cc8",
+      "history_branch": "archive/recovered-releases",
+      "summary": "Recovered user-supplied IFC QC source snapshot; declared version verified"
+    },
+    {
+      "version": "0.5.3",
+      "archive_filename": "openbim-qc version upto 0.78.zip",
+      "archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+      "source_prefixes": [
+        "openbim-qc version upto 0.78/openbim-qc/",
+        "openbim-qc version upto 0.78/openbim-qc-mvp0.6/openbim-qc/"
+      ],
+      "source_tree_sha256": "eb9ec47b4c3d95d79180915819a09f6d8c56012472d6faf1d2f47691feca176c",
+      "git_tree_sha": "6b72585fb1e99f62cb77a25f84c11b4f7f3d65e2",
+      "file_count": 52,
+      "import_commit": "5f913fe1a5b97cf14502eb638963db92d95540b1",
+      "history_branch": "archive/recovered-releases",
+      "summary": "Recovered user-supplied IFC QC source snapshot; declared version verified"
+    },
+    {
+      "version": "0.6.1",
+      "archive_filename": "openbim-qc version upto 0.78.zip",
+      "archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+      "source_prefixes": [
+        "openbim-qc version upto 0.78/openbim-qc-mvp0.6/"
+      ],
+      "source_tree_sha256": "9e759bc366a1501d8e4061c68621315c0d68bbf979f025e555449db33fdced72",
+      "git_tree_sha": "5fd8140918a8856eee5e39e0db6af6dc99781895",
+      "file_count": 56,
+      "import_commit": "6bfdec3b143596db5898b006867becb8413026f6",
+      "history_branch": "archive/recovered-releases",
+      "summary": "Recovered user-supplied IFC QC source snapshot; declared version verified"
+    },
+    {
+      "version": "0.6.2",
+      "archive_filename": "openbim-qc version upto 0.78.zip",
+      "archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+      "source_prefixes": [
+        "openbim-qc version upto 0.78/openbim-qc-mvp0.2/openbim-qc/",
+        "openbim-qc version upto 0.78/openbim-qc-mvp0.61/openbim-qc/"
+      ],
+      "source_tree_sha256": "c9db506fe3b17554dcc464c59f5f238099bcadbaeaecf87f90aa842b3427cfc2",
+      "git_tree_sha": "89426e57bd8d2704f41d894889d7d29eb055e6c2",
+      "file_count": 56,
+      "import_commit": "ed361e6a729b20a4ee925c62e8e5b15fcaea613f",
+      "history_branch": "archive/recovered-releases",
+      "summary": "Recovered user-supplied IFC QC source snapshot; declared version verified"
+    },
+    {
+      "version": "0.7.0",
+      "archive_filename": "openbim-qc version upto 0.78.zip",
+      "archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+      "source_prefixes": [
+        "openbim-qc version upto 0.78/openbim-qc-mvp0.7/openbim-qc/"
+      ],
+      "source_tree_sha256": "3187f3e351bafb8326da99cf5dbb6f42f22f1cee418654576d364db9d550a4c8",
+      "git_tree_sha": "5691b641fadde569c7c29272f1d9a8e8699a6087",
+      "file_count": 59,
+      "import_commit": "848d3663fa80a61b74bb580c00a4d843c7d11b80",
+      "history_branch": "archive/recovered-releases",
+      "summary": "Recovered user-supplied IFC QC source snapshot; declared version verified"
+    },
+    {
+      "version": "0.7.1",
+      "archive_filename": "openbim-qc version upto 0.78.zip",
+      "archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+      "source_prefixes": [
+        "openbim-qc version upto 0.78/openbim-qc-mvp0.71/openbim-qc/"
+      ],
+      "source_tree_sha256": "3ffa462b606dfc574d9175ddb484de5f868c0e4c7a47b5eeea8c883a9b7dafc0",
+      "git_tree_sha": "3ece527f9f9c01a16071643ed1976b6616a43c30",
+      "file_count": 60,
+      "import_commit": "35b985545fb8c4e319628baf53f59a1b899073e6",
+      "history_branch": "archive/recovered-releases",
+      "summary": "Recovered user-supplied IFC QC source snapshot; declared version verified"
+    },
+    {
+      "version": "0.7.2",
+      "archive_filename": "openbim-qc version upto 0.78.zip",
+      "archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+      "source_prefixes": [
+        "openbim-qc version upto 0.78/openbim-qc-mvp0.72/openbim-qc/"
+      ],
+      "source_tree_sha256": "87f7f5b09d1483bf250883cb7bd4753c2d21ae2710dfa938ca7ae01b766e9c03",
+      "git_tree_sha": "35367a72dc0a4f4c84b1bbba80a93238b1b44efb",
+      "file_count": 60,
+      "import_commit": "df50b06c61fdfc10243c8ce0d6376e6558cbc148",
+      "history_branch": "archive/recovered-releases",
+      "summary": "Recovered user-supplied IFC QC source snapshot; declared version verified"
+    },
+    {
+      "version": "0.7.3",
+      "archive_filename": "openbim-qc version upto 0.78.zip",
+      "archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+      "source_prefixes": [
+        "openbim-qc version upto 0.78/openbim-qc-mvp 0.73/openbim-qc/"
+      ],
+      "source_tree_sha256": "bdf4cc3e6569bf6594ce12511a524bfe05abbe6d64497282ef546048bdde491e",
+      "git_tree_sha": "3fc337eaa8fe5862cb93db197485243828f0d6f9",
+      "file_count": 60,
+      "import_commit": "ba8c691f657d19923062bb5e77bd77c1d93cd5bf",
+      "history_branch": "archive/recovered-releases",
+      "summary": "Recovered user-supplied IFC QC source snapshot; declared version verified"
+    },
+    {
+      "version": "0.7.4",
+      "archive_filename": "openbim-qc version upto 0.78.zip",
+      "archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+      "source_prefixes": [
+        "openbim-qc version upto 0.78/openbim-qc-mvp0.74/openbim-qc/"
+      ],
+      "source_tree_sha256": "b1df163858840e299ca8a5c8a411a96a0cfbdc39da4c55a37e09d6b94f6da2e8",
+      "git_tree_sha": "570d73df58d030dc1d1c567a382c222104810701",
+      "file_count": 60,
+      "import_commit": "2651963f6afe989998f6c5c10c5d20fe5ebcba57",
+      "history_branch": "archive/recovered-releases",
+      "summary": "Recovered user-supplied IFC QC source snapshot; declared version verified"
+    },
+    {
+      "version": "0.7.5",
+      "archive_filename": "openbim-qc version upto 0.78.zip",
+      "archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+      "source_prefixes": [
+        "openbim-qc version upto 0.78/openbim-qc-mvp0.75/openbim-qc/"
+      ],
+      "source_tree_sha256": "b6cb777460d18d8a0c4ebff14aa78eac8eb8d2a8a14fa8f9c2f717e33491ff94",
+      "git_tree_sha": "e51ca1c3aae41dc98c4757c92ab9a6385e28fd68",
+      "file_count": 60,
+      "import_commit": "4f4fe7bbdb61ae3984b7d39579e86888d289ac54",
+      "history_branch": "archive/recovered-releases",
+      "summary": "Recovered user-supplied IFC QC source snapshot; declared version verified"
+    },
+    {
+      "version": "0.7.6",
+      "archive_filename": "openbim-qc version upto 0.78.zip",
+      "archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+      "source_prefixes": [
+        "openbim-qc version upto 0.78/openbim-qc-mvp0.76/openbim-qc/"
+      ],
+      "source_tree_sha256": "eb840b5d5b8de24fbb5b36a3e1e62aa32f20d3b6e0aa1bcc48a61072477daae6",
+      "git_tree_sha": "d07135b1c7a54a3f5b38003e7df5ada75ab91f6f",
+      "file_count": 60,
+      "import_commit": "523ec8f8dce32399cacec5f67193cdc40dbb9921",
+      "history_branch": "archive/recovered-releases",
+      "summary": "Recovered user-supplied IFC QC source snapshot; declared version verified"
+    },
+    {
+      "version": "0.7.8",
+      "archive_filename": "openbim-qc version upto 0.78.zip",
+      "archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+      "source_prefixes": [
+        "openbim-qc version upto 0.78/openbim-qc-mvp v0.78/openbim-qc/"
+      ],
+      "source_tree_sha256": "90871bee1b61a72605dee35e18be996448bf19e90e8f9b0bb6cbe24bab797fb6",
+      "git_tree_sha": "74c22db735ae5aadf6bbea7a9198d3e45525b65c",
+      "file_count": 60,
+      "import_commit": "b1b2a42cfb8e7365d3ba586e8de600b1723c6534",
+      "history_branch": "archive/recovered-releases",
+      "summary": "Recovered user-supplied IFC QC source snapshot; declared version verified"
+    },
     {
       "version": "0.7.9",
       "archive_filename": "openbim-qc-mvp.zip",
@@ -95,5 +279,23 @@
     "v0.7.14",
     "v0.7.15",
     "v0.7.16"
-  ]
+  ],
+  "legacy_recovery": {
+    "source_archive": "openbim-qc version upto 0.78.zip",
+    "source_archive_sha256": "a704974d5c1358044317f72a68250b01ea115e1e62b746ef9e7f21d8a928f9ec",
+    "branch": "archive/recovered-releases",
+    "branch_head": "b1b2a42cfb8e7365d3ba586e8de600b1723c6534",
+    "snapshot_count": 13,
+    "recovered_on_utc": "2026-10-12T06:22:06.164647+00:00",
+    "merge_strategy": "Retain current main application tree and existing commit IDs; include legacy branch as a second parent of a merge commit.",
+    "version_identity_source": "pyproject.toml, not user folder label",
+    "existing_snapshot_comparisons": "Supplied v0.7.9\u2013v0.7.15 snapshots match the previously published source bytes.",
+    "separate_cad_project": {
+      "prefix": "OpenBIM-Milestone-3B-navigation-fix",
+      "source_file_count": 53,
+      "disposition": "Separate CAD-to-3D project, excluded from this QC repository import"
+    },
+    "excluded_content": "Installed dependencies, Python/build caches and nested duplicate project folders; project source, tests, synthetic fixtures and vendor runtime retained.",
+    "historical_test_status": "Not rerun; source integrity and remote Git tree hashes verified."
+  }
 }

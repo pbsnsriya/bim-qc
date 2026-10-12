@@ -16,4 +16,4 @@ Keep full-model scans bounded. Do not enable later-stage geometry prototypes unt
 
 Use synthetic or redistribution-authorized test data. Do not commit uploaded private IFCs, access tokens, passwords, environment files, dependency installations or local temporary sessions. Preserve third-party licence notices.
 
-Recovered release-import commits are tagged v0.7.9–v0.7.16. Future changes use ordinary feature/fix/documentation commits; do not backdate development history or relabel unavailable snapshots as verified releases.
+Recovered releases v0.7.9–v0.7.16 retain their version tags; thirteen earlier snapshots are recorded on `archive/recovered-releases` and in the merged main history. Future changes use ordinary feature/fix/documentation commits; do not backdate development history or relabel unavailable snapshots as verified releases.

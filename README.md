@@ -76,7 +76,9 @@ The v0.7.16 release recorded **118 passing Python tests and 30/30 Stage 3 refere
 
 ## Repository history
 
-The Git history imports eight CRC-verified source snapshots from **v0.7.9 through v0.7.16**, each tagged by version, followed by repository documentation. These are release-import commits created now, not the original development commits or dates. Original MVP–v0.7.8 snapshots could not be recovered and have not been fabricated. See [Release history](docs/RELEASE_HISTORY.md) and the [snapshot manifest](docs/release-snapshots.json).
+The history now indexes **21 distinct recovered version identities**, from **v0.4.0 through v0.7.16**. Thirteen earlier snapshots live on the [archive/recovered-releases](https://github.com/pbsnsriya/bim-qc/tree/archive/recovered-releases) branch, whose history is merged into `main` while retaining the current application tree and existing commits. The original eight v0.7.9–v0.7.16 tags remain unchanged.
+
+These are current-date source-snapshot imports, not the original development commits or dates. Folder names were checked against version declarations; duplicate copies were not imported twice. The supplied ZIP contains no v0.7.7 or source before v0.4.0. See [Recovered early releases](docs/RECOVERED_EARLY_RELEASES.md), [Release history](docs/RELEASE_HISTORY.md) and the [snapshot manifest](docs/release-snapshots.json).
 
 Source, synthetic IFC/IDS samples, test suites, scripts, vendored viewer runtime, licence notices and existing release evidence are included. Dependency installations, temporary uploads, credentials and generated build caches are excluded.
 

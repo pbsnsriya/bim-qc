@@ -21,4 +21,4 @@ Local checks used Python 3.12, Node.js 24, IfcOpenShell 0.8.5 and Manifold3D 3.5
 
 The added CI configuration targets Python 3.11 and Node.js 22 on Ubuntu. Its hosted result must be checked separately; local passing results do not establish hosted CI success.
 
-Earlier source history before v0.7.9 remains unavailable. Release imports use current timestamps and explicitly identify their provenance.
+A subsequent 2026-10-12 user upload recovered thirteen earlier source snapshots (v0.4.0–v0.7.8). Their ZIP integrity, source bytes, aliases, declared versions, remote trees and `pbsnsriya` attribution were verified. Supplied v0.7.9–v0.7.15 copies match existing source. Historical tests were not rerun. Main retains the v0.7.16 application tree and its existing history, with the archival branch merged as an additional parent. Release imports use current timestamps and explicitly identify their provenance.

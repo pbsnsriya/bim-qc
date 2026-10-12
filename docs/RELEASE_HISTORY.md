@@ -1,8 +1,10 @@
 # Recovered release history
 
-The repository imports actual ZIP source snapshots into Git. These commits were created for publication on the current date; they are not the original development commits and do not claim their timestamps. Each version tag points to the exact archived source tree, before the repository documentation commit.
+The repository imports actual ZIP source snapshots into Git. These commits were created for publication on the current date; they are not the original development commits and do not claim their timestamps. The v0.7.9–v0.7.16 tags point to their exact archived source trees; newly recovered earlier source trees are linked through their archive commits.
 
-The earliest complete recovered source is **v0.7.9**. The first MVP and v0.7.0–v0.7.8 source snapshots are unavailable. A surviving MVP-named local ZIP is truncated and contains later release documents, so it cannot be used as evidence of the first version. These gaps have not been filled with invented code or dates.
+The earliest complete recovered source is now **v0.4.0**. A later user-supplied ZIP recovered thirteen older snapshots through **v0.7.8**, in addition to the eight releases previously imported. [Recovered early releases](RECOVERED_EARLY_RELEASES.md) documents the versions, actual source labels, duplicate aliases and exact archive commit links. The archive branch is merged into main history while preserving the current application tree and all existing commit IDs.
+
+No source before v0.4.0 or declaring v0.7.7 was present in the supplied archive. Original development timestamps and missing intermediate versions have not been invented. The table below records the first publication batch; the full twenty-one-version index is in [release-snapshots.json](release-snapshots.json).
 
 | Version/tag | Recovered release increment | Files | Source archive SHA-256 |
 | --- | --- | --- | --- |
