@@ -1,0 +1,77 @@
+{
+  "history_kind": "recovered_release_snapshot_imports",
+  "imported_on_utc": "2026-10-11T17:19:14.168123+00:00",
+  "author": {
+    "name": "pbsnsriya",
+    "email": "137526270+pbsnsriya@users.noreply.github.com"
+  },
+  "earliest_recovered_version": "0.7.9",
+  "latest_application_version": "0.7.16",
+  "earlier_history": "Original MVP through v0.7.8 source snapshots are unavailable. The surviving old MVP-named ZIP is truncated and contains later release documents. No earlier code or development timestamps have been invented.",
+  "releases": [
+    {
+      "version": "0.7.9",
+      "archive_filename": "openbim-qc-mvp.zip",
+      "archive_sha256": "66270fe4e4d4b2317f8a4a2b285916dcbe61a91f351bec671bfea02e619d9b7b",
+      "file_count": 89,
+      "import_commit": "5354177e572ef7866a2669bc2fad84b44346efc7",
+      "summary": "Import earliest recovered release with independent geometry evidence"
+    },
+    {
+      "version": "0.7.10",
+      "archive_filename": "openbim-qc-v0.7.10.zip",
+      "archive_sha256": "174faaab0122b2f362adec1fc502bcb47acf39ce91a3b1cf6a181b6215e8e237",
+      "file_count": 95,
+      "import_commit": "5a32514af35b2bb9018847d840905675db7a7e34",
+      "summary": "Batch viewer geometry while preserving element picking and pair selection"
+    },
+    {
+      "version": "0.7.11",
+      "archive_filename": "openbim-qc-v0.7.11.zip",
+      "archive_sha256": "3f32db0a6d954d9b9e12651c4f79479591b13cc2a4f91cdade1729efa667a741",
+      "file_count": 99,
+      "import_commit": "53c54816b967f39b9b5f5d7dd4a030bb5ad5f9bb",
+      "summary": "Compare duplicate pairs using physical fields and source properties"
+    },
+    {
+      "version": "0.7.12",
+      "archive_filename": "openbim-qc-v0.7.12.zip",
+      "archive_sha256": "00ed03aaa5dcacc22651b523b8c480023225d96708cc8730b3f1f78adea16bad",
+      "file_count": 100,
+      "import_commit": "e7b1bbc249517f26461a539cee8485f0464a6fc0",
+      "summary": "Show explicit opening hosts and context-aware comparison fields"
+    },
+    {
+      "version": "0.7.13",
+      "archive_filename": "openbim-qc-v0.7.13.zip",
+      "archive_sha256": "81cfda34bb2df7f38446e00e72bc8e702c138f06c6b1732daedbe1b451ab55ea",
+      "file_count": 105,
+      "import_commit": "ac606f53b78a91c966a0f2fd1d71efd10e8710c9",
+      "summary": "Add bounded translation-only near-duplicate detection"
+    },
+    {
+      "version": "0.7.14",
+      "archive_filename": "openbim-qc-v0.7.14.zip",
+      "archive_sha256": "1b3f4dc91a274cbbae2dedfe38e62e4d1d0e7c323386398f22bd47cefea8cf9e",
+      "file_count": 113,
+      "import_commit": "b65417a6f3981263cdd42fe76247d5567d06451c",
+      "summary": "Measure opening-host bounds separation and visualize opening markers"
+    },
+    {
+      "version": "0.7.15",
+      "archive_filename": "openbim-qc-v0.7.15.zip",
+      "archive_sha256": "cd691a706a75c4b55e68df1660e0604af2f5fd4feb301e1c7a71b36d2fa637e8",
+      "file_count": 128,
+      "import_commit": "a7aa14e9614944a57cabd79989ec7c7e941b5cce",
+      "summary": "Archive test review decisions and expose hard-clash reference failures"
+    },
+    {
+      "version": "0.7.16",
+      "archive_filename": "openbim-qc-v0.7.16.zip",
+      "archive_sha256": "c2451a93538f2d3039855742ebc1e50f2b535441029966d6a1880a3b80dcb189",
+      "file_count": 137,
+      "import_commit": "2200c432320ffc35d51679652d41edaf637babb5",
+      "summary": "Correct aligned overlap detection with solid Booleans and convex depth evidence"
+    }
+  ]
+}

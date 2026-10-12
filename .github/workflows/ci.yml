@@ -1,0 +1,33 @@
+name: Project checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install Python dependencies
+        run: python -m pip install -e .
+      - name: Install frontend test dependencies
+        run: npm ci --prefix web
+      - name: Python tests
+        run: python -m unittest discover -s tests -v
+      - name: Frontend and viewer tests
+        run: npm test --prefix web
+      - name: Stage 3 known-answer controls
+        run: python scripts/verify_hard_clash_reference.py local-reports/hard-clash-reference.json
