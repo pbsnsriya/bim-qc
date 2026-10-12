@@ -134,6 +134,20 @@ opening-void duplicate candidates. Clicking a candidate returns the page to the
 object because they occupy the same space; opening findings highlight their
 selectable hosts because subtraction voids are not standalone rendered meshes.
 
+Each duplicate candidate includes a project review decision: **Unresolved**,
+**Confirmed duplicate**, or **Intentional / not duplicate**, plus a reviewer
+evidence note. Uploaded IFCs receive a streaming SHA-256 fingerprint, and review
+decisions are stored locally against that exact model fingerprint, so rerunning
+Stage 2 retains the ledger while a different IFC revision cannot silently inherit
+old decisions. The live truth-matrix summary reports confirmed, intentional,
+and unresolved counts and reviewed precision. Recall remains explicitly
+unavailable until reviewers also record duplicates the detector missed.
+
+The general JSON and CSV reports include review status, note, and timestamp.
+**Export truth matrix CSV** produces a focused candidate ledger containing the
+canonical pair key, physical/opening classification, opening and host IDs,
+selection IDs, decision, evidence, confidence, tolerance, and detection basis.
+
 The clash matrix currently evaluates `IfcDistributionElement` objects against
 walls, slabs, beams, columns, footings, piles, roofs, ramps, and stairs. Exact
 coincident same-class geometry is labelled **exact duplicate candidate** for
@@ -180,14 +194,16 @@ adapter. BCF export contains topics and component viewpoints, but no camera or
 snapshot yet.
 
 Stage 1 is signed off. Stage 2 currently covers exact physical duplicate
-candidates and separately reviewed exact opening-void candidates only.
+candidates, separately reviewed exact opening-void candidates, and a persistent
+accept/reject truth-matrix workflow. Near-duplicate detection and
+project-configurable intentional-repeat rules remain the next increment.
 Hard/clearance clashes, connectivity, alignment, and dimensions remain
 experimental rule prototypes and have **not** completed their individual stages.
 Alignment results are advisory because diagonal elements may be intentional,
 and the current dimension prototype only enforces a minimum geometric extent.
 
-Next Stage 2 increment: near-duplicate tolerance, confidence scoring, and
-project-configurable intentional-repeat exclusions.
+Next Stage 2 increment: near-duplicate placement/rotation tolerance, expanded
+confidence scoring, and project-configurable intentional-repeat exclusions.
 
 ## Licence
 

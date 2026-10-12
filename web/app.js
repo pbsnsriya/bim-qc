@@ -1,10 +1,96 @@
-const state = { result: null, selectedEntityId: null, viewerBaseStatus: "", baseIssues: [], idsValidation: null, geometryDiagnostics: null, geometryValidation: null, viewerDiagnostics: null, gpuValidation: null, ifcopenshellAvailable: false, activeGeometryJobId: null };
+const state = { result: null, selectedEntityId: null, viewerBaseStatus: "", baseIssues: [], idsValidation: null, geometryDiagnostics: null, geometryValidation: null, viewerDiagnostics: null, gpuValidation: null, ifcopenshellAvailable: false, activeGeometryJobId: null, duplicateReviews: {}, reviewStorageKey: null };
 state.source = null;
 const $ = (id) => document.getElementById(id);
 
 const dropzone = $("dropzone");
 const fileInput = $("fileInput");
 const ISSUE_RENDER_LIMIT = 250;
+const DUPLICATE_RULES = new Set(["exact_duplicate_candidate", "duplicate_opening_candidate"]);
+
+export function duplicateReviewKey(issue) {
+  const ids = [issue.entity_id, issue.related_entity_id].filter((value) => value != null).map(Number).sort((a, b) => a - b);
+  return `${issue.rule_id}|${ids.join("|")}`;
+}
+
+function reviewIdentity() {
+  if (!state.source) return null;
+  if (state.source.sha256) return `openbim-qc:duplicate-reviews:v1:sha256:${state.source.sha256}`;
+  const size = state.source.size ?? state.source.file?.size ?? state.source.content?.length ?? 0;
+  const modified = state.source.file?.lastModified ?? 0;
+  return `openbim-qc:duplicate-reviews:v1:${state.source.filename}|${size}|${modified}`;
+}
+
+function loadDuplicateReviews() {
+  state.reviewStorageKey = reviewIdentity();
+  state.duplicateReviews = {};
+  if (!state.reviewStorageKey) return;
+  try {
+    const saved = localStorage.getItem(state.reviewStorageKey);
+    if (saved) state.duplicateReviews = JSON.parse(saved);
+  } catch {
+    state.duplicateReviews = {};
+  }
+}
+
+function duplicateIssues() {
+  return (state.geometryValidation?.issues || []).filter((issue) => DUPLICATE_RULES.has(issue.rule_id));
+}
+
+function applyDuplicateReviews() {
+  for (const issue of duplicateIssues()) {
+    const review = state.duplicateReviews[duplicateReviewKey(issue)] || {};
+    issue.review_status = review.review_status || "unresolved";
+    issue.review_note = review.review_note || "";
+    issue.reviewed_at = review.reviewed_at || null;
+  }
+  updateDuplicateReviewSummary();
+}
+
+function saveDuplicateReview(issue, reviewStatus, reviewNote) {
+  if (!DUPLICATE_RULES.has(issue.rule_id)) return;
+  const key = duplicateReviewKey(issue);
+  const existing = state.duplicateReviews[key] || {};
+  const review = {
+    review_status: reviewStatus || existing.review_status || "unresolved",
+    review_note: reviewNote ?? existing.review_note ?? "",
+    reviewed_at: new Date().toISOString(),
+  };
+  if (review.review_status === "unresolved" && !review.review_note) review.reviewed_at = null;
+  state.duplicateReviews[key] = review;
+  Object.assign(issue, review);
+  if (state.reviewStorageKey) {
+    try { localStorage.setItem(state.reviewStorageKey, JSON.stringify(state.duplicateReviews)); } catch {}
+  }
+  updateDuplicateReviewSummary();
+}
+
+function duplicateReviewSummary() {
+  const issues = duplicateIssues();
+  const counts = { total: issues.length, confirmed_duplicate: 0, intentional_not_duplicate: 0, unresolved: 0 };
+  for (const issue of issues) counts[issue.review_status || "unresolved"] += 1;
+  const reviewed = counts.confirmed_duplicate + counts.intentional_not_duplicate;
+  return {
+    ...counts,
+    reviewed,
+    reviewed_precision_percent: reviewed ? Math.round(counts.confirmed_duplicate * 1000 / reviewed) / 10 : null,
+    recall_status: "not_measurable_until_missed_duplicates_are_logged",
+  };
+}
+
+function updateDuplicateReviewSummary() {
+  const node = $("duplicateReviewSummary");
+  if (!node) return;
+  const summary = duplicateReviewSummary();
+  if (!summary.total) {
+    node.classList.add("hidden");
+    if (state.result) delete state.result.duplicate_review_summary;
+    return;
+  }
+  if (state.result) state.result.duplicate_review_summary = summary;
+  const precision = summary.reviewed_precision_percent == null ? "—" : `${summary.reviewed_precision_percent}%`;
+  node.innerHTML = `<div><strong>Project truth matrix</strong><span>${summary.total} candidates · ${summary.confirmed_duplicate} confirmed · ${summary.intentional_not_duplicate} intentional/not duplicate · ${summary.unresolved} unresolved · reviewed precision ${precision}</span><small>Recall is not measurable until reviewers also log duplicates the detector missed.</small></div><button id="truthMatrixButton" class="button secondary" type="button">Export truth matrix CSV</button>`;
+  node.classList.remove("hidden");
+}
 
 export function duplicateStageAvailable(diagnostics) {
   return Boolean(diagnostics?.stage2_ready);
@@ -59,7 +145,7 @@ async function analyzeFile(file) {
   try {
     const response = await fetch("/api/models", { method: "POST", body: form });
     const payload = await readJsonResponse(response, "Upload analysis failed.");
-    state.source = { filename: file.name, file, modelId: payload.model_id, size: file.size };
+    state.source = { filename: file.name, file, modelId: payload.model_id, size: file.size, sha256: payload.model_sha256 };
     applyAnalysis(payload.analysis);
     await renderGeometry(file);
     if (file.size > 25 * 1024 * 1024) {
@@ -74,6 +160,7 @@ async function analyzeFile(file) {
 
 function applyAnalysis(result) {
   state.result = result;
+  loadDuplicateReviews();
   state.baseIssues = [...result.issues];
   state.idsValidation = null;
   state.geometryDiagnostics = null;
@@ -84,6 +171,7 @@ function applyAnalysis(result) {
   $("idsStatus").classList.add("hidden");
   $("geometryDiagnosticsStatus").classList.add("hidden");
   $("geometryStatus").classList.add("hidden");
+  $("duplicateReviewSummary").classList.add("hidden");
   $("gpuValidationStatus").classList.add("hidden");
   $("geometryCancelButton").classList.add("hidden");
   $("geometryCheckButton").disabled = true;
@@ -177,6 +265,7 @@ async function runGeometryChecks() {
     });
     const validation = await readJsonResponse(response, "Geometry checks failed.");
     state.geometryValidation = validation;
+    applyDuplicateReviews();
     rebuildIssues();
     render();
     const matrix = validation.duplicate_acceptance_matrix;
@@ -436,9 +525,8 @@ function renderIssues() {
   if (!state.result) return;
   const severity = $("severityFilter").value;
   const rule = $("ruleFilter").value;
-  const duplicateRules = new Set(["exact_duplicate_candidate", "duplicate_opening_candidate"]);
   const issues = state.result.issues.filter((issue) => {
-    const ruleMatches = rule === "all" || issue.rule_id === rule || (rule === "duplicate_review" && duplicateRules.has(issue.rule_id));
+    const ruleMatches = rule === "all" || issue.rule_id === rule || (rule === "duplicate_review" && DUPLICATE_RULES.has(issue.rule_id));
     return (severity === "all" || issue.severity === severity) && ruleMatches;
   });
   const visibleIssues = issues.slice(0, ISSUE_RENDER_LIMIT);
@@ -448,7 +536,12 @@ function renderIssues() {
     const selectable = issue.entity_id != null && selectionIds.length > 0;
     const tag = selectable ? "button" : "div";
     const attributes = selectable ? `type="button" data-entity-id="${issue.entity_id}" data-selection-ids="${selectionIds.join(",")}" data-rule-id="${escapeHtml(issue.rule_id)}" aria-label="Highlight ${escapeHtml(issue.entity_type || "element")} ${issue.entity_id} in the model"` : `data-rule-id="${escapeHtml(issue.rule_id)}" title="${escapeHtml(issue.geometry_message || "This issue has no 3D selection target")}"`;
-    return `<${tag} class="issue ${selectable ? "issue-action" : ""}" ${attributes}><span class="severity ${issue.severity}">${issue.severity}</span><div><strong>${escapeHtml(issue.title)}</strong><p>${escapeHtml(issue.message)}</p></div><span class="entity-ref">${escapeHtml(issue.entity_type || "MODEL")} ${issue.entity_id ? `#${issue.entity_id}` : ""}</span></${tag}>`;
+    const card = `<${tag} class="issue ${selectable ? "issue-action" : ""}" ${attributes}><span class="severity ${issue.severity}">${issue.severity}</span><div><strong>${escapeHtml(issue.title)}</strong><p>${escapeHtml(issue.message)}</p></div><span class="entity-ref">${escapeHtml(issue.entity_type || "MODEL")} ${issue.entity_id ? `#${issue.entity_id}` : ""}</span></${tag}>`;
+    if (!DUPLICATE_RULES.has(issue.rule_id)) return card;
+    const reviewKey = duplicateReviewKey(issue);
+    const status = issue.review_status || "unresolved";
+    const option = (value, label) => `<option value="${value}"${status === value ? " selected" : ""}>${label}</option>`;
+    return `<div class="duplicate-review-row ${status}">${card}<div class="duplicate-review-controls" data-review-key="${escapeHtml(reviewKey)}"><label>Decision<select class="review-decision" aria-label="Duplicate review decision">${option("unresolved", "Unresolved")}${option("confirmed_duplicate", "Confirmed duplicate")}${option("intentional_not_duplicate", "Intentional / not duplicate")}</select></label><label>Reviewer note<input class="review-note" type="text" value="${escapeHtml(issue.review_note || "")}" placeholder="Reason or evidence" aria-label="Duplicate review note"></label><span class="review-saved">${issue.reviewed_at ? `Saved ${escapeHtml(new Date(issue.reviewed_at).toLocaleString())}` : "Not reviewed"}</span></div></div>`;
   }).join("") + (issues.length > visibleIssues.length
     ? `<div class="issue-limit-note">Showing the first ${visibleIssues.length.toLocaleString()} of ${issues.length.toLocaleString()} matching issues. JSON and CSV exports still contain every issue; use the filters to narrow the review.</div>`
     : "") : `<div class="issue"><p>No issues match the selected filters.</p></div>`;
@@ -510,7 +603,7 @@ function updateSelectionUi() {
 
 function exportCsv() {
   if (!state.result) return;
-  const header = ["severity", "rule_id", "title", "entity_id", "entity_type", "global_id", "name", "message"];
+  const header = ["severity", "rule_id", "title", "entity_id", "related_entity_id", "entity_type", "global_id", "name", "message", "review_status", "review_note", "reviewed_at"];
   const quote = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
   const csv = [header.join(","), ...state.result.issues.map((issue) => header.map((key) => quote(issue[key])).join(","))].join("\n");
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -520,6 +613,43 @@ function exportCsv() {
   link.click();
   URL.revokeObjectURL(url);
   toast("QC report exported");
+}
+
+export function buildDuplicateTruthMatrix(issues, filename, exportedAt = new Date().toISOString()) {
+  return issues.filter((issue) => DUPLICATE_RULES.has(issue.rule_id)).map((issue) => ({
+    model_filename: filename,
+    exported_at: exportedAt,
+    pair_key: duplicateReviewKey(issue),
+    rule_id: issue.rule_id,
+    candidate_type: issue.rule_id === "duplicate_opening_candidate" ? "opening_void" : "physical_element",
+    entity_id: issue.entity_id,
+    related_entity_id: issue.related_entity_id,
+    opening_ids: issue.opening_ids || [],
+    host_entity_ids: issue.host_entity_ids || [],
+    selection_ids: issue.selection_ids || [],
+    review_status: issue.review_status || "unresolved",
+    review_note: issue.review_note || "",
+    reviewed_at: issue.reviewed_at || "",
+    confidence: issue.confidence || "",
+    tolerance_mm: issue.tolerance_mm ?? "",
+    detection_basis: issue.detection_basis || "",
+  }));
+}
+
+function exportTruthMatrixCsv() {
+  if (!state.result || !duplicateIssues().length) return;
+  const exportedAt = new Date().toISOString();
+  const header = [
+    "model_filename", "exported_at", "pair_key", "rule_id", "candidate_type",
+    "entity_id", "related_entity_id", "opening_ids", "host_entity_ids",
+    "selection_ids", "review_status", "review_note", "reviewed_at", "confidence",
+    "tolerance_mm", "detection_basis",
+  ];
+  const quote = (value) => `"${String(Array.isArray(value) ? value.join("|") : value ?? "").replaceAll('"', '""')}"`;
+  const rows = buildDuplicateTruthMatrix(duplicateIssues(), state.result.filename, exportedAt);
+  const csv = [header.join(","), ...rows.map((row) => header.map((key) => quote(row[key])).join(","))].join("\n");
+  downloadText(csv, `${state.result.filename.replace(/\.ifc$/i, "")}-duplicate-truth-matrix.csv`, "text/csv;charset=utf-8");
+  toast(`${rows.length} reviewed candidate row(s) exported`);
 }
 
 function exportJson() {
@@ -625,6 +755,21 @@ $("selectionModeSelect").addEventListener("change", (event) => {
 $("issueList").addEventListener("click", (event) => {
   const issue = event.target.closest("[data-entity-id]");
   if (issue) selectEntity(issue.dataset.entityId, { selectionIDs: issue.dataset.selectionIds.split(",").filter(Boolean).map(Number), revealViewer: true });
+});
+$("issueList").addEventListener("change", (event) => {
+  const control = event.target.closest(".review-decision, .review-note");
+  if (!control) return;
+  const container = control.closest("[data-review-key]");
+  const issue = duplicateIssues().find((item) => duplicateReviewKey(item) === container?.dataset.reviewKey);
+  if (!issue) return;
+  const decision = container.querySelector(".review-decision").value;
+  const note = container.querySelector(".review-note").value.trim();
+  saveDuplicateReview(issue, decision, note);
+  renderIssues();
+  toast(decision === "unresolved" ? "Candidate returned to unresolved" : "Duplicate review decision saved");
+});
+$("duplicateReviewSummary").addEventListener("click", (event) => {
+  if (event.target.closest("#truthMatrixButton")) exportTruthMatrixCsv();
 });
 $("modelMap").addEventListener("click", (event) => {
   const element = event.target.closest("[data-entity-id]");

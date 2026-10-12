@@ -1,4 +1,5 @@
 import json
+from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
 from threading import Thread
@@ -59,6 +60,10 @@ class ApiTests(unittest.TestCase):
         uploaded = self.upload_model()
         self.assertEqual("geometry_demo.ifc", uploaded["analysis"]["filename"])
         self.assertGreater(uploaded["size_bytes"], 0)
+        self.assertEqual(
+            sha256((ROOT / "samples/geometry_demo.ifc").read_bytes()).hexdigest(),
+            uploaded["model_sha256"],
+        )
         request = Request(
             f"{self.base}/api/models/{uploaded['model_id']}/analyze",
             data=json.dumps({"profile": "handover"}).encode(),

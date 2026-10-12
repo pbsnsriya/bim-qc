@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
 import json
 import multiprocessing
 from pathlib import Path
@@ -21,6 +22,7 @@ class ModelRecord:
     path: Path
     filename: str
     size: int
+    sha256: str
     created_at: float
 
 
@@ -40,6 +42,7 @@ class ModelStore:
         model_id = uuid.uuid4().hex
         path = self.root / f"{model_id}.ifc"
         size = 0
+        digest = sha256()
         try:
             with path.open("wb") as target:
                 while True:
@@ -50,9 +53,10 @@ class ModelStore:
                     if size > self.max_file_bytes:
                         raise ValueError("The IFC file must not exceed 100 MB.")
                     target.write(chunk)
+                    digest.update(chunk)
             if size == 0:
                 raise ValueError("The uploaded IFC file is empty.")
-            record = ModelRecord(model_id, path, safe_name, size, time())
+            record = ModelRecord(model_id, path, safe_name, size, digest.hexdigest(), time())
             with self._lock:
                 self._evict_for(size, protected_ids or set())
                 self._records[model_id] = record

@@ -33,6 +33,7 @@ Object.assign(globalThis, {
   location: window.location,
   CustomEvent: window.CustomEvent,
   Event: window.Event,
+  localStorage: window.localStorage,
   addEventListener: window.addEventListener.bind(window),
 });
 
@@ -177,6 +178,33 @@ const duplicateIssue = document.querySelector('[data-rule-id="exact_duplicate_ca
 assert.ok(duplicateIssue, "exact duplicate wall pair is linked to geometry");
 duplicateIssue.click();
 assert.deepEqual(calls.selected.slice(-2), [104, 57], "duplicate issue highlights both elements in the pair");
+const reviewRow = duplicateIssue.closest(".duplicate-review-row");
+assert.ok(reviewRow, "duplicate candidate exposes a review workflow");
+const reviewNote = reviewRow.querySelector(".review-note");
+const reviewDecision = reviewRow.querySelector(".review-decision");
+reviewNote.value = "Confirmed accidental overlapping wall";
+reviewDecision.value = "confirmed_duplicate";
+reviewDecision.dispatchEvent(new window.Event("change", { bubbles: true }));
+assert.match(document.querySelector("#duplicateReviewSummary").textContent, /1 confirmed/, "truth-matrix summary updates after review");
+assert.match(document.querySelector("#duplicateReviewSummary").textContent, /reviewed precision 100%/, "reviewed precision is explicitly reported");
+assert.equal(document.querySelector(".duplicate-review-row.confirmed_duplicate") !== null, true, "confirmed review receives visible state");
+const reviewStorageKey = Object.keys(window.localStorage).find((key) => key.startsWith("openbim-qc:duplicate-reviews:v1:"));
+assert.ok(reviewStorageKey, "review ledger is persisted for the loaded IFC");
+const persistedReviews = JSON.parse(window.localStorage.getItem(reviewStorageKey));
+assert.equal(persistedReviews["exact_duplicate_candidate|57|104"].review_status, "confirmed_duplicate", "persisted ledger stores the decision by canonical pair key");
+assert.equal(persistedReviews["exact_duplicate_candidate|57|104"].review_note, "Confirmed accidental overlapping wall", "persisted ledger stores reviewer evidence");
+const truthRows = appModule.buildDuplicateTruthMatrix([{
+  rule_id: "exact_duplicate_candidate", entity_id: 104, related_entity_id: 57,
+  selection_ids: [104, 57], review_status: "confirmed_duplicate", review_note: "Confirmed overlap",
+}], "geometry_demo.ifc", "2026-10-03T00:00:00.000Z");
+assert.deepEqual(truthRows[0], {
+  model_filename: "geometry_demo.ifc", exported_at: "2026-10-03T00:00:00.000Z",
+  pair_key: "exact_duplicate_candidate|57|104", rule_id: "exact_duplicate_candidate",
+  candidate_type: "physical_element", entity_id: 104, related_entity_id: 57,
+  opening_ids: [], host_entity_ids: [], selection_ids: [104, 57],
+  review_status: "confirmed_duplicate", review_note: "Confirmed overlap", reviewed_at: "",
+  confidence: "", tolerance_mm: "", detection_basis: "",
+}, "truth-matrix export preserves the reviewed decision and evidence");
 document.querySelector("#ruleFilter").value = "ids:wall-name";
 document.querySelector("#ruleFilter").dispatchEvent(new window.Event("change"));
 assert.ok(document.querySelector('[data-rule-id="ids:wall-name"]'), "IDS findings remain available after geometry checks");

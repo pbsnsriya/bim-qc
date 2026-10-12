@@ -102,12 +102,24 @@ h3 { margin: 0; font-size: 17px; }
 .filters { display: flex; gap: 8px; }
 select { background: white; border: 1px solid var(--line); border-radius: 8px; padding: 9px 30px 9px 11px; color: var(--ink); font-size: 12px; }
 .issue-list { max-height: 520px; overflow: auto; }
+.duplicate-review-summary { margin: 0 0 12px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 1px solid #cdd8c4; border-radius: 12px; background: #f7faef; }
+.duplicate-review-summary strong, .duplicate-review-summary span, .duplicate-review-summary small { display: block; }
+.duplicate-review-summary span { margin-top: 3px; color: var(--ink); font-size: 12px; }
+.duplicate-review-summary small { margin-top: 4px; color: var(--muted); font-size: 10px; }
 .issue { display: grid; grid-template-columns: 85px 1fr 145px; gap: 16px; padding: 16px 20px; align-items: start; border-bottom: 1px solid var(--line); }
 .issue-action { width: 100%; border-top: 0; border-right: 0; border-left: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
 .issue-action:hover { background: #f5f8f2; }
 .issue-action.selected { background: #fff5d2; box-shadow: inset 4px 0 #ff8a1f; }
 .issue-action:focus-visible, .model-node:focus-visible, .clear-selection:focus-visible, .selection-mode:focus-visible { outline: 3px solid rgba(19,95,66,.25); outline-offset: -3px; }
 .issue:last-child { border: 0; }
+.duplicate-review-row { border-bottom: 1px solid var(--line); }
+.duplicate-review-row .issue { border-bottom: 0; }
+.duplicate-review-row.confirmed_duplicate { box-shadow: inset 4px 0 var(--green); }
+.duplicate-review-row.intentional_not_duplicate { box-shadow: inset 4px 0 var(--info); }
+.duplicate-review-controls { padding: 0 20px 14px 121px; display: grid; grid-template-columns: minmax(180px, .55fr) minmax(240px, 1fr) auto; align-items: end; gap: 12px; }
+.duplicate-review-controls label { display: grid; gap: 5px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.duplicate-review-controls input { min-width: 0; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); font-size: 12px; }
+.review-saved { align-self: center; color: var(--muted); font-size: 10px; white-space: nowrap; }
 .issue-limit-note { padding: 14px 20px; border-top: 1px solid var(--line); background: #f3f6f1; color: var(--muted); font-size: 12px; text-align: center; }
 .severity { display: inline-flex; align-items: center; gap: 6px; width: fit-content; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .severity::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
@@ -128,6 +140,8 @@ select { background: white; border: 1px solid var(--line); border-radius: 8px; p
   .coordination-panel { align-items: stretch; flex-direction: column; }
   .coordination-options { justify-content: flex-start; }
   .diagnostic-checks { grid-template-columns: 1fr; }
+  .duplicate-review-controls { padding-left: 20px; grid-template-columns: 1fr; }
+  .duplicate-review-summary { align-items: stretch; flex-direction: column; }
 }
 @media (max-width: 560px) {
   main { width: 92vw; padding-top: 40px; }

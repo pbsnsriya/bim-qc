@@ -238,6 +238,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(201, {
                 "model_id": record.model_id,
                 "size_bytes": record.size,
+                "model_sha256": record.sha256,
                 "analysis": result,
             })
         except (ValueError, RuntimeError) as exc:
