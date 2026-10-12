@@ -225,6 +225,34 @@ and the current dimension prototype only enforces a minimum geometric extent.
 Next Stage 2 increment: near-duplicate placement/rotation tolerance, expanded
 confidence scoring, and project-configurable intentional-repeat exclusions.
 
+## v0.7.11 pair comparison
+
+Click a duplicate issue to highlight its pair and open the **Compare #A ↔ #B**
+panel immediately underneath. You can also open Compare independently using
+its keyboard-accessible disclosure. The panel shows type, material names,
+storey, load-bearing status, dimensions, world position and identities side by
+side. Amber rows identify physical/property differences; blue rows identify
+different records. Missing values are explicit, not matching verdicts.
+
+Expand **Source properties and quantities** to compare occurrence and type
+values. Property-set record IDs are excluded. Length and coordinate measurements
+are normalized to mm and m; source quantities retain their declared IFC units.
+
+Comparison reads the existing uploaded IFC session and tessellates only the
+two requested elements. Results are cached in the page for the current model;
+review edits and filter changes reuse them. Failed requests offer Retry.
+Loading a new model clears the cache and aborts pending browser requests.
+Server comparisons are serialized to avoid parsing multiple large models at
+once. This adds no new whole-model tessellation gate.
+
+**Decision** and **Reviewer note** remain manual and retain the existing
+model-specific saved ledger. Matching properties or bounds do not certify
+full shape equality or prove that the author intended a duplicate. Near
+duplicates and hard clashes remain later increments.
+
+See `docs/Pair_Comparison_v0.7.11.md` for the two supplied column acceptance
+cases, automated verification and measurement limits.
+
 ## v0.7.10 viewer optimization
 
 Opaque geometry with matching materials is now merged into spatial render

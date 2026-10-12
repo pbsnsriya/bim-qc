@@ -74,6 +74,17 @@ class ApiTests(unittest.TestCase):
             result = json.load(response)
         self.assertEqual("handover", result["profile"])
 
+    def test_stored_model_pair_comparison_uses_matching_fingerprint(self):
+        uploaded = self.upload_model("golden/duplicate_exact_matrix.ifc")
+        request = Request(f"{self.base}/api/compare-elements", data=json.dumps({
+            "model_id": uploaded["model_id"], "element_ids": [40, 41],
+        }).encode(), headers={"Content-Type": "application/json"}, method="POST")
+        with urlopen(request) as response:
+            result = json.load(response)
+        self.assertEqual(uploaded["model_sha256"], result["source_sha256"])
+        self.assertEqual([40, 41], [e["step_id"] for e in result["elements"]])
+        self.assertEqual(0, result["physical_difference_count"])
+
     def test_background_geometry_job_reports_progress_and_completes(self):
         uploaded = self.upload_model()
         backend = __import__("ifcqc.geometry_diagnostics", fromlist=["diagnose_geometry"])

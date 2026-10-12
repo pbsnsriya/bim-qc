@@ -206,10 +206,36 @@ assert.equal(document.querySelector("#ruleFilter").value, "duplicate_review", "S
 assert.equal(document.querySelectorAll('.issue-action[data-rule-id="exact_duplicate_candidate"]').length, 1, "filtered duplicate findings are immediately visible");
 const duplicateIssue = document.querySelector('[data-rule-id="exact_duplicate_candidate"][data-entity-id="104"]');
 assert.ok(duplicateIssue, "exact duplicate wall pair is linked to geometry");
+let comparisonRequestCount = 0;
+const fetchWithComparison = globalThis.fetch;
+globalThis.fetch = (input, init) => {
+  if (String(input) === "/api/compare-elements" && ++comparisonRequestCount === 1) {
+    return Promise.resolve(new Response(JSON.stringify({ error: "Temporary comparison failure" }), {
+      status: 500, headers: { "Content-Type": "application/json" },
+    }));
+  }
+  return fetchWithComparison(input, init);
+};
 duplicateIssue.click();
 assert.deepEqual(calls.selected.slice(-2), [104, 57], "duplicate issue highlights both elements in the pair");
 const reviewRow = duplicateIssue.closest(".duplicate-review-row");
 assert.ok(reviewRow, "duplicate candidate exposes a review workflow");
+const retryDeadline = Date.now() + 10000;
+while (!reviewRow.querySelector(".comparison-retry") && Date.now() < retryDeadline) {
+  await new Promise(resolve => setTimeout(resolve, 25));
+}
+assert.match(reviewRow.querySelector(".pair-comparison-content").textContent, /Temporary comparison failure/, "failure is visible rather than an empty panel");
+reviewRow.querySelector(".comparison-retry").click();
+const comparisonDeadline = Date.now() + 10000;
+while (!reviewRow.querySelector(".pair-table") && Date.now() < comparisonDeadline) {
+  await new Promise(resolve => setTimeout(resolve, 25));
+}
+assert.ok(reviewRow.querySelector(".pair-comparison").open, "selecting a duplicate opens its comparison panel");
+assert.ok(reviewRow.querySelector(".pair-table"), "side-by-side fields load from the stored model API");
+assert.match(reviewRow.querySelector('[data-field="dimensions_mm"]').textContent, /Same/, "duplicate dimensions compare as matching");
+assert.match(reviewRow.querySelector('[data-field="global_id"]').textContent, /Identity differs/, "distinct GlobalIds are separated from physical differences");
+assert.match(reviewRow.querySelector('[data-field="phase_status"]').textContent, /Not evaluated/, "missing phase information is not reported as passing");
+assert.equal(reviewRow.querySelector(".review-decision").value, "unresolved", "comparison does not change the review decision");
 const reviewNote = reviewRow.querySelector(".review-note");
 const reviewDecision = reviewRow.querySelector(".review-decision");
 reviewNote.value = "Confirmed accidental overlapping wall";
@@ -218,6 +244,9 @@ reviewDecision.dispatchEvent(new window.Event("change", { bubbles: true }));
 assert.match(document.querySelector("#duplicateReviewSummary").textContent, /1 confirmed/, "truth-matrix summary updates after review");
 assert.match(document.querySelector("#duplicateReviewSummary").textContent, /reviewed precision 100%/, "reviewed precision is explicitly reported");
 assert.equal(document.querySelector(".duplicate-review-row.confirmed_duplicate") !== null, true, "confirmed review receives visible state");
+assert.ok(document.querySelector(".pair-comparison").open, "saving review keeps the comparison open");
+assert.ok(document.querySelector(".pair-table"), "cached comparison survives review rerender");
+assert.equal(comparisonRequestCount, 2, "saving a decision reuses the successful comparison after a retry");
 const reviewStorageKey = Object.keys(window.localStorage).find((key) => key.startsWith("openbim-qc:duplicate-reviews:v1:"));
 assert.ok(reviewStorageKey, "review ledger is persisted for the loaded IFC");
 const persistedReviews = JSON.parse(window.localStorage.getItem(reviewStorageKey));

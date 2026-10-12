@@ -1,6 +1,60 @@
+import { renderPairComparison } from "./pair-comparison.js";
 const state = { result: null, selectedEntityId: null, viewerBaseStatus: "", baseIssues: [], idsValidation: null, geometryDiagnostics: null, geometryValidation: null, viewerDiagnostics: null, gpuValidation: null, ifcopenshellAvailable: false, activeGeometryJobId: null, duplicateReviews: {}, reviewStorageKey: null };
 state.source = null;
 const $ = (id) => document.getElementById(id);
+state.pairComparisons = new Map();
+state.openComparisons = new Set();
+state.comparisonRequests = new Set();
+
+function resetPairComparisons() {
+  for (const request of state.comparisonRequests) request.abort();
+  state.comparisonRequests.clear();
+  state.pairComparisons.clear();
+  state.openComparisons.clear();
+}
+
+function pairComparisonContent(key) {
+  const entry = state.pairComparisons.get(key);
+  if (entry?.result) return renderPairComparison(entry.result);
+  if (entry?.error) return `<p class="comparison-warning">${escapeHtml(entry.error)}</p><button type="button" class="comparison-retry">Retry comparison</button>`;
+  return entry?.loading ? "Reading the two elements and measuring their geometry…" : "Open to compare geometry measurements and IFC properties.";
+}
+
+function refreshPairComparison(key) {
+  for (const node of document.querySelectorAll(".pair-comparison")) {
+    if (node.dataset.comparisonKey !== key) continue;
+    const content = node.querySelector(".pair-comparison-content");
+    content.innerHTML = pairComparisonContent(key);
+    content.setAttribute("aria-busy", String(Boolean(state.pairComparisons.get(key)?.loading)));
+  }
+}
+
+async function loadPairComparison(issue, retry = false) {
+  const key = duplicateReviewKey(issue);
+  if (!state.source || (!retry && state.pairComparisons.has(key))) return;
+  const source = state.source;
+  const controller = new AbortController();
+  state.comparisonRequests.add(controller);
+  state.pairComparisons.set(key, { loading: true });
+  refreshPairComparison(key);
+  try {
+    const response = await fetch("/api/compare-elements", {
+      method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal,
+      body: JSON.stringify({ model_id: source.modelId, content: source.modelId ? undefined : source.content,
+        element_ids: [issue.related_entity_id, issue.entity_id] }),
+    });
+    const result = await readJsonResponse(response, "Pair comparison failed.");
+    if (state.source !== source || controller.signal.aborted) return;
+    if (source.sha256 && result.source_sha256 !== source.sha256) throw new Error("Comparison belongs to a different IFC. Upload this model again.");
+    state.pairComparisons.set(key, { result });
+  } catch (error) {
+    if (state.source !== source || controller.signal.aborted) return;
+    state.pairComparisons.set(key, { error: error.message });
+  } finally {
+    state.comparisonRequests.delete(controller);
+    if (state.source === source && !controller.signal.aborted) refreshPairComparison(key);
+  }
+}
 
 const dropzone = $("dropzone");
 const fileInput = $("fileInput");
@@ -159,6 +213,7 @@ async function analyzeFile(file) {
 }
 
 function applyAnalysis(result) {
+  resetPairComparisons();
   state.result = result;
   loadDuplicateReviews();
   state.baseIssues = [...result.issues];
@@ -581,9 +636,10 @@ function renderIssues() {
     const selectable = issue.entity_id != null && selectionIds.length > 0;
     const tag = selectable ? "button" : "div";
     const attributes = selectable ? `type="button" data-entity-id="${issue.entity_id}" data-selection-ids="${selectionIds.join(",")}" data-rule-id="${escapeHtml(issue.rule_id)}" aria-label="Highlight ${escapeHtml(issue.entity_type || "element")} ${issue.entity_id} in the model"` : `data-rule-id="${escapeHtml(issue.rule_id)}" title="${escapeHtml(issue.geometry_message || "This issue has no 3D selection target")}"`;
-    const card = `<${tag} class="issue ${selectable ? "issue-action" : ""}" ${attributes}><span class="severity ${issue.severity}">${issue.severity}</span><div><strong>${escapeHtml(issue.title)}</strong><p>${escapeHtml(issue.message)}</p></div><span class="entity-ref">${escapeHtml(issue.entity_type || "MODEL")} ${issue.entity_id ? `#${issue.entity_id}` : ""}</span></${tag}>`;
+    let card = `<${tag} class="issue ${selectable ? "issue-action" : ""}" ${attributes}><span class="severity ${issue.severity}">${issue.severity}</span><div><strong>${escapeHtml(issue.title)}</strong><p>${escapeHtml(issue.message)}</p></div><span class="entity-ref">${escapeHtml(issue.entity_type || "MODEL")} ${issue.entity_id ? `#${issue.entity_id}` : ""}</span></${tag}>`;
     if (!DUPLICATE_RULES.has(issue.rule_id)) return card;
     const reviewKey = duplicateReviewKey(issue);
+    card += `<details class="pair-comparison" data-comparison-key="${escapeHtml(reviewKey)}"${state.openComparisons.has(reviewKey) ? " open" : ""}><summary>Compare #${issue.related_entity_id} ↔ #${issue.entity_id}</summary><div class="pair-comparison-content" role="status" aria-live="polite" aria-busy="${Boolean(state.pairComparisons.get(reviewKey)?.loading)}">${pairComparisonContent(reviewKey)}</div></details>`;
     const status = issue.review_status || "unresolved";
     const option = (value, label) => `<option value="${value}"${status === value ? " selected" : ""}>${label}</option>`;
     return `<div class="duplicate-review-row ${status}">${card}<div class="duplicate-review-controls" data-review-key="${escapeHtml(reviewKey)}"><label>Decision<select class="review-decision" aria-label="Duplicate review decision">${option("unresolved", "Unresolved")}${option("confirmed_duplicate", "Confirmed duplicate")}${option("intentional_not_duplicate", "Intentional / not duplicate")}</select></label><label>Reviewer note<input class="review-note" type="text" value="${escapeHtml(issue.review_note || "")}" placeholder="Reason or evidence" aria-label="Duplicate review note"></label><span class="review-saved">${issue.reviewed_at ? `Saved ${escapeHtml(new Date(issue.reviewed_at).toLocaleString())}` : "Not reviewed"}</span></div></div>`;
@@ -819,9 +875,29 @@ $("selectionModeSelect").addEventListener("change", (event) => {
   }
 });
 $("issueList").addEventListener("click", (event) => {
+  const retry = event.target.closest(".comparison-retry");
+  if (retry) {
+    const key = retry.closest(".pair-comparison").dataset.comparisonKey;
+    const pair = duplicateIssues().find(item => duplicateReviewKey(item) === key);
+    if (pair) loadPairComparison(pair, true);
+    return;
+  }
   const issue = event.target.closest("[data-entity-id]");
-  if (issue) selectEntity(issue.dataset.entityId, { selectionIDs: issue.dataset.selectionIds.split(",").filter(Boolean).map(Number), revealViewer: true });
+  if (issue) {
+    selectEntity(issue.dataset.entityId, { selectionIDs: issue.dataset.selectionIds.split(",").filter(Boolean).map(Number), revealViewer: true });
+    const comparison = issue.closest(".duplicate-review-row")?.querySelector(".pair-comparison");
+    if (comparison) comparison.open = true;
+  }
 });
+$("issueList").addEventListener("toggle", (event) => {
+  const node = event.target;
+  if (!node.matches?.(".pair-comparison")) return;
+  const key = node.dataset.comparisonKey;
+  if (!node.open) { state.openComparisons.delete(key); return; }
+  state.openComparisons.add(key);
+  const issue = duplicateIssues().find(item => duplicateReviewKey(item) === key);
+  if (issue) loadPairComparison(issue);
+}, true);
 $("issueList").addEventListener("change", (event) => {
   const control = event.target.closest(".review-decision, .review-note");
   if (!control) return;

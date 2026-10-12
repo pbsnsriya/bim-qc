@@ -7,6 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
 import re
+from threading import Lock
 from urllib.parse import urlparse
 
 from ifcqc import analyze_ifc
@@ -18,6 +19,7 @@ from ifcqc.geometry_acceptance import run_acceptance_matrix
 from ifcqc.geometry_diagnostics import diagnose_geometry
 from ifcqc.ids_validator import validate_ids
 from ifcqc.runtime import GeometryJobManager, ModelStore
+from ifcqc.element_comparison import compare_elements, compare_elements_file, validate_pair_ids
 
 
 ROOT = Path(__file__).resolve().parent
@@ -29,6 +31,7 @@ MAX_BODY_BYTES = 120 * 1024 * 1024
 MAX_MULTIPART_BYTES = MAX_IFC_BYTES + 1024 * 1024
 MODEL_STORE = ModelStore(MAX_IFC_BYTES)
 GEOMETRY_JOBS = GeometryJobManager()
+PAIR_COMPARISON_LOCK = Lock()
 
 
 def require_ifc_content(payload: dict) -> str:
@@ -147,6 +150,7 @@ class Handler(BaseHTTPRequestHandler):
         if path not in {
             "/api/analyze", "/api/validate-ids", "/api/geometry-diagnostics",
             "/api/geometry-checks", "/api/export-bcf",
+            "/api/compare-elements",
         }:
             self.send_error(404)
             return
@@ -155,7 +159,22 @@ class Handler(BaseHTTPRequestHandler):
             if size <= 0 or size > MAX_BODY_BYTES:
                 raise ValueError("Request must be between 1 byte and 120 MB; IFC files are limited to 100 MB.")
             payload = json.loads(self.rfile.read(size))
-            if path == "/api/analyze":
+            if path == "/api/compare-elements":
+                if not isinstance(payload, dict):
+                    raise ValueError("The request body must be a JSON object.")
+                ids = validate_pair_ids(payload.get("element_ids"))
+                if not capabilities()["ifcopenshell_available"]:
+                    raise ValueError("Pair comparison requires IfcOpenShell. Restart using start_windows.bat.")
+                # A large IFC is parsed once per uncached pair. Serialize these
+                # requests so opening several cards does not multiply that memory.
+                with PAIR_COMPARISON_LOCK:
+                    if payload.get("model_id"):
+                        record = MODEL_STORE.get(payload["model_id"])
+                        result = compare_elements_file(record.path, ids, record.sha256)
+                    else:
+                        result = compare_elements(require_ifc_content(payload), ids)
+                self.send_json(200, result)
+            elif path == "/api/analyze":
                 filename = str(payload.get("filename", "model.ifc"))[:200]
                 profile = str(payload.get("profile", "coordination"))
                 content = content_for_payload(payload)
