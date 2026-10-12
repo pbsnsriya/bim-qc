@@ -76,7 +76,17 @@ globalThis.OpenBIMViewer = {
   },
 };
 
-await import(`../web/app.js?frontend-test=${Date.now()}`);
+const appModule = await import(`../web/app.js?frontend-test=${Date.now()}`);
+assert.equal(
+  appModule.duplicateStageAvailable({ ready: false, stage2_ready: true }),
+  true,
+  "Stage 2 can run when its prerequisites pass even if strict Stage 1 extent evidence needs attention",
+);
+assert.equal(
+  appModule.duplicateStageAvailable({ ready: true, stage2_ready: false }),
+  false,
+  "strict Stage 1 status cannot bypass failed Stage 2 prerequisites",
+);
 document.querySelector("#demoButton").click();
 
 const deadline = Date.now() + 15000;

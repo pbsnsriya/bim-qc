@@ -6,6 +6,10 @@ const dropzone = $("dropzone");
 const fileInput = $("fileInput");
 const ISSUE_RENDER_LIMIT = 250;
 
+export function duplicateStageAvailable(diagnostics) {
+  return Boolean(diagnostics?.stage2_ready);
+}
+
 function toast(message) {
   const node = $("toast");
   node.textContent = message;
@@ -148,7 +152,9 @@ async function validateIds(idsFilename, idsContent) {
 
 async function runGeometryChecks() {
   if (!state.source || !state.result) throw new Error("Load an IFC model before running coordination checks.");
-  if (!state.geometryDiagnostics?.ready) throw new Error("Validate the Stage 1 geometry foundation first.");
+  if (!duplicateStageAvailable(state.geometryDiagnostics)) {
+    throw new Error("Complete the Stage 2 readiness prerequisites first.");
+  }
   const button = $("geometryCheckButton");
   button.disabled = true;
   button.textContent = "Checking exact duplicates…";
