@@ -134,6 +134,7 @@ def _diagnose_model(
 ) -> dict:
     """Verify geometry for an open model, optionally emitting bounded progress."""
     started = perf_counter()
+    phase_timings_ms: dict[str, float] = {}
     try:
         import ifcopenshell
         import ifcopenshell.geom
@@ -143,9 +144,11 @@ def _diagnose_model(
             "IfcOpenShell is required for geometry diagnostics. Install the project dependencies."
         ) from exc
 
+    phase_started = perf_counter()
     products = _physical_products(model)
     represented = [element for element in products if getattr(element, "Representation", None)]
     represented_by_id = {element.id(): element for element in represented}
+    phase_timings_ms["inventory"] = round((perf_counter() - phase_started) * 1000, 1)
     # Every worker may hold substantial OpenCASCADE state. Large IFCs are kept
     # single-threaded to avoid multiplying tessellation memory and killing the
     # local server process.
@@ -170,53 +173,102 @@ def _diagnose_model(
     element_extents: dict[int, list[float]] = {}
     minimum = np.array([np.inf, np.inf, np.inf], dtype=float)
     maximum = np.array([-np.inf, -np.inf, -np.inf], dtype=float)
-    iterator_error = None
-
-    try:
-        iterator = ifcopenshell.geom.iterator(
-            settings, model, thread_count, include=represented,
-        ) if represented else None
-        if iterator is not None and iterator.initialize():
-            while True:
-                shape = iterator.get()
-                element_id = int(shape.id)
-                successful_ids.append(element_id)
-                vertices = np.asarray(shape.geometry.verts, dtype=float).reshape((-1, 3))
-                vertex_count += int(len(vertices))
-                faces = getattr(shape.geometry, "faces", ())
-                triangle_count += int(len(faces) // 3)
-                if len(vertices) and np.isfinite(vertices).all():
-                    minimum = np.minimum(minimum, vertices.min(axis=0))
-                    maximum = np.maximum(maximum, vertices.max(axis=0))
-                    element_extents[element_id] = [
-                        float(value) for value in np.ptp(vertices, axis=0)
-                    ]
-                else:
-                    invalid_vertex_elements.append(element_id)
-                processed = len(successful_ids)
-                if progress_callback and (processed == 1 or processed % 25 == 0 or processed == len(represented)):
-                    progress_callback({
-                        "phase": "tessellating",
-                        "processed": processed,
-                        "total": len(represented),
-                        "percent": round(processed * 100 / max(len(represented), 1), 1),
-                        "message": f"Tessellated {processed} of {len(represented)} represented product(s).",
-                    })
-                if not iterator.next():
-                    break
-    except Exception as exc:  # Iterator failures are reported with element-level retries below.
-        iterator_error = str(exc)
-
-    unique_successful_ids = set(successful_ids)
+    iterator_errors: list[str] = []
+    slowest_elements: list[dict] = []
+    iterator_started = perf_counter()
     failed_elements: list[dict] = []
-    for element_id in sorted(set(represented_by_id) - unique_successful_ids):
-        element = represented_by_id[element_id]
+    fallback_slowest: list[dict] = []
+    fallback_retry_count = 0
+    fallback_elapsed_ms = 0.0
+
+    def record_shape(shape, element_id: int) -> None:
+        nonlocal vertex_count, triangle_count, minimum, maximum
+        if element_id in element_extents:
+            return
+        successful_ids.append(element_id)
+        vertices = np.asarray(shape.geometry.verts, dtype=float).reshape((-1, 3))
+        vertex_count += int(len(vertices))
+        faces = getattr(shape.geometry, "faces", ())
+        triangle_count += int(len(faces) // 3)
+        if len(vertices) and np.isfinite(vertices).all():
+            minimum = np.minimum(minimum, vertices.min(axis=0))
+            maximum = np.maximum(maximum, vertices.max(axis=0))
+            element_extents[element_id] = [float(value) for value in np.ptp(vertices, axis=0)]
+        else:
+            invalid_vertex_elements.append(element_id)
+
+    # One malformed shape can abort an entire IfcOpenShell iterator. Bounded
+    # batches keep bulk tessellation for the rest of the model and restrict
+    # individual retries to the affected batch.
+    batch_size = 250 if large_model else max(len(represented), 1)
+    for batch_number, offset in enumerate(range(0, len(represented), batch_size), start=1):
+        batch = represented[offset:offset + batch_size]
+        batch_ids = {element.id() for element in batch}
+        before_ids = set(successful_ids)
         try:
-            ifcopenshell.geom.create_shape(settings, element)
-            reason = "The iterator omitted this shape without reporting an error."
+            iterator = ifcopenshell.geom.iterator(
+                settings, model, thread_count, include=batch,
+            ) if batch else None
+            if iterator is not None and iterator.initialize():
+                while True:
+                    element_started = perf_counter()
+                    shape = iterator.get()
+                    element_id = int(shape.id)
+                    record_shape(shape, element_id)
+                    slowest_elements.append({
+                        "step_id": element_id,
+                        "type": represented_by_id.get(element_id).is_a()
+                        if element_id in represented_by_id else "unknown",
+                        "elapsed_ms": round((perf_counter() - element_started) * 1000, 1),
+                        "measurement": "iterator_get_and_result_processing",
+                    })
+                    slowest_elements = sorted(
+                        slowest_elements, key=lambda item: item["elapsed_ms"], reverse=True,
+                    )[:10]
+                    if not iterator.next():
+                        break
         except Exception as exc:
-            reason = str(exc) or exc.__class__.__name__
-        failed_elements.append(_failure(element, reason))
+            iterator_errors.append(f"Batch {batch_number}: {str(exc) or exc.__class__.__name__}")
+
+        recovered_ids = set(successful_ids) - before_ids
+        for element_id in sorted(batch_ids - recovered_ids):
+            fallback_retry_count += 1
+            element = represented_by_id[element_id]
+            retry_started = perf_counter()
+            try:
+                record_shape(ifcopenshell.geom.create_shape(settings, element), element_id)
+            except Exception as exc:
+                failed_elements.append(_failure(element, str(exc) or exc.__class__.__name__))
+            fallback_elapsed_ms += (perf_counter() - retry_started) * 1000
+            fallback_slowest.append({
+                "step_id": element_id,
+                "type": element.is_a(),
+                "elapsed_ms": round((perf_counter() - retry_started) * 1000, 1),
+            })
+            fallback_slowest = sorted(
+                fallback_slowest, key=lambda item: item["elapsed_ms"], reverse=True,
+            )[:10]
+
+        processed = min(offset + len(batch), len(represented))
+        if progress_callback:
+            progress_callback({
+                "phase": "tessellating",
+                "processed": processed,
+                "total": len(represented),
+                "percent": round(processed * 100 / max(len(represented), 1), 1),
+                "message": (
+                    f"Processed {processed} of {len(represented)} represented product(s); "
+                    f"{fallback_retry_count} targeted fallback retry/retries."
+                ),
+            })
+
+    combined_geometry_ms = (perf_counter() - iterator_started) * 1000
+    phase_timings_ms["iterator_tessellation"] = round(
+        max(0.0, combined_geometry_ms - fallback_elapsed_ms), 1,
+    )
+    unique_successful_ids = set(successful_ids)
+    omitted_ids = sorted(set(represented_by_id) - unique_successful_ids)
+    phase_timings_ms["fallback_retries"] = round(fallback_elapsed_ms, 1)
 
     duplicate_shape_ids = sorted(item for item, count in Counter(successful_ids).items() if count > 1)
     unexpected_shape_ids = sorted(unique_successful_ids - set(represented_by_id))
@@ -268,8 +320,11 @@ def _diagnose_model(
         warnings.append(
             f"World coordinates reach {coordinate_magnitude:,.0f} m from the origin; browser GPU precision may be reduced."
         )
-    if iterator_error:
-        warnings.append(f"Geometry iterator reported: {iterator_error}")
+    if iterator_errors:
+        warnings.append(
+            f"Geometry iterator recovery was used for {len(iterator_errors)} batch(es): "
+            + "; ".join(iterator_errors[:3])
+        )
 
     browser_expected_ids = {
         element.id() for element in represented
@@ -286,8 +341,12 @@ def _diagnose_model(
         if element.id() in unique_successful_ids
         and element.is_a("IfcFeatureElementSubtraction")
     ]
+    comparison_started = perf_counter()
     cross_engine = _compare_browser_evidence(
         browser_expected_ids, element_extents, browser_evidence,
+    )
+    phase_timings_ms["cross_engine_comparison"] = round(
+        (perf_counter() - comparison_started) * 1000, 1,
     )
     cross_engine["expected_browser_omissions"] = expected_browser_omissions
     cross_engine_check = {
@@ -328,6 +387,21 @@ def _diagnose_model(
         "threads": thread_count,
         "memory_mode": "large-model-conservative" if large_model else "standard",
         "duration_ms": round((perf_counter() - started) * 1000, 1),
+        "performance_profile": {
+            "phase_timings_ms": phase_timings_ms,
+            "iterator_omission_count": len(omitted_ids),
+            "fallback_retry_count": fallback_retry_count,
+            "iterator_batch_size": batch_size,
+            "iterator_error_count": len(iterator_errors),
+            "iterator_errors": iterator_errors[:10],
+            "slowest_iterator_results": slowest_elements,
+            "slowest_fallback_retries": fallback_slowest,
+            "thread_count": thread_count,
+            "profile_scope": (
+                "Iterator timings measure result retrieval and local processing. "
+                "IfcOpenShell may perform part of the next shape computation inside iterator.next()."
+            ),
+        },
         "units": {"length": unit_name, "metres_per_project_unit": unit_scale},
         "counts": {
             "physical_products": len(products),
@@ -400,8 +474,15 @@ def diagnose_geometry_file(
             "IfcOpenShell is required for geometry diagnostics. Install the project dependencies."
         ) from exc
     source = Path(path)
+    opening_started = perf_counter()
     try:
         model = ifcopenshell.open(str(source))
     except Exception as exc:
         raise ValueError(f"IfcOpenShell could not open this IFC model: {exc}") from exc
-    return _diagnose_model(model, source.stat().st_size, browser_evidence, progress_callback)
+    opening_ms = round((perf_counter() - opening_started) * 1000, 1)
+    result = _diagnose_model(model, source.stat().st_size, browser_evidence, progress_callback)
+    result["performance_profile"]["phase_timings_ms"]["ifc_open"] = opening_ms
+    result["performance_profile"]["end_to_end_ms"] = round(
+        opening_ms + result["duration_ms"], 1,
+    )
+    return result

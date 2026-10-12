@@ -105,20 +105,56 @@ class JobRecord:
     result_path: Path
     started: float
     timeout_seconds: int
+    no_progress_seconds: int = 5 * 60
+    cache_key: str = ""
+    cached: bool = False
+
+
+class _CompletedProcess:
+    """Process-shaped sentinel for a result served from the in-memory cache."""
+
+    exitcode = 0
+
+    @staticmethod
+    def is_alive() -> bool:
+        return False
+
+    @staticmethod
+    def join(timeout=None) -> None:
+        return None
+
+    @staticmethod
+    def terminate() -> None:
+        return None
+
+
+def geometry_timeout_seconds(model_size: int) -> int:
+    """Return a bounded wall-clock budget for the supported 100 MiB range."""
+    if model_size <= 25 * 1024 * 1024:
+        return 15 * 60
+    if model_size <= 75 * 1024 * 1024:
+        return 30 * 60
+    return 45 * 60
+
+
+def no_progress_timeout_seconds(wall_timeout_seconds: int) -> int:
+    """Allow long individual shapes while still detecting a stalled worker."""
+    return min(15 * 60, max(5 * 60, wall_timeout_seconds // 3))
 
 
 class GeometryJobManager:
     def __init__(
         self,
-        timeout_seconds: int = 15 * 60,
+        timeout_seconds: int | None = None,
         memory_limit_bytes: int = 4 * 1024 * 1024 * 1024,
-        cpu_seconds: int = 15 * 60,
+        cpu_seconds: int | None = None,
     ):
         self.timeout_seconds = timeout_seconds
         self.memory_limit_bytes = memory_limit_bytes
         self.cpu_seconds = cpu_seconds
         self.root = Path(tempfile.mkdtemp(prefix="openbim-qc-jobs-"))
         self._jobs: dict[str, JobRecord] = {}
+        self._cache: dict[str, dict] = {}
         self._lock = Lock()
         self._context = multiprocessing.get_context("spawn")
 
@@ -132,25 +168,47 @@ class GeometryJobManager:
             job_dir.mkdir(parents=True)
             status_path = job_dir / "status.json"
             result_path = job_dir / "result.json"
+            timeout_seconds = self.timeout_seconds or geometry_timeout_seconds(model.size)
+            no_progress_seconds = no_progress_timeout_seconds(timeout_seconds)
+            evidence_json = json.dumps(browser_evidence or {}, sort_keys=True, separators=(",", ":"))
+            evidence_hash = sha256(evidence_json.encode("utf-8")).hexdigest()
+            cache_key = f"{model.sha256}:{evidence_hash}"
+            cached_result = self._cache.get(cache_key)
+            if cached_result is not None:
+                result_path.write_text(json.dumps(cached_result), encoding="utf-8")
+                status_path.write_text(json.dumps({
+                    "state": "completed",
+                    "phase": "complete",
+                    "processed": cached_result["counts"]["represented_products"],
+                    "total": cached_result["counts"]["represented_products"],
+                    "percent": 100.0,
+                    "message": "Reused cached Stage 1 evidence for this exact IFC and browser geometry.",
+                }), encoding="utf-8")
+                self._jobs[job_id] = JobRecord(
+                    job_id, model.model_id, _CompletedProcess(), status_path, result_path,
+                    monotonic(), timeout_seconds, no_progress_seconds, cache_key, True,
+                )
+                return job_id
             status_path.write_text(json.dumps({
                 "state": "queued",
                 "phase": "queued",
                 "processed": 0,
                 "total": None,
                 "percent": 0.0,
-                "message": "Geometry validation is queued.",
+                "message": f"Geometry validation is queued with a {timeout_seconds // 60}-minute limit.",
             }), encoding="utf-8")
+            cpu_seconds = self.cpu_seconds or timeout_seconds
             process = self._context.Process(
                 target=run_geometry_job,
                 args=(
                     str(model.path), browser_evidence, str(status_path), str(result_path),
-                    self.memory_limit_bytes, self.cpu_seconds,
+                    self.memory_limit_bytes, cpu_seconds,
                 ),
                 daemon=True,
             )
             record = JobRecord(
                 job_id, model.model_id, process, status_path, result_path,
-                monotonic(), self.timeout_seconds,
+                monotonic(), timeout_seconds, no_progress_seconds, cache_key, False,
             )
             self._jobs[job_id] = record
             process.start()
@@ -158,16 +216,32 @@ class GeometryJobManager:
 
     def status(self, job_id: str) -> dict:
         record = self._get(job_id)
-        if record.process.is_alive() and monotonic() - record.started > record.timeout_seconds:
-            record.process.terminate()
-            record.process.join(timeout=2)
-            self._write_status(record, {
-                "state": "timed_out",
-                "phase": "timed_out",
-                "percent": None,
-                "message": f"Geometry validation exceeded the {record.timeout_seconds // 60}-minute limit.",
-                "error": "Geometry validation timed out before completion.",
-            })
+        elapsed = monotonic() - record.started
+        if record.process.is_alive() and not record.result_path.is_file():
+            try:
+                status_age = max(0.0, time() - record.status_path.stat().st_mtime)
+            except OSError:
+                status_age = elapsed
+            if elapsed > record.timeout_seconds:
+                record.process.terminate()
+                record.process.join(timeout=2)
+                self._write_status(record, {
+                    "state": "timed_out",
+                    "phase": "timed_out",
+                    "percent": None,
+                    "message": f"Geometry validation exceeded its size-aware {record.timeout_seconds // 60}-minute limit.",
+                    "error": "Stage 1 is inconclusive because the worker timed out before completion.",
+                })
+            elif status_age > record.no_progress_seconds:
+                record.process.terminate()
+                record.process.join(timeout=2)
+                self._write_status(record, {
+                    "state": "timed_out",
+                    "phase": "stalled",
+                    "percent": None,
+                    "message": f"Geometry validation made no reported progress for {record.no_progress_seconds // 60} minutes.",
+                    "error": "Stage 1 is inconclusive because the geometry worker appeared stalled.",
+                })
         payload = self._read_status(record)
         if not record.process.is_alive():
             record.process.join(timeout=0)
@@ -187,6 +261,8 @@ class GeometryJobManager:
                     "message": "Geometry extraction evidence is complete.",
                 }
                 self._write_status(record, payload)
+            if diagnostic is not None and record.cache_key:
+                self._cache[record.cache_key] = diagnostic
         if not record.process.is_alive() and payload.get("state") in {"queued", "running"}:
             payload = {
                 "state": "failed",
@@ -196,7 +272,15 @@ class GeometryJobManager:
                 "error": f"Geometry worker exited with code {record.process.exitcode}.",
             }
             self._write_status(record, payload)
-        response = {"job_id": job_id, "model_id": record.model_id, **payload}
+        response = {
+            "job_id": job_id,
+            "model_id": record.model_id,
+            "elapsed_seconds": round(elapsed, 1),
+            "timeout_seconds": record.timeout_seconds,
+            "no_progress_seconds": record.no_progress_seconds,
+            "cached": record.cached,
+            **payload,
+        }
         if payload.get("state") == "completed" and record.result_path.is_file():
             response["result"] = json.loads(record.result_path.read_text(encoding="utf-8"))
         return response

@@ -104,6 +104,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual("completed", status["state"], status)
         self.assertTrue(status["result"]["ready"])
         self.assertEqual(100.0, status["percent"])
+        self.assertEqual(15 * 60, status["timeout_seconds"])
         self.assertTrue({"queued", "running"} & set(states))
 
     def test_background_geometry_job_can_be_cancelled(self):

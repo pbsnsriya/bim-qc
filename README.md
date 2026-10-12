@@ -35,7 +35,16 @@ information-quality issues, and exporting a review report.
 - Large-result protection: at most 250 issue rows are rendered at once while
   JSON and CSV exports retain the full result set
 - Isolated Stage 1 geometry jobs with live product progress, cancellation,
-  a 15-minute limit, a 4 GiB worker-memory ceiling, and one concurrent job
+  a size-aware 15/30/45-minute limit, a 4 GiB worker-memory ceiling, and one concurrent job
+- A size-aware 5/10/15-minute no-progress watchdog distinguishes stalled jobs
+  from slow but advancing tessellation; timeouts are explicitly inconclusive
+- Completed Stage 1 evidence is cached for the exact IFC SHA-256 plus browser
+  geometry evidence during the current server session, avoiding repeated work
+- Large-model tessellation runs in bounded 250-element batches. A malformed or
+  omitted shape can therefore trigger targeted recovery only for its batch,
+  instead of forcing every remaining model element through a slow individual retry.
+- Stage 1 reports IFC-open, bulk-tessellation, targeted-retry and engine-comparison
+  timings together with retry counts and the slowest fallback elements.
 - Windows-safe geometry progress updates: temporary antivirus/indexer file
   locks are retried and cannot abort the underlying tessellation job
 - Browser/GPU evidence probe reporting WebGL version, renderer, drawing-buffer
@@ -62,9 +71,13 @@ server keeps a bounded temporary model session, so IDS, profile changes, and
 geometry operations do not resend the IFC. Large-model semantic analysis
 remains interactive, while full IfcOpenShell tessellation runs in an isolated,
 single-worker background job. The UI reports product progress and provides a
-real cancel button; a 15-minute timeout and 4 GiB address-space ceiling protect
+real cancel button; size-aware wall/CPU limits and a 4 GiB address-space ceiling protect
 the main application process. On Windows, temporary locks on the progress JSON
 are retried; progress-reporting failures no longer terminate geometry extraction.
+The UI reports elapsed time and the active limit. A timeout or no-progress stop
+produces no Stage 1 verdict and must not be interpreted as invalid model geometry.
+Completed evidence is reused when the exact IFC and browser geometry signature
+are validated again before the local server is restarted.
 
 After loading a model, choose **Validate IDS** for your own `.ids` file or
 **Try sample IDS**. The dependency-free validator supports entity applicability

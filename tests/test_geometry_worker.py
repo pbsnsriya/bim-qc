@@ -1,4 +1,5 @@
 import json
+from hashlib import sha256
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -7,7 +8,10 @@ import unittest
 from unittest.mock import patch
 
 from ifcqc.geometry_worker import _atomic_json, run_geometry_job
-from ifcqc.runtime import GeometryJobManager, JobRecord
+from ifcqc.runtime import (
+    GeometryJobManager, JobRecord, ModelRecord,
+    geometry_timeout_seconds, no_progress_timeout_seconds,
+)
 
 
 class _StoppedProcess:
@@ -20,7 +24,31 @@ class _StoppedProcess:
         return None
 
 
+class _AliveProcess:
+    exitcode = None
+
+    def __init__(self):
+        self.alive = True
+
+    def is_alive(self):
+        return self.alive
+
+    def terminate(self):
+        self.alive = False
+        self.exitcode = -15
+
+    def join(self, timeout=None):
+        return None
+
+
 class GeometryWorkerTests(unittest.TestCase):
+    def test_timeout_policy_scales_to_supported_model_size(self):
+        self.assertEqual(15 * 60, geometry_timeout_seconds(25 * 1024 * 1024))
+        self.assertEqual(30 * 60, geometry_timeout_seconds(60 * 1024 * 1024))
+        self.assertEqual(45 * 60, geometry_timeout_seconds(80 * 1024 * 1024))
+        self.assertEqual(5 * 60, no_progress_timeout_seconds(15 * 60))
+        self.assertEqual(15 * 60, no_progress_timeout_seconds(45 * 60))
+
     def test_atomic_json_retries_temporary_windows_permission_error(self):
         with TemporaryDirectory() as directory:
             target = Path(directory) / "status.json"
@@ -83,6 +111,49 @@ class GeometryWorkerTests(unittest.TestCase):
 
             self.assertEqual("completed", response["state"])
             self.assertEqual(100.0, response["percent"])
+            self.assertEqual(diagnostic, response["result"])
+        finally:
+            manager.close()
+
+    def test_stalled_worker_is_inconclusive_not_geometry_failure(self):
+        manager = GeometryJobManager(timeout_seconds=60)
+        try:
+            job_dir = manager.root / ("b" * 32)
+            job_dir.mkdir(parents=True)
+            status = job_dir / "status.json"
+            result = job_dir / "result.json"
+            status.write_text(json.dumps({"state": "running", "phase": "tessellating"}))
+            os.utime(status, (0, 0))
+            job_id = "b" * 32
+            manager._jobs[job_id] = JobRecord(
+                job_id, "model", _AliveProcess(), status, result, monotonic(), 60, 1,
+            )
+
+            response = manager.status(job_id)
+
+            self.assertEqual("timed_out", response["state"])
+            self.assertEqual("stalled", response["phase"])
+            self.assertIn("inconclusive", response["error"])
+        finally:
+            manager.close()
+
+    def test_completed_evidence_is_reused_by_model_and_browser_hash(self):
+        manager = GeometryJobManager(timeout_seconds=30)
+        try:
+            model_path = manager.root / "model.ifc"
+            model_path.write_text("IFC")
+            evidence = {"element_ids": [1]}
+            evidence_json = json.dumps(evidence, sort_keys=True, separators=(",", ":"))
+            evidence_hash = sha256(evidence_json.encode("utf-8")).hexdigest()
+            diagnostic = {"counts": {"represented_products": 1}, "ready": True}
+            manager._cache[f"model-hash:{evidence_hash}"] = diagnostic
+            model = ModelRecord("model", model_path, "model.ifc", 3, "model-hash", 0.0)
+
+            job_id = manager.start(model, evidence)
+            response = manager.status(job_id)
+
+            self.assertEqual("completed", response["state"])
+            self.assertTrue(response["cached"])
             self.assertEqual(diagnostic, response["result"])
         finally:
             manager.close()

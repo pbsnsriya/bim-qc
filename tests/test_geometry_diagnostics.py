@@ -42,6 +42,9 @@ class GeometryDiagnosticTests(unittest.TestCase):
             (ROOT / "samples/geometry_demo.ifc").read_text(), browser,
         )
         self.assertTrue(result["ready"])
+        self.assertIn("performance_profile", result)
+        self.assertIn("iterator_tessellation", result["performance_profile"]["phase_timings_ms"])
+        self.assertGreaterEqual(result["performance_profile"]["fallback_retry_count"], 0)
         self.assertTrue(result["duplicate_prerequisites_ready"])
         self.assertEqual("pass", result["cross_engine"]["status"])
         self.assertEqual(7, result["cross_engine"]["compared_elements"])

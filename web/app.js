@@ -298,6 +298,13 @@ function vectorText(values) {
   return values ? values.map((value) => Number(value).toFixed(2)).join(", ") : "unavailable";
 }
 
+function durationText(seconds) {
+  const value = Math.max(0, Math.round(Number(seconds) || 0));
+  const minutes = Math.floor(value / 60);
+  const remainder = value % 60;
+  return minutes ? `${minutes}m ${remainder}s` : `${remainder}s`;
+}
+
 async function runGeometryDiagnostics() {
   if (!state.source || !state.result) throw new Error("Load an IFC model before validating its geometry foundation.");
   if (!state.ifcopenshellAvailable) throw new Error("IfcOpenShell is not available on the local server.");
@@ -325,13 +332,19 @@ async function runGeometryDiagnostics() {
       job = await readJsonResponse(response, "Geometry job status could not be read.");
       const count = job.total == null ? "" : ` · ${Number(job.processed || 0).toLocaleString()}/${Number(job.total).toLocaleString()}`;
       const percent = job.percent == null ? "" : ` · ${job.percent}%`;
-      status.innerHTML = `<strong>${escapeHtml(job.message || "Geometry validation is running.")}</strong>${count}${percent}<div class="progress-track"><span style="width:${Math.max(0, Math.min(100, Number(job.percent || 0)))}%"></span></div>`;
+      const timing = ` · elapsed ${durationText(job.elapsed_seconds)} / limit ${durationText(job.timeout_seconds)}`;
+      const cached = job.cached ? " · cached evidence" : "";
+      status.innerHTML = `<strong>${escapeHtml(job.message || "Geometry validation is running.")}</strong>${count}${percent}${timing}${cached}<div class="progress-track"><span style="width:${Math.max(0, Math.min(100, Number(job.percent || 0)))}%"></span></div>`;
       if (["completed", "failed", "cancelled", "timed_out"].includes(job.state)) break;
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
     if (state.activeGeometryJobId !== started.job_id) return;
     if (!job || job.state === "cancelled") return;
-    if (job.state !== "completed" || !job.result) throw new Error(job.error || "Geometry validation did not complete.");
+    if (job.state !== "completed" || !job.result) {
+      status.classList.add("diagnostics-fail");
+      status.innerHTML += `<p class="evidence-boundary"><strong>No validation verdict was produced.</strong> The model has not failed Stage 1; retry after addressing the timeout or stall.</p>`;
+      throw new Error(job.error || "Geometry validation did not complete.");
+    }
     const acceptanceResponse = await fetch("/api/geometry-acceptance");
     const acceptance = await readJsonResponse(acceptanceResponse, "Known-answer acceptance matrix failed.");
     finishGeometryDiagnostics(job.result, acceptance);
@@ -357,6 +370,25 @@ function finishGeometryDiagnostics(result, acceptance) {
     ? `<details><summary>${result.failed_elements.length} failed element(s)</summary><ul>${result.failed_elements.map((item) => `<li>#${item.step_id} ${escapeHtml(item.type)} · ${escapeHtml(item.error)}</li>`).join("")}</ul></details>`
     : "";
   const warnings = result.warnings.length ? `<p><strong>Review:</strong> ${result.warnings.map(escapeHtml).join(" ")}</p>` : "";
+  const profile = result.performance_profile;
+  const profileDetails = profile ? (() => {
+    const phases = profile.phase_timings_ms || {};
+    const phaseText = [
+      ["IFC opening", phases.ifc_open],
+      ["Bulk tessellation", phases.iterator_tessellation],
+      ["Targeted retries", phases.fallback_retries],
+      ["Engine comparison", phases.cross_engine_comparison],
+    ].filter(([, value]) => Number.isFinite(Number(value)))
+      .map(([label, value]) => `${label}: ${durationText(Number(value) / 1000)}`)
+      .join(" · ");
+    const slowRetries = (profile.slowest_fallback_retries || []).slice(0, 5)
+      .map((item) => `<li>#${item.step_id} ${escapeHtml(item.type)} · ${Math.round(Number(item.elapsed_ms))} ms</li>`)
+      .join("");
+    return `<details><summary><strong>Performance evidence</strong> · ${profile.fallback_retry_count || 0} targeted retries · ${profile.iterator_error_count || 0} iterator errors</summary>` +
+      `<p>${escapeHtml(phaseText || "Timing details unavailable.")}</p>` +
+      (slowRetries ? `<p><strong>Slowest fallback elements</strong></p><ul>${slowRetries}</ul>` : "") +
+      `</details>`;
+  })() : "";
   const stage2Gate = `<p class="evidence-boundary"><strong>Stage 2 readiness: ${result.stage2_ready ? "PASS" : "FAIL"}.</strong> ${escapeHtml(result.duplicate_readiness_message)}</p>`;
   status.classList.toggle("diagnostics-pass", result.ready);
   status.classList.toggle("diagnostics-fail", !result.ready);
@@ -368,7 +400,7 @@ function finishGeometryDiagnostics(result, acceptance) {
     `Bounds min [${vectorText(result.bounds_metres.minimum)}] m · max [${vectorText(result.bounds_metres.maximum)}] m` +
     `<ul class="diagnostic-checks">${checkRows}</ul>` +
     `<details open><summary><strong>Known-answer matrix: ${acceptance.passed_cases}/${acceptance.total_cases} cases passed</strong> · tolerance ${acceptance.tolerance_metres * 1000} mm</summary><ul class="diagnostic-checks">${matrixRows}</ul></details>` +
-    `<p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(result.claim_boundary)}</p>${stage2Gate}${warnings}${failures}`;
+    `${profileDetails}<p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(result.claim_boundary)}</p>${stage2Gate}${warnings}${failures}`;
   $("geometryCheckButton").disabled = !result.stage2_ready;
   $("geometryCheckButton").textContent = result.stage2_ready ? "Validate exact duplicates" : "Stage 1 prerequisites must pass";
   $("geometryEvidenceButton").disabled = false;
