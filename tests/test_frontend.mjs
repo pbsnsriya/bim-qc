@@ -38,7 +38,7 @@ Object.assign(globalThis, {
 
 const nativeFetch = globalThis.fetch;
 globalThis.fetch = (input, init) => nativeFetch(new URL(String(input), window.location.href), init);
-const calls = { selected: [], cleared: 0 };
+const calls = { selected: [], cleared: 0, modes: [] };
 globalThis.OpenBIMViewer = {
   async loadIfcGeometry() { return 5; },
   getGeometryDiagnostics() {
@@ -56,9 +56,12 @@ globalThis.OpenBIMViewer = {
   selectExpressIDs(ids) { calls.selected.push(...ids); return true; },
   selectExpressID(id) { calls.selected.push(id); return true; },
   clearSelection() { calls.cleared += 1; },
+  setSelectionMode(mode) { calls.modes.push(mode); return true; },
   async runGpuValidation() {
     return {
       passed: true,
+      rendering_capability_passed: true,
+      interactive_performance_passed: true,
       probe_duration_ms: 2000,
       probe_frames: 120,
       average_fps: 60,
@@ -94,6 +97,10 @@ assert.equal(issue.classList.contains("selected"), true, "clicked issue receives
 assert.equal(document.querySelector('.model-node[data-entity-id="73"]').classList.contains("selected"), true, "issue selection synchronizes the data map");
 assert.match(document.querySelector("#viewerStatus").textContent, /WALL #73/, "viewer status identifies selected element");
 assert.equal(document.querySelector("#clearSelectionButton").classList.contains("hidden"), false, "clear-selection control becomes visible");
+assert.equal(document.querySelector("#selectionModeSelect").classList.contains("hidden"), false, "selection visibility control becomes visible");
+document.querySelector("#selectionModeSelect").value = "isolate";
+document.querySelector("#selectionModeSelect").dispatchEvent(new window.Event("change"));
+assert.equal(calls.modes.at(-1), "isolate", "isolate mode is forwarded to the viewer");
 
 window.dispatchEvent(new window.CustomEvent("ifc-element-selected", { detail: { expressID: 85 } }));
 assert.equal(document.querySelector('.issue-action[data-entity-id="85"]').classList.contains("selected"), true, "direct 3D selection synchronizes the issue list");
@@ -102,6 +109,7 @@ document.querySelector("#clearSelectionButton").click();
 assert.equal(calls.cleared > 0, true, "clear selection calls the viewer reset");
 assert.equal(document.querySelectorAll(".issue-action.selected").length, 0, "clear selection removes issue highlighting");
 assert.equal(document.querySelector("#clearSelectionButton").classList.contains("hidden"), true, "clear-selection control hides after reset");
+assert.equal(document.querySelector("#selectionModeSelect").classList.contains("hidden"), true, "selection visibility control hides after reset");
 
 document.querySelector("#sampleIdsButton").click();
 const idsDeadline = Date.now() + 5000;
@@ -116,10 +124,10 @@ assert.equal(document.querySelector("#bcfButton").disabled, false, "BCF export i
 assert.equal(document.querySelector("#gpuValidationButton").disabled, false, "GPU check unlocks after geometry loads");
 document.querySelector("#gpuValidationButton").click();
 const gpuDeadline = Date.now() + 5000;
-while (!/Browser\/GPU rendering evidence (passed|needs attention)/.test(document.querySelector("#gpuValidationStatus").textContent) && Date.now() < gpuDeadline) {
+while (!/Browser rendering and interactive performance passed/.test(document.querySelector("#gpuValidationStatus").textContent) && Date.now() < gpuDeadline) {
   await new Promise((resolve) => setTimeout(resolve, 25));
 }
-assert.match(document.querySelector("#gpuValidationStatus").textContent, /Browser\/GPU rendering evidence passed/, "GPU evidence is visible");
+assert.match(document.querySelector("#gpuValidationStatus").textContent, /Browser rendering and interactive performance passed/, "GPU evidence is visible");
 assert.match(document.querySelector("#gpuValidationStatus").textContent, /60 average FPS/, "GPU frame probe result is visible");
 
 assert.equal(document.querySelector("#geometryCheckButton").disabled, true, "experimental checks are gated before Stage 1 validation");

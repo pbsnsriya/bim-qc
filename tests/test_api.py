@@ -167,6 +167,8 @@ class ApiTests(unittest.TestCase):
         self.assertIn("selectExpressIDs", source)
         self.assertIn("ifc-element-selected", source)
         self.assertIn("clearSelection", source)
+        self.assertIn("setSelectionMode", source)
+        self.assertIn("material.depthTest = false", source)
         self.assertIn("new THREE.Box3Helper", source)
         self.assertIn("raycaster.intersectObjects", source)
         self.assertIn("runGpuValidation", source)

@@ -1,6 +1,6 @@
 # Large-model validation
 
-Version 0.6.1 was exercised locally against three non-synthetic IFC4 models.
+Version 0.6.2 was exercised locally against three non-synthetic IFC4 models.
 The source IFC files are not redistributed with this project.
 
 | Model | IFC size | IFC entities | QC elements | Semantic analysis | Result |
@@ -40,7 +40,7 @@ Therefore the overall cross-engine Stage 1 conclusion remains
 **needs attention**, not pass. See `OFFICE_STAGE1_EVIDENCE_2026-09-26.json`.
 
 Large models force IfcOpenShell geometry iteration to one worker to avoid
-multiplying OpenCASCADE memory. Version 0.6.1 runs this work in a separate
+multiplying OpenCASCADE memory. Version 0.6.2 runs this work in a separate
 process, reports processed/total represented products, and provides true
 cancellation. The local runtime permits one geometry job, terminates it after
 15 minutes, applies a best-effort 4 GiB address-space ceiling, and retains at
@@ -53,6 +53,11 @@ performance. A separate earlier 76.73 MiB housing-model run was stopped after
 four minutes and remains incomplete; it must not be conflated with the completed
 77.59 MiB timber-office test above.
 
-The UI now includes a two-second browser/GPU evidence probe. It must be run on
-the user's actual computer after the 3D model loads because Node.js WASM parsing
-does not prove that a hardware WebGL canvas rendered successfully.
+The UI includes a two-second browser/GPU evidence probe. A local run on
+2026-09-27 created a WebGL 2 context on an AMD Radeon 780M and rendered the
+77.59 MiB model (19,757 mesh groups and 2,808,099 loaded triangles). The probe
+measured 11 frames in 2,248 ms, or 4.9 average FPS. This passes rendering
+capability but does not meet the 20 FPS interactive target. The browser reported
+the integrated AMD GPU rather than the available discrete RTX 5060. Use the new
+isolate-selection mode for review and configure the browser/Windows graphics
+preference for the discrete GPU before repeating the performance check.

@@ -86,6 +86,10 @@ function createScene(container) {
     frame: 0,
     expressMeshes: new Map(),
     selectedMaterials: [],
+    selectedMeshes: [],
+    contextStates: [],
+    selectedMeshObjects: [],
+    selectionMode: "xray",
     selectionHelper: null,
     modelGroup: null,
     diagnostics: null,
@@ -118,12 +122,21 @@ function fitCamera(camera, controls, object) {
   fitCameraToBox(camera, controls, box);
 }
 
-export function fitCameraToBox(camera, controls, box) {
+export function fitCameraToBox(camera, controls, box, options = {}) {
   if (box.isEmpty()) return;
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   const radius = Math.max(size.x, size.y, size.z, 1);
-  const direction = camera.position.clone().sub(controls.target).normalize();
+  let direction;
+  if (options.preferSide) {
+    // IFC Z is viewer Y. For broad, low elements such as exported perimeter
+    // walls, use a lower side-oblique view so roofs do not hide the selection.
+    direction = size.x >= size.z
+      ? new THREE.Vector3(0.15, 0.3, 1).normalize()
+      : new THREE.Vector3(1, 0.3, 0.15).normalize();
+  } else {
+    direction = camera.position.clone().sub(controls.target).normalize();
+  }
   if (!Number.isFinite(direction.x)) direction.set(1, 0.8, 1).normalize();
   camera.position.copy(center).addScaledVector(direction, radius * 2.2);
   camera.near = Math.max(radius / 1000, 0.01);
@@ -140,15 +153,20 @@ export function restoreMaterialStates(states) {
     original.material.emissiveIntensity = original.emissiveIntensity;
     original.material.opacity = original.opacity;
     original.material.transparent = original.transparent;
+    original.material.depthTest = original.depthTest;
+    original.material.depthWrite = original.depthWrite;
     original.material.needsUpdate = true;
   }
 }
 
 export function applySelectionAppearance(meshes) {
   const states = [];
+  const meshStates = [];
   const selectedBox = new THREE.Box3();
   const seenMaterials = new Set();
   for (const mesh of meshes) {
+    meshStates.push({ mesh, renderOrder: mesh.renderOrder });
+    mesh.renderOrder = 10_000;
     selectedBox.expandByObject(mesh);
     const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     for (const material of materials) {
@@ -161,22 +179,79 @@ export function applySelectionAppearance(meshes) {
         emissiveIntensity: material.emissiveIntensity,
         opacity: material.opacity,
         transparent: material.transparent,
+        depthTest: material.depthTest,
+        depthWrite: material.depthWrite,
       });
       material.color.set(0xffc83d);
       material.emissive.set(0x6b3f00);
       material.emissiveIntensity = 1.25;
       material.opacity = 1;
       material.transparent = false;
+      // Draw selected geometry over occluding roofs, façades, and finishes.
+      material.depthTest = false;
+      material.depthWrite = false;
       material.needsUpdate = true;
     }
   }
-  return { states, selectedBox };
+  return { states, meshStates, selectedBox };
+}
+
+function restoreContextStates(current) {
+  for (const state of current.contextStates) {
+    state.mesh.visible = state.visible;
+    if (state.materials) restoreMaterialStates(state.materials);
+  }
+  current.contextStates = [];
+}
+
+function applyContextMode(current) {
+  restoreContextStates(current);
+  if (!current.modelGroup || current.selectionMode === "xray") return;
+  const selected = new Set(current.selectedMeshObjects);
+  for (const mesh of current.modelGroup.children) {
+    if (selected.has(mesh)) continue;
+    if (current.selectionMode === "isolate") {
+      current.contextStates.push({ mesh, visible: mesh.visible });
+      mesh.visible = false;
+      continue;
+    }
+    if (current.selectionMode === "fade") {
+      const materials = (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).map((material) => ({
+        material,
+        color: material.color.clone(),
+        emissive: material.emissive.clone(),
+        emissiveIntensity: material.emissiveIntensity,
+        opacity: material.opacity,
+        transparent: material.transparent,
+        depthTest: material.depthTest,
+        depthWrite: material.depthWrite,
+      }));
+      current.contextStates.push({ mesh, visible: mesh.visible, materials });
+      for (const { material } of materials) {
+        material.opacity = Math.min(material.opacity, 0.08);
+        material.transparent = true;
+        material.depthWrite = false;
+        material.needsUpdate = true;
+      }
+    }
+  }
+}
+
+export function setSelectionMode(mode) {
+  if (!sceneState || !["xray", "fade", "isolate"].includes(mode)) return false;
+  sceneState.selectionMode = mode;
+  if (sceneState.selectedMeshObjects.length) applyContextMode(sceneState);
+  return true;
 }
 
 export function clearSelection() {
   if (!sceneState) return;
+  restoreContextStates(sceneState);
   restoreMaterialStates(sceneState.selectedMaterials);
   sceneState.selectedMaterials = [];
+  for (const original of sceneState.selectedMeshes) original.mesh.renderOrder = original.renderOrder;
+  sceneState.selectedMeshes = [];
+  sceneState.selectedMeshObjects = [];
   if (sceneState.selectionHelper) {
     sceneState.scene.remove(sceneState.selectionHelper);
     sceneState.selectionHelper.geometry.dispose();
@@ -195,11 +270,14 @@ export function selectExpressIDs(expressIDs, focus = true) {
     .flatMap((expressID) => sceneState.expressMeshes.get(expressID) || []);
   if (!meshes?.length) return false;
   clearSelection();
-  const { states, selectedBox } = applySelectionAppearance(meshes);
+  const { states, meshStates, selectedBox } = applySelectionAppearance(meshes);
   sceneState.selectedMaterials = states;
+  sceneState.selectedMeshes = meshStates;
+  sceneState.selectedMeshObjects = meshes;
+  applyContextMode(sceneState);
   sceneState.selectionHelper = new THREE.Box3Helper(selectedBox, 0xff6b1a);
   sceneState.scene.add(sceneState.selectionHelper);
-  if (focus) fitCameraToBox(sceneState.camera, sceneState.controls, selectedBox);
+  if (focus) fitCameraToBox(sceneState.camera, sceneState.controls, selectedBox, { preferSide: true });
   return true;
 }
 
@@ -338,22 +416,31 @@ export async function runGpuValidation(durationMs = 2000) {
   const renderedFrames = current.frameCount - startingFrame;
   const evidence = getRendererEvidence(current);
   const geometry = current.diagnostics || {};
-  const checks = [
+  const averageFps = Math.round((renderedFrames * 1000 / Math.max(elapsedMs, 1)) * 10) / 10;
+  const capabilityChecks = [
     { id: "webgl_context", passed: Boolean(evidence.webgl_version) && !evidence.context_lost, message: `${evidence.webgl_version} context is active.` },
     { id: "canvas_size", passed: evidence.drawing_buffer_pixels.every((value) => value > 0), message: `Drawing buffer is ${evidence.drawing_buffer_pixels.join(" × ")} pixels.` },
     { id: "visible_meshes", passed: Number(geometry.mesh_groups || 0) > 0, message: `${Number(geometry.mesh_groups || 0).toLocaleString()} mesh group(s) are loaded.` },
     { id: "rendered_frames", passed: renderedFrames >= 10, message: `${renderedFrames} frames rendered during the probe.` },
     { id: "draw_calls", passed: evidence.render_calls > 0 && evidence.rendered_triangles > 0, message: `${evidence.render_calls} draw call(s), ${evidence.rendered_triangles.toLocaleString()} triangle(s) in the latest frame.` },
   ];
+  const performanceCheck = {
+    id: "interactive_frame_rate",
+    passed: averageFps >= 20,
+    message: `${averageFps} average FPS (interactive target: at least 20 FPS).`,
+  };
+  const renderingPassed = capabilityChecks.every((check) => check.passed);
   return {
-    passed: checks.every((check) => check.passed),
+    passed: renderingPassed && performanceCheck.passed,
+    rendering_capability_passed: renderingPassed,
+    interactive_performance_passed: performanceCheck.passed,
     measured_at: new Date().toISOString(),
     probe_duration_ms: Math.round(elapsedMs),
     probe_frames: renderedFrames,
-    average_fps: Math.round((renderedFrames * 1000 / Math.max(elapsedMs, 1)) * 10) / 10,
+    average_fps: averageFps,
     geometry: structuredClone(geometry),
     renderer: evidence,
-    checks,
+    checks: [...capabilityChecks, performanceCheck],
     claim_boundary: "This proves that this browser created an active WebGL context and rendered the loaded IFC during the probe. It does not benchmark every interaction or prove drawing/design correctness.",
   };
 }
@@ -364,6 +451,7 @@ globalThis.OpenBIMViewer = {
   selectExpressID,
   selectExpressIDs,
   clearSelection,
+  setSelectionMode,
   getGeometryDiagnostics,
   runGpuValidation,
   applySelectionAppearance,

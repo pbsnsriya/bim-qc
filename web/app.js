@@ -326,15 +326,20 @@ async function runBrowserGpuValidation() {
   try {
     const result = await runGpuValidation(2000);
     state.gpuValidation = result;
-    status.classList.toggle("diagnostics-pass", result.passed);
-    status.classList.toggle("diagnostics-fail", !result.passed);
+    status.classList.toggle("diagnostics-pass", result.rendering_capability_passed && result.interactive_performance_passed);
+    status.classList.toggle("diagnostics-fail", !result.rendering_capability_passed || !result.interactive_performance_passed);
     const checks = result.checks.map((check) =>
       `<li class="diagnostic-${check.passed ? "pass" : "fail"}"><strong>${check.passed ? "PASS" : "FAIL"}</strong> ${escapeHtml(check.message)}</li>`
     ).join("");
-    status.innerHTML = `<strong>${result.passed ? "Browser/GPU rendering evidence passed" : "Browser/GPU rendering evidence needs attention"}</strong> · ${escapeHtml(result.renderer.webgl_version)} · ${escapeHtml(result.renderer.renderer || "renderer hidden by browser")}<br>` +
+    const verdict = !result.rendering_capability_passed
+      ? "Browser rendering capability failed"
+      : result.interactive_performance_passed
+        ? "Browser rendering and interactive performance passed"
+        : "Browser rendering passed · performance needs attention";
+    status.innerHTML = `<strong>${verdict}</strong> · ${escapeHtml(result.renderer.webgl_version)} · ${escapeHtml(result.renderer.renderer || "renderer hidden by browser")}<br>` +
       `${result.probe_frames} frames in ${result.probe_duration_ms} ms · ${result.average_fps} average FPS · ${Number(result.geometry.mesh_groups || 0).toLocaleString()} mesh groups · ${Number(result.geometry.triangles || 0).toLocaleString()} loaded triangles` +
       `<ul class="diagnostic-checks">${checks}</ul><p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(result.claim_boundary)}</p>`;
-    toast(result.passed ? "Browser/GPU evidence passed" : "Browser/GPU evidence needs attention");
+    toast(verdict);
   } finally {
     button.disabled = false;
     button.textContent = "Run browser/GPU check";
@@ -444,6 +449,7 @@ function selectEntity(entityID, { fromViewer = false, selectionIDs = null } = {}
   if (!Number.isInteger(numericID)) return;
   const element = state.result?.elements.find((item) => item.step_id === numericID);
   const targetIDs = selectionIDs?.length ? selectionIDs.map(Number) : (element?.selection_ids || [numericID]);
+  if (!fromViewer) globalThis.OpenBIMViewer?.setSelectionMode?.($("selectionModeSelect").value);
   const highlighted = fromViewer || (
     globalThis.OpenBIMViewer?.selectExpressIDs?.(targetIDs)
     ?? (targetIDs.length === 1 && globalThis.OpenBIMViewer?.selectExpressID(targetIDs[0]))
@@ -453,6 +459,7 @@ function selectEntity(entityID, { fromViewer = false, selectionIDs = null } = {}
   const viaChildren = element?.geometry_status === "children" ? ` via ${targetIDs.length} geometric child element(s)` : "";
   $("viewerStatus").textContent = `Selected ${shortType(element?.type || "IFC element")} #${numericID}${viaChildren}`;
   $("clearSelectionButton").classList.toggle("hidden", !highlighted);
+  $("selectionModeSelect").classList.toggle("hidden", !highlighted);
   if (!highlighted) toast(geometryFailureMessage(element, targetIDs));
 }
 
@@ -461,6 +468,7 @@ function clearEntitySelection() {
   state.selectedEntityId = null;
   updateSelectionUi();
   $("clearSelectionButton")?.classList.add("hidden");
+  $("selectionModeSelect")?.classList.add("hidden");
   if ($("viewerStatus") && state.viewerBaseStatus) $("viewerStatus").textContent = state.viewerBaseStatus;
 }
 
@@ -579,6 +587,11 @@ $("profileSelect").addEventListener("change", async () => {
 $("severityFilter").addEventListener("change", renderIssues);
 $("ruleFilter").addEventListener("change", renderIssues);
 $("clearSelectionButton").addEventListener("click", clearEntitySelection);
+$("selectionModeSelect").addEventListener("change", (event) => {
+  if (globalThis.OpenBIMViewer?.setSelectionMode?.(event.target.value)) {
+    toast(`${event.target.options[event.target.selectedIndex].text} mode applied`);
+  }
+});
 $("issueList").addEventListener("click", (event) => {
   const issue = event.target.closest("[data-entity-id]");
   if (issue) selectEntity(issue.dataset.entityId, { selectionIDs: issue.dataset.selectionIds.split(",").filter(Boolean).map(Number) });

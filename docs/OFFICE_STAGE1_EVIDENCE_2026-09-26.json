@@ -64,8 +64,22 @@
     "tolerance_metres": 0.001
   },
   "browser_gpu": {
-    "status": "pending_on_user_hardware",
-    "reason": "A GPU result must be measured in the user's visible local browser and cannot be inferred from Node.js WASM parsing."
+    "status": "rendering_passed_performance_needs_attention",
+    "measured_at": "2026-09-27",
+    "webgl_version": "WebGL 2",
+    "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x000015BF) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "probe_duration_ms": 2248,
+    "probe_frames": 11,
+    "average_fps": 4.9,
+    "interactive_target_fps": 20,
+    "drawing_buffer_pixels": [1180, 570],
+    "mesh_groups": 19757,
+    "loaded_triangles": 2808099,
+    "latest_frame_draw_calls": 21239,
+    "latest_frame_triangles": 2855299,
+    "rendering_capability_passed": true,
+    "interactive_performance_passed": false,
+    "note": "The browser used the integrated AMD Radeon 780M rather than the available discrete RTX 5060."
   },
-  "claim_boundary": "IfcOpenShell exhaustive extraction passed its configured core gate. The overall Stage 1 gate remains needs-attention because seven of 10,446 shared element extents differ by more than 1 mm and the local hardware WebGL probe is pending."
+  "claim_boundary": "IfcOpenShell exhaustive extraction and local WebGL rendering capability passed. The overall Stage 1 gate remains needs-attention because seven of 10,446 shared element extents differ by more than 1 mm and the measured 4.9 FPS is below the 20 FPS interactive target."
 }

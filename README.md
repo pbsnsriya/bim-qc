@@ -7,7 +7,8 @@ information-quality issues, and exporting a review report.
 
 - Streaming multipart IFC upload up to 100 MiB; each model is sent once
 - Interactive local 3D geometry with orbit and zoom controls
-- Issue-to-model highlighting with camera framing and direct 3D selection
+- Issue-to-model highlighting with side-aware camera framing, direct 3D
+  selection, and X-ray, fade-context, or isolate visibility modes
 - IFC2x3 / IFC4 schema detection
 - IfcOpenShell-backed semantic traversal and schema-aware type counts
 - Deterministic checks for missing names, duplicate GlobalIds, missing spatial
@@ -34,7 +35,8 @@ information-quality issues, and exporting a review report.
 - Isolated Stage 1 geometry jobs with live product progress, cancellation,
   a 15-minute limit, a 4 GiB worker-memory ceiling, and one concurrent job
 - Browser/GPU evidence probe reporting WebGL version, renderer, drawing-buffer
-  size, loaded meshes, draw calls, rendered triangles, frames, and average FPS
+  size, loaded meshes, draw calls, rendered triangles, frames, and average FPS;
+  rendering capability and interactive performance are graded separately
 
 The 3D path uses the open-source `web-ifc` WASM parser and Three.js, both
 vendored so the app runs without a CDN or internet connection. If WebGL or

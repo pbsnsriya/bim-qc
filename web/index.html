@@ -96,7 +96,7 @@
 
       <div class="dashboard-grid">
         <article class="panel model-panel">
-          <div class="panel-heading"><div><p class="eyebrow">MODEL VIEW</p><h3>Interactive IFC geometry</h3></div><div class="viewer-heading-actions"><span id="viewerStatus" class="muted">Drag to orbit · Scroll to zoom</span><button id="clearSelectionButton" class="clear-selection hidden" type="button">Clear selection</button></div></div>
+          <div class="panel-heading"><div><p class="eyebrow">MODEL VIEW</p><h3>Interactive IFC geometry</h3></div><div class="viewer-heading-actions"><span id="viewerStatus" class="muted">Drag to orbit · Scroll to zoom</span><select id="selectionModeSelect" class="selection-mode hidden" aria-label="Selected element visibility"><option value="xray">X-ray selected</option><option value="fade">Fade context</option><option value="isolate">Isolate selected</option></select><button id="clearSelectionButton" class="clear-selection hidden" type="button">Clear selection</button></div></div>
           <div id="viewer" class="viewer"><div id="modelMap" class="model-map"></div></div>
         </article>
         <article class="panel type-panel">
