@@ -36,6 +36,8 @@ information-quality issues, and exporting a review report.
   JSON and CSV exports retain the full result set
 - Isolated Stage 1 geometry jobs with live product progress, cancellation,
   a 15-minute limit, a 4 GiB worker-memory ceiling, and one concurrent job
+- Windows-safe geometry progress updates: temporary antivirus/indexer file
+  locks are retried and cannot abort the underlying tessellation job
 - Browser/GPU evidence probe reporting WebGL version, renderer, drawing-buffer
   size, loaded meshes, draw calls, rendered triangles, frames, and average FPS;
   rendering capability and interactive performance are graded separately
@@ -61,7 +63,8 @@ geometry operations do not resend the IFC. Large-model semantic analysis
 remains interactive, while full IfcOpenShell tessellation runs in an isolated,
 single-worker background job. The UI reports product progress and provides a
 real cancel button; a 15-minute timeout and 4 GiB address-space ceiling protect
-the main application process.
+the main application process. On Windows, temporary locks on the progress JSON
+are retried; progress-reporting failures no longer terminate geometry extraction.
 
 After loading a model, choose **Validate IDS** for your own `.ids` file or
 **Try sample IDS**. The dependency-free validator supports entity applicability

@@ -6,23 +6,51 @@ import json
 import os
 from pathlib import Path
 import tempfile
+from time import sleep
 import traceback
 
 from .geometry_diagnostics import diagnose_geometry_file
 
 
-def _atomic_json(path: Path, payload: dict) -> None:
+def _atomic_json(path: Path, payload: dict, attempts: int = 12) -> None:
+    """Write JSON safely, including when Windows briefly locks the target.
+
+    Antivirus, indexing, and a concurrent status poll can hold ``status.json``
+    long enough for ``os.replace`` to raise WinError 5. Retrying keeps that
+    incidental lock from aborting a multi-minute geometry extraction. A final
+    in-place write is acceptable because readers already tolerate transient
+    incomplete JSON and retry on the next poll.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}-", dir=path.parent)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-            json.dump(payload, handle)
-        os.replace(temporary, path)
-    finally:
+    content = json.dumps(payload)
+    last_error: OSError | None = None
+    for attempt in range(max(1, attempts)):
+        descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}-", dir=path.parent)
         try:
-            os.unlink(temporary)
-        except FileNotFoundError:
-            pass
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                handle.write(content)
+                handle.flush()
+            os.replace(temporary, path)
+            return
+        except PermissionError as exc:
+            last_error = exc
+        finally:
+            try:
+                os.unlink(temporary)
+            except FileNotFoundError:
+                pass
+        sleep(min(0.01 * (2 ** attempt), 0.25))
+
+    for attempt in range(4):
+        try:
+            path.write_text(content, encoding="utf-8")
+            return
+        except PermissionError as exc:
+            last_error = exc
+            sleep(0.25 * (attempt + 1))
+    if last_error is not None:
+        raise last_error
+    raise OSError(f"Could not write JSON status file: {path}")
 
 
 def _set_resource_limits(memory_limit_bytes: int, cpu_seconds: int) -> None:
@@ -51,8 +79,17 @@ def run_geometry_job(
     result = Path(result_path)
     _set_resource_limits(memory_limit_bytes, cpu_seconds)
 
+    def safe_status(payload: dict) -> None:
+        try:
+            _atomic_json(status, payload)
+        except OSError:
+            # Progress reporting is best-effort. It must never terminate the
+            # actual tessellation job; the parent can recover completion from
+            # the atomically written result file.
+            pass
+
     def progress(update: dict) -> None:
-        _atomic_json(status, {"state": "running", **update})
+        safe_status({"state": "running", **update})
 
     try:
         progress({
@@ -64,7 +101,7 @@ def run_geometry_job(
         })
         diagnostic = diagnose_geometry_file(model_path, browser_evidence, progress)
         _atomic_json(result, diagnostic)
-        _atomic_json(status, {
+        safe_status({
             "state": "completed",
             "phase": "complete",
             "processed": diagnostic["counts"]["represented_products"],
@@ -73,7 +110,7 @@ def run_geometry_job(
             "message": "Geometry extraction evidence is complete.",
         })
     except MemoryError:
-        _atomic_json(status, {
+        safe_status({
             "state": "failed",
             "phase": "failed",
             "percent": None,
@@ -81,7 +118,7 @@ def run_geometry_job(
             "error": "Geometry validation exceeded its memory limit.",
         })
     except Exception as exc:
-        _atomic_json(status, {
+        safe_status({
             "state": "failed",
             "phase": "failed",
             "percent": None,

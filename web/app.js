@@ -83,6 +83,7 @@ function applyAnalysis(result) {
   $("gpuValidationStatus").classList.add("hidden");
   $("geometryCancelButton").classList.add("hidden");
   $("geometryCheckButton").disabled = true;
+  $("geometryCheckButton").textContent = "Complete Stage 1 to unlock";
   $("geometryEvidenceButton").disabled = true;
   $("gpuValidationButton").disabled = true;
   $("geometryCheckButton").title = "Stage 1 geometry validation must pass first";
@@ -265,6 +266,7 @@ function finishGeometryDiagnostics(result, acceptance) {
     `<details open><summary><strong>Known-answer matrix: ${acceptance.passed_cases}/${acceptance.total_cases} cases passed</strong> · tolerance ${acceptance.tolerance_metres * 1000} mm</summary><ul class="diagnostic-checks">${matrixRows}</ul></details>` +
     `<p class="evidence-boundary"><strong>Claim boundary:</strong> ${escapeHtml(result.claim_boundary)}</p>${warnings}${failures}`;
   $("geometryCheckButton").disabled = !result.ready;
+  $("geometryCheckButton").textContent = result.ready ? "Validate exact duplicates" : "Stage 1 must pass first";
   $("geometryEvidenceButton").disabled = false;
   $("geometryCheckButton").title = result.ready ? "Stage 1 passed; exact duplicate validation is available" : "Stage 1 extraction evidence must pass first";
   toast(result.ready ? "Stage 1 extraction evidence passed" : "Stage 1 found extraction evidence problems");

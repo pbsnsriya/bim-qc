@@ -12,7 +12,7 @@ from threading import Lock
 from time import monotonic, time
 import uuid
 
-from .geometry_worker import run_geometry_job
+from .geometry_worker import _atomic_json, run_geometry_job
 
 
 @dataclass
@@ -167,6 +167,22 @@ class GeometryJobManager:
         payload = self._read_status(record)
         if not record.process.is_alive():
             record.process.join(timeout=0)
+        if not record.process.is_alive() and record.result_path.is_file():
+            try:
+                diagnostic = json.loads(record.result_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                diagnostic = None
+            if diagnostic is not None and payload.get("state") != "completed":
+                total = diagnostic["counts"]["represented_products"]
+                payload = {
+                    "state": "completed",
+                    "phase": "complete",
+                    "processed": total,
+                    "total": total,
+                    "percent": 100.0,
+                    "message": "Geometry extraction evidence is complete.",
+                }
+                self._write_status(record, payload)
         if not record.process.is_alive() and payload.get("state") in {"queued", "running"}:
             payload = {
                 "state": "failed",
@@ -218,9 +234,7 @@ class GeometryJobManager:
 
     @staticmethod
     def _write_status(record: JobRecord, payload: dict) -> None:
-        temporary = record.status_path.with_suffix(".tmp")
-        temporary.write_text(json.dumps(payload), encoding="utf-8")
-        temporary.replace(record.status_path)
+        _atomic_json(record.status_path, payload)
 
     def close(self) -> None:
         for record in self._jobs.values():

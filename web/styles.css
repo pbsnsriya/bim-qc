@@ -37,6 +37,7 @@ h1 { max-width: 680px; font: 600 clamp(42px, 6vw, 72px)/.98 Georgia, serif; lett
 .actions, .heading-actions { display: flex; gap: 10px; align-items: center; }
 .heading-actions { flex-wrap: wrap; justify-content: flex-end; }
 .button { border: 0; border-radius: 10px; padding: 11px 16px; cursor: pointer; font-weight: 700; font-size: 13px; }
+.button:disabled { opacity: .48; cursor: not-allowed; filter: grayscale(.25); }
 .primary { background: var(--ink); color: white; }
 .secondary { background: white; color: var(--ink); border: 1px solid var(--line); }
 .danger { background: #fff1ee; color: var(--error); border: 1px solid #e4b9b0; }

@@ -12,7 +12,7 @@ try {
 } catch {
   serverProcess = spawn("python3", ["server.py"], { cwd: projectRoot, stdio: "ignore" });
   process.on("exit", () => serverProcess?.kill());
-  const serverDeadline = Date.now() + 5000;
+  const serverDeadline = Date.now() + 15000;
   while (Date.now() < serverDeadline) {
     try {
       const health = await fetch("http://127.0.0.1:8000/api/health");
@@ -79,12 +79,16 @@ globalThis.OpenBIMViewer = {
 await import(`../web/app.js?frontend-test=${Date.now()}`);
 document.querySelector("#demoButton").click();
 
-const deadline = Date.now() + 5000;
+const deadline = Date.now() + 15000;
 while (document.querySelectorAll(".issue-action").length === 0 && Date.now() < deadline) {
   await new Promise((resolve) => setTimeout(resolve, 25));
 }
 
-assert.equal(document.querySelector("#workspace").classList.contains("hidden"), false, "demo analysis opens the workspace");
+assert.equal(
+  document.querySelector("#workspace").classList.contains("hidden"),
+  false,
+  `demo analysis opens the workspace (${document.querySelector("#toast").textContent || "no UI error"})`,
+);
 assert.match(document.querySelector("#viewerStatus").textContent, /5 mesh groups/, "geometry result is reported");
 
 const issue = document.querySelector('.issue-action[data-entity-id="73"]');

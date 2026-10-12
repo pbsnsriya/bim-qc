@@ -61,3 +61,8 @@ capability but does not meet the 20 FPS interactive target. The browser reported
 the integrated AMD GPU rather than the available discrete RTX 5060. Use the new
 isolate-selection mode for review and configure the browser/Windows graphics
 preference for the discrete GPU before repeating the performance check.
+
+Version 0.7.1 also hardens the Windows background-worker progress channel.
+Temporary `WinError 5` locks caused by antivirus, indexing, or a concurrent
+status poll are retried and treated as non-fatal. If the final status write is
+blocked, the parent recovers completion from the atomically written result.
