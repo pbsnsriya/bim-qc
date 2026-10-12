@@ -15,11 +15,11 @@ The earliest complete recovered source is **v0.7.9**. The first MVP and v0.7.0â€
 | v0.7.15 | Archive test review decisions and expose hard-clash reference failures | 128 | `cd691a706a75c4b55e68df1660e0604af2f5fd4feb301e1c7a71b36d2fa637e8` |
 | v0.7.16 | Correct aligned overlap detection with solid Booleans and convex depth evidence | 137 | `c2451a93538f2d3039855742ebc1e50f2b535441029966d6a1880a3b80dcb189` |
 
-Full import commit IDs and source hashes are in [release-snapshots.json](release-snapshots.json). SHA-256 values identify the validated release ZIPs; Git commits/tags identify their extracted trees. Each snapshot's archived README and licence files are preserved at its tag. The latest original release usage guide is also available as [LOCAL_USAGE.md](LOCAL_USAGE.md).
+Published import commit IDs, prepared local commit IDs and source hashes are in [release-snapshots.json](release-snapshots.json). SHA-256 values identify the validated release ZIPs; Git commits/tags identify their extracted trees. Each snapshot's archived README and licence files are preserved at its tag. The latest original release usage guide is also available as [LOCAL_USAGE.md](LOCAL_USAGE.md).
 
 ## Attribution
 
-Local release-import and repository documentation commits use `pbsnsriya` for both author and committer with the GitHub no-reply address `137526270+pbsnsriya@users.noreply.github.com`. They contain no ChatGPT/Codex co-author trailers. Existing vendor copyright and licence attribution remains intact.
+Published release-import and documentation commits were verified to resolve to the GitHub account `pbsnsriya` for both author and committer. The prepared local Git bundle uses the GitHub no-reply address `137526270+pbsnsriya@users.noreply.github.com`. Published and local commit IDs differ because publication follows GitHub repository initialization; their source trees were verified identical. Project commits contain no assistant co-author trailers. Existing vendor copyright and licence attribution remains intact.
 
 ## What the history proves
 

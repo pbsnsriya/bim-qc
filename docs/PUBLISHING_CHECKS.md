@@ -15,10 +15,10 @@ Prepared for `pbsnsriya/bim-qc` on 2026-10-11. Application runtime remains v0.7.
 | Credential-pattern scan | No GitHub token or private-key patterns found in prepared tracked files |
 | Local author/committer | `pbsnsriya` with GitHub no-reply email; no assistant co-author trailers |
 | Physical Edge/GPU run | Not performed as part of publication preparation |
-| GitHub repository creation/push | Pending; local preparation is not a remote publication verdict |
+| GitHub repository creation/push | Private repository created; eight recovered releases and documentation published; every imported remote tree matches its prepared local tree |
 
 Local checks used Python 3.12, Node.js 24, IfcOpenShell 0.8.5 and Manifold3D 3.5.1. This workspace crashed while loading native extensions from its workspace virtual environment; rerunning with the same pinned geometry dependencies installed in the container's temporary filesystem passed. No application code was changed to mask that environment failure.
 
-The added CI configuration targets Python 3.11 and Node.js 22 on Ubuntu. Its hosted result must be checked after publication; preparing the workflow does not mean a GitHub Actions run has already passed.
+The added CI configuration targets Python 3.11 and Node.js 22 on Ubuntu. Its hosted result must be checked separately; local passing results do not establish hosted CI success.
 
 Earlier source history before v0.7.9 remains unavailable. Release imports use current timestamps and explicitly identify their provenance.
